@@ -197,3 +197,128 @@ If a worker finds a CRIT-level issue:
 - Queen flags it immediately (don't wait for all workers)
 - Other workers continue (their findings still matter)
 - CRIT is reported to operator before consolidation completes
+
+---
+
+## 7. Worker Hierarchy (from oh-my-claudecode)
+
+### Worker Preamble
+
+Every spawned worker receives an explicit hierarchy statement in its dispatch prompt:
+
+```
+You are a WORKER in a swarm dispatched by {Queen agent name}.
+You are NOT the orchestrator. You do NOT spawn sub-agents.
+
+WORK PROTOCOL:
+1. Execute your assigned targets using your tools (Read/Grep/Preview/SQL)
+2. Report findings in the standard format
+3. Report "No findings" explicitly if clean (silence is ambiguous)
+4. Return results to the Queen. Do not take additional action.
+
+You do NOT: spawn sub-agents, modify orchestration, skip targets, change methodology.
+```
+
+### Why This Matters
+
+Without hierarchy enforcement, workers can:
+- Spawn their own sub-agents (chaotic delegation chains)
+- Decide to skip targets they consider "low priority"
+- Modify their methodology mid-execution
+- Attempt to coordinate with other workers directly
+
+The preamble prevents all of these. Workers execute. Queens orchestrate. Clean separation.
+
+---
+
+## 8. Worker Lifecycle Management
+
+### Deliverable Verification on Completion
+
+When a worker finishes, the Queen verifies deliverables before accepting results:
+
+```
+FOR each completed worker:
+  1. Did the worker return a result? (not silent/empty)
+  2. Does the result cover ALL assigned targets? (no gaps)
+  3. Is the result in the expected format? (finding table, not prose)
+  4. If any check fails:
+     - Log the failure
+     - Re-dispatch a replacement worker for the missed targets
+     - Do NOT count the failed worker's partial results without review
+```
+
+### Idle Nudge
+
+If a worker has been running for longer than expected and tasks remain:
+
+| Worker Type | Expected Duration | Nudge After |
+|-------------|------------------|-------------|
+| File scanner (Pierce, Sable) | 30-60s | 90s |
+| Browser tester (Mara, Sentinel) | 60-120s | 180s |
+| Database analyzer (Kehinde, Tanaka) | 45-90s | 120s |
+
+Nudge = re-check if the worker is still alive and producing output. If no response, reassign targets.
+
+### Stuck Worker Recovery
+
+```
+IF worker.duration > timeout:
+  1. Check: did the worker produce partial results?
+  2. IF yes: accept partial, reassign remaining targets to new worker
+  3. IF no: mark worker as failed, dispatch replacement
+  4. Log the failure pattern for future threshold tuning
+```
+
+---
+
+## 9. Dispatch Queue Fairness
+
+### The Problem
+
+Without fairness, the first worker gets the easiest tasks and finishes quickly, while the last worker gets the hardest tasks and takes 3x longer. Total time = slowest worker.
+
+### Fair Allocation
+
+When decomposing N targets into worker assignments:
+
+1. **Estimate complexity** per target (file size, route complexity, API parameter count)
+2. **Sort targets** by estimated complexity (descending)
+3. **Round-robin assign** in snake order: Worker 1 gets hardest, Worker 2 gets next, ..., then reverse: last worker gets next hardest
+4. **Result:** Each worker gets roughly equal total complexity, not just equal count
+
+### Snake Order Example (5 targets, 2 workers)
+
+Targets sorted by complexity: A(high), B(high), C(med), D(med), E(low)
+- Worker 1: A, C, E (high + med + low = balanced)
+- Worker 2: B, D (high + med = balanced)
+
+---
+
+## 10. Sentinel Gate on Swarm Completion
+
+### The Problem
+
+All workers report "done." All findings are consolidated. But did the swarm actually verify everything? Workers might have silently skipped targets or produced shallow results.
+
+### Completion Gate
+
+Before the Queen reports "swarm complete":
+
+```
+1. Target coverage check:
+   - List all assigned targets
+   - List all targets in worker results
+   - IF coverage < 100%: flag missing targets, re-dispatch
+
+2. Finding plausibility check:
+   - IF 0 findings across ALL workers on N targets where N > 10:
+     re-check a random sample of 2-3 targets (suspiciously clean)
+   - IF sample reveals issues: full re-scan
+
+3. Severity distribution check:
+   - IF every finding is LOW: review 2-3 for possible under-severity
+   - Normal distribution: mix of severities across workers
+```
+
+This gate prevents "all green" reports that mask incomplete or shallow reviews.

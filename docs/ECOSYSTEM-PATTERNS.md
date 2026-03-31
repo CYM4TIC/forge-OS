@@ -180,3 +180,60 @@ A batch is done when:
 5. Sentinel reports no regressions
 6. Adversarial check passed (4 questions)
 7. BOOT.md updated with handoff
+
+---
+
+## 7. Circuit Breakers (from oh-my-claudecode)
+
+Every iterative process has a maximum iteration count. After the limit, STOP and escalate.
+
+| Process | Max Iterations | Escalation |
+|---------|---------------|------------|
+| Fix cycle (single finding) | 3 | Escalate to operator — root cause may be architectural |
+| Verification loop (story) | 3 | Escalate to architect agent for reframe |
+| Ralplan critic loop | 5 | Accept best plan so far |
+| Ralph persistence loop | 10 | Stop, report progress with evidence |
+| Swarm worker | 10 | Force-return partial findings |
+| Deep interview | 12 rounds | Report remaining ambiguity, proceed with caveats |
+
+**Why:** Infinite loops burn tokens and context without making progress. The right response to hitting a circuit breaker is to **reframe the problem**, not retry harder. Three failed fix attempts using the same approach is a signal that the approach is wrong, not that the execution was bad.
+
+---
+
+## 8. PreCompact Learning Persistence (from oh-my-claudecode)
+
+Before context window compression, persist all undocumented learnings to disk.
+
+### What Gets Saved
+- Tool workarounds discovered this session
+- Codebase patterns not yet in BUILD-LEARNINGS.md
+- Architecture decisions made implicitly (should be explicit)
+- Failure patterns observed (circuit breaker hits, unexpected errors)
+
+### When It Fires
+- Context > 60% utilized (preemptive)
+- System context compression event (reactive)
+- Session end (cleanup)
+
+### Why
+Context compression loses information. If a discovery was made at 30% context and compression happens at 70%, that discovery is gone unless it was written to disk. The PreCompact hook ensures nothing valuable is lost.
+
+---
+
+## 9. Atomic Write Safety (from oh-my-claudecode)
+
+### The Pattern
+```
+1. Write content to temp file ({target}.tmp)
+2. Rename temp file to target (atomic OS operation)
+3. If crash between 1 and 2: temp file exists but target is untouched
+```
+
+### Why
+Direct writes can corrupt files if interrupted (power loss, process kill, context limit). Atomic write ensures the file is either fully written or untouched — never partially written.
+
+### Where to Apply
+- State files (persistence protocol state, swarm state)
+- Build learnings (cross-session knowledge)
+- Handoff documents (cross-agent context)
+- Any file that multiple sessions or agents might read

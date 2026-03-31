@@ -58,6 +58,30 @@ These sources make our agents smarter at their specific domains.
 - **Reference files:** `references/trail-of-bits/NOTES.md`
 - **Installed as:** security-auditor skill (`.claude/skills/security-auditor/`)
 
+### oh-my-claudecode (18.6k stars)
+- **What:** Multi-agent orchestration layer for Claude Code. 20 agents, 37 skills, 11 hook points.
+- **What we take:**
+  - Deep Interview protocol (Socratic ambiguity scoring + ontology convergence tracking)
+  - Ralph persistence loop (PRD-driven completion with testable acceptance criteria)
+  - Ralplan-first gate (vague request detection with concrete signal scanning)
+  - Worker hierarchy protocol (explicit preamble, no sub-agent spawning)
+  - Stage handoff documents (decisions + rejected alternatives + risks)
+  - Deslop pass (post-build AI code cleanup)
+  - Circuit breakers (3-failure limit on fix cycles)
+  - Critic self-audit + realist severity check
+  - Pre-mortem analysis (3 failure scenarios before build)
+  - Deliverable verification on sub-agent completion
+  - PreCompact learning persistence
+  - Dispatch queue fairness (snake-order complexity balancing)
+  - Idle nudge / watchdog (stuck worker detection and reassignment)
+  - Sentinel gate on swarm completion (plausibility check)
+  - Atomic write + file locking for state
+  - Multi-perspective review lenses (security / new-hire / ops)
+  - Intra-task progress tracking
+- **Persona mapping:** Nyx (persistence, gates, pre-mortem), Pierce (self-audit, lenses), all agents (circuit breakers, handoffs), swarm system (worker hierarchy, fairness, completion gate)
+- **Reference files:** `references/oh-my-claudecode/NOTES.md`
+- **Installed as:** 4 protocol docs (`docs/DEEP-INTERVIEW-PROTOCOL.md`, `PERSISTENCE-PROTOCOL.md`, `EXECUTION-GATES.md`, `HANDOFF-PROTOCOL.md`) + SWARM-PROTOCOL.md updates
+
 ### UI UX Pro Max
 - **What:** 161 reasoning rules, 99 UX guidelines, 67 styles, 161 palettes, 57 font pairings.
 - **What we take:**
@@ -168,6 +192,8 @@ Reference implementations that validate our approach.
 
 7. **LightRAG + n8n = Phase 7+ integrations.** Knowledge graph and workflow automation. Reference captured, build deferred.
 
+8. **oh-my-claudecode = execution discipline layer.** 17 patterns extracted: deep interview (ambiguity gating), ralph persistence (empirical completion), ralplan gate (vague request detection), worker hierarchy, handoff documents, deslop pass, circuit breakers, self-audit, pre-mortem, deliverable verification, precompact persistence, review lenses, dispatch fairness, idle nudge, sentinel completion gate, atomic writes, intra-task progress. Installed as 4 protocol docs + swarm updates.
+
 ---
 
 ## Source Count
@@ -175,10 +201,10 @@ Reference implementations that validate our approach.
 | Tier | Sources | Priority |
 |------|---------|----------|
 | Tier 1: Core Architecture | 3 | CRITICAL |
-| Tier 2: Domain Intelligence | 3 | HIGH |
+| Tier 2: Domain Intelligence | 4 | HIGH |
 | Tier 3: Patterns & Methodology | 2 | HIGH/MEDIUM |
 | Tier 4: Integration Primitives | 4 | MEDIUM/LOW |
 | Tier 5: Identity & Process | 2 | REFERENCE |
-| **Total** | **14** | |
+| **Total** | **15** | |
 
-All 14 sources have been extracted into `references/` directory with structured NOTES.md files. The 5 actionable skills are installed in `.claude/skills/`. The 3 methodology docs are in `docs/`.
+All 15 sources extracted into `references/`. 5 skills in `.claude/skills/`. 7 methodology docs in `docs/`. 17 OMC patterns integrated across 4 protocol docs + swarm protocol updates.
