@@ -24,21 +24,24 @@ For persona rules:
 
 # Gate Protocol
 
-## Step 1 — Kehinde (Systems Architecture)
+## Steps 1-3 — PARALLEL DISPATCH (Swarm)
+Dispatch all 3 persona checks simultaneously using separate Agent calls in a single message. Vane only runs if the batch touches financial flows.
+
+### Kehinde (Systems Architecture)
 1. Failure mode analysis — every API/function: what fails? compensation?
 2. Schema conformance — live schema vs spec
 3. Race condition check — read-then-write without locking
 4. Index coverage on hot-path queries
 5. Tenant isolation — tenant scope in every query
 
-## Step 2 — Tanaka (Security & Compliance)
+### Tanaka (Security & Compliance)
 1. Access policy audit — flag overly permissive rules
 2. Auth verification — public APIs must require authentication
 3. Security-critical functions — hardened search paths
 4. PII scan — sensitive data only behind auth
 5. Input validation — no raw user input in queries
 
-## Step 3 — Vane (Financial Architecture)
+### Vane (Financial Architecture)
 Only run if batch touches financial flows (payments, pricing, rates):
 1. Rate conformance — canonical rate functions used, no hardcoded
 2. Payment platform correctness — fee splits, transfers, refunds

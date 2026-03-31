@@ -23,8 +23,8 @@ State the architectural question clearly. Identify:
 - What constraints exist (ADL, existing code, timeline)
 - What the options are (if known)
 
-## Step 2 — Gather Perspectives
-For each persona, provide their domain lens:
+## Step 2 — Gather Perspectives (PARALLEL DISPATCH — all 10 simultaneously)
+Dispatch all 10 persona agents in parallel using multiple Agent calls in a single message. Each gets the framed question + constraints + their domain lens:
 1. **Nyx** (Build) — Implementation complexity, timeline, dependencies
 2. **Pierce** (QA) — Spec conformance, naming, testability
 3. **Mara** (UX) — User experience, interaction patterns, accessibility
@@ -35,6 +35,8 @@ For each persona, provide their domain lens:
 8. **Voss** (Legal) — Legal risk, compliance, regulatory
 9. **Calloway** (Growth) — Market positioning, competitive advantage, pricing
 10. **Sable** (Brand) — Brand voice, customer perception, copy
+
+All 10 perspectives are independent — no persona needs another's input. Max concurrency: 10 agents.
 
 ## Step 3 — Synthesize
 Identify:

@@ -24,20 +24,23 @@ For persona rules:
 
 # Gate Protocol
 
-## Step 1 — Calloway (Growth Strategy)
+## Steps 1-3 — PARALLEL DISPATCH (Swarm)
+Dispatch all 3 persona checks simultaneously using separate Agent calls in a single message.
+
+### Calloway (Growth Strategy)
 1. Pricing conformance — features gated to correct tiers
 2. Tier visibility — upgrade prompts present, not aggressive
 3. Competitive positioning — feature set competitive at price point
 4. Growth levers — engagement drivers, referral loops
 
-## Step 2 — Voss (Platform Legal)
+### Voss (Platform Legal)
 1. Communication compliance — marketing comms require consent
 2. TOS/Privacy links present on customer-facing pages
 3. Consent mechanisms — explicit opt-in, no pre-checked boxes
 4. Fee disclosure — terms visible before payment
 5. Data retention — deletion possible
 
-## Step 3 — Sable (Brand Voice)
+### Sable (Brand Voice)
 1. Voice consistency — consistent tone across all surfaces
 2. Error messages — empathetic, specific, actionable
 3. Empty states — helpful guidance

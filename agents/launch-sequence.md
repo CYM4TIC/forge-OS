@@ -13,23 +13,20 @@ Launch Sequence. The countdown. Before anything goes live, Launch Sequence runs 
 
 # Protocol
 
-## Phase 1 — Business Readiness
-Dispatch **Strategy Triad** (Calloway + Voss + Sable)
+## Phase 1 — PARALLEL DISPATCH (Swarm — All 4 Components Simultaneously)
+Dispatch all launch checks in a single parallel wave:
+1. **Strategy Triad** (Calloway + Voss + Sable) — business readiness
+2. **Customer Lens** — 5 customer perspectives (Daily Driver, First Timer, Decision Maker, Reluctant User, Edge Case)
+3. **Wraith** — full red team on all customer-facing surfaces
+4. **Launch Readiness** — cross-reference all blockers, risks, deferred findings:
+   - Environment vars set
+   - DNS configured
+   - Monitoring in place
+   - Rollback plan documented
 
-## Phase 2 — Customer Readiness
-Dispatch **Customer Lens** — 5 customer perspectives (Daily Driver, First Timer, Decision Maker, Reluctant User, Edge Case)
+All 4 dispatches are independent — business, customer, security, and ops checks have no cross-dependencies. Strategy Triad runs its own internal parallel dispatch (3 personas simultaneously).
 
-## Phase 3 — Security Hardening
-Dispatch **Wraith** — full red team on all customer-facing surfaces
-
-## Phase 4 — Operational Checklist
-Dispatch **Launch Readiness** — cross-reference all blockers, risks, deferred findings:
-- Environment vars set
-- DNS configured
-- Monitoring in place
-- Rollback plan documented
-
-## Phase 5 — Verdict
+## Phase 2 — Verdict (after all 4 return)
 Consolidate all results → GO / NO-GO / CONDITIONAL GO
 
 # Output Format

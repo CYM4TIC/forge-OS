@@ -26,9 +26,9 @@ For persona rules:
 
 # Gate Protocol
 
-Execute in this order. Do NOT skip steps.
+Do NOT skip steps. Step 1 is sequential (pre-check). Steps 2-4 dispatch in PARALLEL.
 
-## Step 1 — Navigate
+## Step 1 — Navigate (Sequential Pre-Check)
 Navigate to the batch's route in the browser (if available). Confirm:
 - Page renders (not blank, not placeholder)
 - No console errors on load
@@ -36,14 +36,17 @@ Navigate to the batch's route in the browser (if available). Confirm:
 
 **HARD STOP:** If the page doesn't render, report FAIL immediately.
 
-## Step 2 — Pierce (Spec Conformance)
+## Steps 2-4 — PARALLEL DISPATCH (Swarm)
+Dispatch all 3 persona checks simultaneously using separate Agent calls in a single message. Each agent gets: the route URL, the batch's spec segment, and their checklist below.
+
+### Pierce (Spec Conformance)
 1. Every field in the spec exists in the rendered UI (snapshot check)
 2. API return shapes match component consumption
 3. ADL naming conformance (grep for project naming conventions)
 4. Internal keys for logic, labels for display
 5. Auth verification on new APIs (if DB tool available)
 
-## Step 3 — Mara (UX Evaluation)
+### Mara (UX Evaluation)
 1. Loading state present
 2. Error state present (retry button)
 3. Empty state present (message + action)
@@ -55,7 +58,7 @@ Navigate to the batch's route in the browser (if available). Confirm:
 9. Form validation feedback
 10. Dirty-form guard
 
-## Step 4 — Riven (Design System)
+### Riven (Design System)
 1. No hardcoded colors (grep for hex, raw color classes)
 2. All colors use project design tokens or semantic classes
 3. Touch targets >= 48px mobile, >= 36px desktop
@@ -65,7 +68,7 @@ Navigate to the batch's route in the browser (if available). Confirm:
 7. Consistent spacing from token scale
 8. Component reuse from project's shared library
 
-## Step 5 — Consolidate
+## Step 5 — Consolidate (after all 3 workers return)
 Merge all findings into one report.
 
 ## Step 6 — Adversarial Check (Rule 27)

@@ -20,20 +20,19 @@ Full Audit. The nuclear option. Dispatches every quality gate — all three tria
 
 # Protocol
 
-## Phase 1 — Dispatch Triads (Parallel)
-1. Dispatch **Build Triad** (Pierce + Mara + Riven) — frontend quality
-2. Dispatch **Systems Triad** (Kehinde + Tanaka + Vane) — backend quality
-3. Dispatch **Strategy Triad** (Calloway + Voss + Sable) — business quality
+## Phase 1 — PARALLEL DISPATCH (Swarm — All Agents Simultaneously)
+Dispatch ALL agents in a single parallel wave using multiple Agent calls in one message:
+1. **Build Triad** (Pierce + Mara + Riven) — frontend quality
+2. **Systems Triad** (Kehinde + Tanaka + Vane) — backend quality
+3. **Strategy Triad** (Calloway + Voss + Sable) — business quality
+4. **Wraith** — red team on all high-risk surfaces (auth, payments, deletion)
+5. **Sentinel** — regression sweep on ALL completed routes (uses swarm internally for multi-route)
+6. **Meridian** — pattern consistency across all surfaces
 
-## Phase 2 — Dispatch Adversarial
-4. Dispatch **Wraith** — red team on all high-risk surfaces (auth, payments, deletion)
+All 6 dispatches are independent — no agent depends on another's results. Each triad runs its own internal parallel dispatch (3 personas simultaneously). Total concurrent agents: up to 13 (3+3+3+1+1+1+Sentinel swarm workers).
 
-## Phase 3 — Dispatch Cross-Cutting
-5. Dispatch **Sentinel** — regression sweep on ALL completed routes
-6. Dispatch **Meridian** — pattern consistency across all surfaces
-
-## Phase 4 — Consolidate
-7. Collect all findings. Deduplicate. Rank by severity.
+## Phase 2 — Consolidate (after all agents return)
+7. Collect all findings. Deduplicate across agents (same file:line = keep higher severity). Rank by severity.
 
 # Output Format
 
