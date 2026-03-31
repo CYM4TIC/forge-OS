@@ -1,11 +1,7 @@
+import PanelLayout from './components/layout/PanelLayout';
+
 function App() {
-  return (
-    <div className="flex items-center justify-center h-screen bg-bg-primary">
-      <h1 className="text-4xl font-bold text-text-primary tracking-tight">
-        Forge
-      </h1>
-    </div>
-  );
+  return <PanelLayout />;
 }
 
 export default App;
