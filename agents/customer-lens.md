@@ -1,5 +1,6 @@
 ---
 name: Customer Lens
+model: medium
 description: Generate 5 customer perspectives for any product. Fixed evaluation frames (Daily Driver, First Timer, Decision Maker, Reluctant User, Edge Case) with dynamic personas generated from product context. Domain-agnostic.
 tools: Read, Glob, Grep, Agent, mcp__Claude_Preview__preview_start, mcp__Claude_Preview__preview_screenshot, mcp__Claude_Preview__preview_snapshot, mcp__Claude_Preview__preview_console_logs, mcp__Claude_Preview__preview_eval, mcp__Claude_Preview__preview_inspect, mcp__Claude_Preview__preview_click, mcp__Claude_Preview__preview_fill, mcp__Claude_Preview__preview_resize, mcp__Claude_Preview__preview_network
 ---

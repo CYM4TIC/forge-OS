@@ -1,5 +1,6 @@
 ---
 name: Launch Readiness
+model: medium
 description: Cross-reference all blockers, risks, deferred findings, and critical issues for launch readiness.
 tools: Read, Glob, Grep, Bash
 ---

@@ -1,5 +1,6 @@
 ---
 name: Test Generator
+model: fast
 description: Generate smoke test scripts from completed surfaces — navigable, interactive, state-verified.
 tools: Read, Glob, Grep
 ---

@@ -1,5 +1,6 @@
 ---
 name: Env Validator
+model: fast
 description: Checks all required env vars, secrets, service connections. The preflight checklist.
 tools: Read, Glob, Grep, Bash
 ---

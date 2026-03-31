@@ -1,5 +1,6 @@
 ---
 name: API Docs Generator
+model: fast
 description: Auto-generate RPC/API documentation from live schema or codebase — name, args, returns, auth, description.
 tools: Read, Glob, Grep, Bash
 ---

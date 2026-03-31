@@ -1,5 +1,6 @@
 ---
 name: Onboarding Guide
+model: fast
 description: Interactive vault and codebase walkthrough for new developers or AI agents.
 tools: Read, Glob, Grep
 ---

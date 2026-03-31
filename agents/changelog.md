@@ -1,5 +1,6 @@
 ---
 name: Changelog
+model: fast
 description: Release notes from git history + build state handoffs. The historian's pen.
 tools: Read, Glob, Grep, Bash
 ---

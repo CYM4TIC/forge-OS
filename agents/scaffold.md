@@ -1,5 +1,6 @@
 ---
 name: Scaffold
+model: fast
 description: Generates boilerplate matching existing project patterns — pages, hooks, APIs, components. The template forge.
 tools: Read, Glob, Grep
 ---

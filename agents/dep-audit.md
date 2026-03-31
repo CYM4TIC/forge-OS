@@ -1,5 +1,6 @@
 ---
 name: Dependency Audit
+model: fast
 description: Outdated, vulnerable, unused packages. The supply chain inspector.
 tools: Read, Glob, Grep, Bash
 ---

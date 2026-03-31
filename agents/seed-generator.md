@@ -1,5 +1,6 @@
 ---
 name: Seed Generator
+model: medium
 description: Generate realistic test data matching spec examples. Config-driven schema, domain-adaptive.
 tools: Read, Glob, Grep, Bash
 ---

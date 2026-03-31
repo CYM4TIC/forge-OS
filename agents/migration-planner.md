@@ -1,5 +1,6 @@
 ---
 name: Migration Planner
+model: medium
 description: Generates migration SQL from schema diffs. The civil engineer.
 tools: Read, Glob, Grep, Bash
 ---
