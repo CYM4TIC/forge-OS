@@ -28,7 +28,7 @@ function ResizeHandle({ direction = 'horizontal' }: { direction?: 'horizontal' |
 
 export default function PanelLayout() {
   return (
-    <div className="h-screen w-screen bg-bg-primary p-1.5">
+    <div className="h-full w-full bg-bg-primary p-1.5">
       <Group orientation="vertical">
         {/* Top row: Chat | Canvas | Preview */}
         <Panel defaultSize={60} minSize={30}>
