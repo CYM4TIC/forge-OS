@@ -367,5 +367,14 @@ projects/{name}/
 
 *Forge OS — CLAUDE.md bridge.*
 *Auto-loaded by Claude Code on every session start.*
-*Phase 1 complete: Foundation (CLAUDE.md, forge/, commands/, config, settings).*
-*Phase 2 next: Agent genericization (105 entities from DMS Cathedral).*
+*Phase 1 foundation complete. Tauri Phase 1 build next (P1-A: Monorepo Scaffold).*
+
+---
+
+## Current Build State
+
+**Architecture:** Tauri v2 desktop app (Rust backend + React frontend).
+**Phase:** 1 — Tauri Shell + Chat. Batched into 12 micro-batches (P1-A through P1-L).
+**Build state tracked at:** `forge-dms-brain/forge-os/BOOT.md` (DMS vault hosts OS state until OS is self-managing).
+**Batch manifests:** `forge-dms-brain/forge-os/BATCH-MANIFESTS.md`
+**Full build plan:** `docs/TAURI-BUILD-PLAN.md` (8 phases, 24 sessions)

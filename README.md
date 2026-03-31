@@ -1,10 +1,10 @@
 # Forge OS
 
-A 10-persona AI development platform for Claude Code. 105 specialized agents. 35 slash commands. One unified build methodology.
+A 10-persona AI development platform. 105 specialized agents. 35 slash commands. One unified build methodology.
 
 ## What Is This
 
-Forge OS is a standalone development operating system that runs inside Claude Code. It provides:
+Forge OS is a standalone Tauri v2 desktop application — a native program where you direct AI agents to build software. It provides:
 
 - **10 personas** with persistent identities, self-awareness, and accumulated failure modes
 - **10 intelligences** that handle recon, regression testing, red-teaming, impact analysis, and monitoring
