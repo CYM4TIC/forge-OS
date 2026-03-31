@@ -1,5 +1,5 @@
 mod database;
-
+mod providers;
 use database::Database;
 use tauri::Manager;
 
