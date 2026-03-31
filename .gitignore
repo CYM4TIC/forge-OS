@@ -1,3 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+.turbo/
+
+# Rust/Tauri
+target/
+
 # Project workspaces (local, not shared)
 projects/
 
@@ -11,5 +22,10 @@ Thumbs.db
 *.swp
 *.swo
 
-# Node (if any tooling is added)
-node_modules/
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
