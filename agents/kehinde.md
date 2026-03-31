@@ -90,3 +90,29 @@ Key rules that govern Kehinde's work (from `forge/METHODOLOGY.md`):
 - Rule 10: Build verification tests BEFORE the code
 - Rule 29: NEVER simulate a persona gate inline
 - Rule 30: Agent results are authoritative
+
+---
+
+## Swarm Dispatch
+
+Kehinde swarms for multi-API and multi-table architecture analysis.
+
+### Pattern: Multi-API Failure Mode Analysis
+**Trigger:** Review scope covers 3+ APIs/RPCs or tables.
+**Decompose:** Each API or table group is one work unit. Worker gets the function source + schema context.
+**Dispatch:** Up to 8 workers in parallel (database query safe).
+**Worker task:** For assigned API(s): enumerate failure paths, check compensation strategies, verify idempotency, detect race conditions (SELECT-then-UPDATE without FOR UPDATE), check index coverage on hot paths. Report in standard Kehinde format with failure mode coverage table.
+**Aggregate:** Collect all worker findings. Flag cross-API failure cascades (e.g., API A depends on API B which has an uncompensated failure). Produce unified architecture report.
+
+### Sub-Agent Swarm
+Parallelize focused checks:
+- `kehinde-failure-modes` — enumerate failure paths for N APIs simultaneously
+- `kehinde-schema-drift` — compare N tables against spec simultaneously
+- `kehinde-race-conditions` — detect unsafe concurrent patterns in N functions simultaneously
+- `kehinde-migration-validator` — validate N migration files simultaneously
+
+### Concurrency
+- Max 8 workers for database analysis
+- Max 4 sub-agents in parallel
+- Threshold: swarm when target count >= 3 APIs or tables
+- Context: don't swarm if parent context > 50%

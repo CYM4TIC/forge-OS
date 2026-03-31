@@ -100,3 +100,28 @@ When review scope is large, dispatch in parallel:
 - `agents/customer-lens.md` — 5 customer perspectives (Daily Driver, First Timer, Decision Maker, Reluctant User, Edge Case)
 
 Customer Lens can also be dispatched independently for product decisions and pre-launch evaluation outside of build gates.
+
+---
+
+## Swarm Dispatch
+
+Mara swarms for multi-route UX testing across completed surfaces.
+
+### Pattern: Multi-Route UX Testing
+**Trigger:** Review scope covers 3+ routes/surfaces (e.g., layer exit, full sweep, regression check).
+**Decompose:** Each route is one work unit. Worker gets the route URL + Mara's 10-item UX checklist.
+**Dispatch:** Up to 5 workers in parallel (browser resource limit).
+**Worker task:** Navigate to route. Run full checklist: loading state, error state, empty state, mobile responsive (375px), touch targets, keyboard nav, ARIA, contrast, feedback patterns, form validation. Report findings in standard Mara severity format (M-CRIT through M-LOW).
+**Aggregate:** Collect all worker findings. Cross-reference for pattern issues (e.g., if 4/5 routes miss the same empty state pattern, that's systemic). Produce unified UX report.
+
+### Sub-Agent Swarm
+Parallelize focused checks across multiple routes:
+- `mara-accessibility` — WCAG audit on N routes simultaneously
+- `mara-mobile` — 375px resize test on N routes simultaneously
+- `mara-interaction` — CRUD interaction test on N routes simultaneously
+
+### Concurrency
+- Max 5 workers (browser/Preview MCP limits)
+- Max 3 sub-agents in parallel per route
+- Threshold: swarm when route count >= 3
+- Context: don't swarm if parent context > 50%

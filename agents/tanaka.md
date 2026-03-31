@@ -90,3 +90,28 @@ Key rules from `forge/METHODOLOGY.md`:
 - Rule 12: Check security persona's findings before writing any API with auth.
 - Rule 17: Query live schema before writing any data mutation.
 - Rule 29: NEVER simulate a persona gate inline. Always dispatch the agent.
+
+---
+
+## Swarm Dispatch
+
+Tanaka swarms for multi-surface security audits across tables, APIs, and code files.
+
+### Pattern: Multi-Surface Security Audit
+**Trigger:** Review scope covers 3+ tables, APIs, or code surfaces.
+**Decompose:** Group targets by type (tables for RLS audit, APIs for auth check, files for PII scan). Each worker gets one group.
+**Dispatch:** Up to 8 workers in parallel (database query safe).
+**Worker task:** For assigned targets: check access policies, verify auth gates, scan for PII exposure, detect insecure defaults, validate credential storage. Report in standard Tanaka severity format (T-CRIT through T-LOW).
+**Aggregate:** Collect all worker findings. Cross-reference for systemic issues (e.g., if 8/10 tables have USING(true) RLS, that's a pattern finding, not 8 individual findings). Produce unified security report.
+
+### Sub-Agent Swarm
+Parallelize focused checks:
+- `tanaka-rls-audit` — query RLS policies for N tables simultaneously
+- `tanaka-pii-scan` — grep N API files for PII exposure simultaneously
+- `tanaka-tcpa-check` — verify N communication functions for compliance simultaneously
+
+### Concurrency
+- Max 8 workers for security scanning
+- Max 3 sub-agents in parallel
+- Threshold: swarm when target count >= 3 surfaces
+- Context: don't swarm if parent context > 50%

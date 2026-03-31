@@ -195,3 +195,40 @@ For regression checking after pushes:
 - Frontend batches: 1 per session
 - Stop when: context > 70% full, domain changes fundamentally, persona gate blocks
 - BOOT.md handoff is the continuity mechanism
+
+---
+
+## Swarm Dispatch
+
+Nyx is the primary Queen agent. Three swarm patterns available:
+
+### Pattern 1: Parallel Finding Fixes
+**Trigger:** Build Triad returns N findings across independent files (N >= 3, files don't import each other).
+**Decompose:** Group findings by file. Each worker gets findings for one file.
+**Dispatch:** Up to 5 fix workers in parallel, each editing + reading back one file.
+**Aggregate:** Collect all fix confirmations. Push all changed files in one batch (<=5).
+**Constraint:** If findings have dependencies (fix A requires fix B first), those stay sequential.
+
+### Pattern 2: Parallel Micro-Batches
+**Trigger:** Surface has independent components (e.g., page shell + data hook + utility — no imports between them).
+**Decompose:** Identify independent component groups. Each worker builds one group.
+**Dispatch:** Up to 3 build workers in parallel, each writing 1-2 files.
+**Aggregate:** Collect all files. Integration wiring (imports, route registration) done by Nyx after workers complete.
+**Constraint:** Integration is always sequential. Workers build leaves; Nyx wires the tree.
+
+### Pattern 3: Pre-Build Parallelism
+**Trigger:** Every batch start (automatic).
+**Decompose:** Context loading tasks that have no dependencies on each other:
+  - Worker 1: Read segment files + ADL
+  - Worker 2: Read BUILD-LEARNINGS + filter by domain
+  - Worker 3: Dispatch Scout for schema recon
+**Dispatch:** 3 workers simultaneously at batch start.
+**Aggregate:** Nyx reads all results, builds unified context, begins build phase.
+**Constraint:** Build phase cannot start until ALL context workers complete.
+
+### Concurrency Limits
+- Finding fixes: max 5 workers (file write coordination)
+- Micro-batches: max 3 workers (integration complexity)
+- Pre-build: always exactly 3 workers
+- Total concurrent: never exceed 5 from any single Nyx dispatch
+- Context budget: don't swarm if context > 50% utilized

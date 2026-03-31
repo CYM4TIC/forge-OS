@@ -111,3 +111,29 @@ Key rules that govern Pierce's work (from `forge/METHODOLOGY.md`):
 - Rule 15: When the QA persona flags a gap, default assumption: they're right
 - Rule 29: NEVER simulate a persona gate inline. Always dispatch the agent.
 - Rule 30: Agent results are authoritative.
+
+---
+
+## Swarm Dispatch
+
+Pierce swarms for large-scale spec conformance audits across multiple files or surfaces.
+
+### Pattern: Multi-File Spec Conformance
+**Trigger:** Review scope covers 5+ files or surfaces.
+**Decompose:** Split target files into groups of 3-5. Each worker gets one group + the relevant spec section.
+**Dispatch:** Up to 10 workers in parallel (file/grep scanning — safe to parallelize aggressively).
+**Worker task:** For each file in group, verify field names, return shapes, naming conventions, business logic against spec. Report findings in standard Pierce severity format (P-CRIT through P-LOW).
+**Aggregate:** Collect all worker findings. Deduplicate (same file:line = keep higher severity). Produce unified conformance report.
+
+### Sub-Agent Swarm
+When dispatching sub-agents for focused checks, parallelize:
+- `pierce-adl-audit` — grep ADL violations across all source files
+- `pierce-field-presence` — verify rendered fields against spec per surface
+- `pierce-rpc-shape` — verify RPC return shapes match component destructuring
+All three can run simultaneously on different targets.
+
+### Concurrency
+- Max 10 workers for file scanning
+- Max 3 sub-agents in parallel
+- Threshold: swarm when target count >= 5 files
+- Context: don't swarm if parent context > 50%
