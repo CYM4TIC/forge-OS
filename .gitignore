@@ -1,0 +1,15 @@
+# Project workspaces (local, not shared)
+projects/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if any tooling is added)
+node_modules/

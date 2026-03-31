@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Rule 22] Read this file back to confirm edit applied.'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Rules 21+22] Confirm this is a NEW file. Read it back.'"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__github__push_files",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Rule 24] Verify <= 5 files in this push.'"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__supabase__execute_sql",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Rule 17] Did you query the schema for all referenced tables first?'"
+          }
+        ]
+      }
+    ]
+  }
+}
