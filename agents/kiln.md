@@ -62,3 +62,25 @@ Read before any performance analysis:
 - Largest dependencies: [list]
 - Lazy-load candidates: [routes]
 ```
+
+---
+
+## Swarm Dispatch
+
+Kiln swarms for multi-query and multi-component performance profiling.
+
+### Pattern: Multi-Query Performance Profiling
+**Trigger:** Performance review covers 5+ queries, components, or bundle packages.
+**Decompose:** Each query or component is one work unit. Worker gets the function source + profiling methodology.
+**Dispatch:** Up to 8 workers in parallel (database queries are safe to parallelize).
+**Worker task:** For assigned target: run EXPLAIN ANALYZE on queries, check index usage, detect N+1 patterns, measure bundle contribution, analyze re-render patterns. Report with severity (CRITICAL/RECOMMENDED/INFORMATIONAL) and specific fix.
+**Aggregate:** Rank all findings by impact. Identify systemic patterns (e.g., 5/8 APIs missing the same index type). Produce unified performance report.
+
+### Sub-Agent Swarm
+- `kiln-query-profiler` on N queries simultaneously
+- `kiln-bundle-analyzer` on N packages simultaneously
+
+### Concurrency
+- Max 8 workers for database/file analysis
+- Max 2 sub-agents in parallel
+- Threshold: swarm when target count >= 5

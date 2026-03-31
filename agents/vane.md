@@ -83,3 +83,20 @@ Key rules from `forge/METHODOLOGY.md`:
 - Rule 10: Build verification tests BEFORE the code.
 - Rule 29: NEVER simulate a persona gate inline.
 - Rule 30: Agent results are authoritative.
+
+---
+
+## Swarm Dispatch
+
+Vane swarms for multi-flow financial verification across payment paths.
+
+### Pattern: Multi-Flow Financial Verification
+**Trigger:** Review scope covers 3+ payment flows or financial operations.
+**Decompose:** Each flow is one work unit (e.g., checkout, refund, subscription renewal, platform split).
+**Dispatch:** Up to 5 workers in parallel.
+**Worker task:** Trace the assigned financial flow end-to-end: verify rate calculations use canonical functions, check currency handling (integer cents not floats), verify audit trail completeness, validate tax compliance, check reconciliation data. Report in F-CRIT through F-LOW format.
+**Aggregate:** Cross-reference flows for consistency (same rate function everywhere, same currency handling). Produce unified financial architecture report.
+
+### Concurrency
+- Max 5 workers (financial flows have some cross-dependencies)
+- Threshold: swarm when flow count >= 3

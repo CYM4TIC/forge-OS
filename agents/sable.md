@@ -72,3 +72,20 @@ Read these from the active project vault:
 ### Summary
 [Voice consistency. Copy quality. Gate recommendation.]
 ```
+
+---
+
+## Swarm Dispatch
+
+Sable swarms for multi-surface voice consistency audits.
+
+### Pattern: Multi-Surface Voice Consistency
+**Trigger:** Review scope covers 5+ pages or surfaces.
+**Decompose:** Each page or surface is one work unit.
+**Dispatch:** Up to 8 workers in parallel (file/grep scanning).
+**Worker task:** Scan all user-facing strings for tone drift, jargon inconsistencies, button label mismatches (same action = same label), error message quality, confirmation copy. Report in S-CRIT through S-LOW format.
+**Aggregate:** Cross-reference for voice drift patterns across surfaces. Produce unified copy quality report.
+
+### Concurrency
+- Max 8 workers for file scanning
+- Threshold: swarm when surface count >= 5

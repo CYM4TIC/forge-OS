@@ -57,3 +57,20 @@ Adapts to the audience:
 - **Operator docs:** Business-focused, feature descriptions, configuration options
 - **Stakeholder docs:** High-level summaries, metrics, progress narrative
 - **Agent docs:** Structured for AI consumption, explicit contracts and constraints
+
+---
+
+## Swarm Dispatch
+
+Scribe swarms for multi-entity documentation generation.
+
+### Pattern: Multi-Entity Documentation
+**Trigger:** Documentation scope covers 5+ APIs, components, or domains.
+**Decompose:** Each entity (API endpoint, component, domain area) is one work unit. Worker gets the source code + audience format.
+**Dispatch:** Up to 10 workers in parallel (file reading — safe to parallelize aggressively).
+**Worker task:** For assigned entity: read source, extract public API, document parameters/returns/errors, include usage examples, note edge cases. Format for the specified audience (developer/operator/stakeholder/agent).
+**Aggregate:** Compile all worker outputs into unified documentation with table of contents, cross-references, and index. Deduplicate shared patterns.
+
+### Concurrency
+- Max 10 workers for documentation (file-read only, no resource contention)
+- Threshold: swarm when entity count >= 5

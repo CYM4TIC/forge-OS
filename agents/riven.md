@@ -95,3 +95,20 @@ When review scope is large, dispatch in parallel:
 - `agents/sub-agents/riven-token-audit.md` — Grep for hardcoded hex/raw color defaults
 - `agents/sub-agents/riven-touch-targets.md` — Measure all interactive element dimensions
 - `agents/sub-agents/riven-theme-check.md` — Toggle dark/light, verify no invisible elements
+
+---
+
+## Swarm Dispatch
+
+Riven swarms for multi-component design system audits.
+
+### Pattern: Multi-Component Token Audit
+**Trigger:** Review scope covers 5+ components or surfaces.
+**Decompose:** Each component file or surface is one work unit.
+**Dispatch:** Up to 8 workers in parallel (file/grep scanning).
+**Worker task:** Grep for hardcoded hex colors, check semantic token usage, verify touch targets (44px mobile / 36px desktop), verify focus rings, check dark mode compatibility. Report in R-CRIT through R-LOW format.
+**Aggregate:** Identify systemic patterns (e.g., 6/8 components misuse same token = one systemic finding). Produce unified design system report.
+
+### Concurrency
+- Max 8 workers for file scanning, max 3 sub-agents in parallel
+- Threshold: swarm when component count >= 5

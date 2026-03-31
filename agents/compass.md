@@ -67,3 +67,20 @@ Given a shared utility, type, or constant change:
 ### Dependency Chain
 [Entity] → [direct dependents] → [transitive dependents]
 ```
+
+---
+
+## Swarm Dispatch
+
+Compass swarms for multi-change impact analysis.
+
+### Pattern: Multi-Change Impact Analysis
+**Trigger:** Impact analysis covers 3+ proposed changes (e.g., batch of schema changes, API modifications, or refactors).
+**Decompose:** Each change is one work unit. Worker gets the change description + project dependency graph.
+**Dispatch:** Up to 8 workers in parallel (file/grep scanning).
+**Worker task:** For assigned change: trace dependency chain in all 3 directions (downward: schema→RPC→component→route, upward: route→component→RPC→schema, lateral: cross-cutting utilities). Report blast radius (NARROW/MODERATE/WIDE) and breaking changes.
+**Aggregate:** Cross-reference for overlapping blast radii (two changes that both affect the same downstream component). Produce unified impact report with combined blast radius.
+
+### Concurrency
+- Max 8 workers for file/grep analysis
+- Threshold: swarm when change count >= 3

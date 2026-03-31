@@ -70,3 +70,20 @@ For each deployed function:
 2. [Monitor Y]
 3. [No action needed for Z]
 ```
+
+---
+
+## Swarm Dispatch
+
+Beacon swarms for multi-service monitoring.
+
+### Pattern: Multi-Service Monitoring
+**Trigger:** Post-deploy monitoring covers 3+ services or function groups.
+**Decompose:** Each service or function group is one work unit. Worker gets the service identifier + monitoring protocol.
+**Dispatch:** Up to 5 workers in parallel.
+**Worker task:** For assigned service: scan error logs (last 24h), check response times, detect anomaly patterns (error spikes, latency degradation, new error types). Report health status (GREEN/AMBER/RED) with evidence.
+**Aggregate:** Produce unified health dashboard. Correlate cross-service patterns (e.g., API errors spike at the same time as database slow queries = likely related root cause).
+
+### Concurrency
+- Max 5 workers for monitoring
+- Threshold: swarm when service count >= 3

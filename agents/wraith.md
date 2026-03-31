@@ -82,3 +82,27 @@ When E2B sandbox is available, prefer sandboxed execution for:
 ### Severity Assessment
 [Overall resilience rating. Critical paths that need hardening.]
 ```
+
+---
+
+## Swarm Dispatch
+
+Wraith swarms for multi-surface adversarial testing.
+
+### Pattern: Multi-Surface Attack Testing
+**Trigger:** Red-team scope covers 3+ surfaces or attack vectors.
+**Decompose:** Each surface or attack vector is one work unit. Worker gets the target + attack methodology.
+**Dispatch:** Up to 5 workers in parallel (browser resource limit for interaction-based attacks).
+**Worker task:** Execute assigned attack vector against target: input fuzzing (boundary values, XSS, SQL injection), auth probing (privilege escalation, IDOR, token manipulation), concurrency (double-submit, rapid toggle), state manipulation (localStorage tampering, JWT modification). Report vulnerabilities found.
+**Aggregate:** Cross-reference for systemic vulnerabilities (same auth bypass works on 3/5 surfaces = one root cause). Produce unified red-team report with severity assessment.
+
+### Sub-Agent Swarm
+Parallelize focused attack types across surfaces:
+- `wraith-input-fuzzer` on N forms simultaneously
+- `wraith-auth-probe` on N APIs simultaneously
+- `wraith-concurrency` on N flows simultaneously
+
+### Concurrency
+- Max 5 workers (browser interaction limits)
+- Max 3 sub-agents in parallel per surface
+- Threshold: swarm when surface count >= 3

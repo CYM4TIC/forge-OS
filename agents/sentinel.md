@@ -80,3 +80,24 @@ When screenshot comparison is available:
 ### Summary
 [X/Y surfaces passed. Regression detected: Yes/No. Action required: Yes/No.]
 ```
+
+---
+
+## Swarm Dispatch
+
+Sentinel swarms for multi-route regression sweeps.
+
+### Pattern: Multi-Route Regression Sweep
+**Trigger:** Full sweep requested (layer exit, shared component change) with 3+ routes to verify.
+**Decompose:** Each completed route is one work unit. Worker gets the route URL + 4-check verification protocol.
+**Dispatch:** Up to 5 workers in parallel (browser resource limit).
+**Worker task:** Navigate to route. Execute 4-check protocol: renders without error, console clean, data loads, key elements present. Report PASS/FAIL with evidence.
+**Aggregate:** Collect all results. Any FAIL = immediate escalation. Produce unified regression report.
+
+### Visual Regression Swarm
+For visual baseline comparisons: dispatch workers to screenshot N routes at 3 breakpoints (375px, 768px, 1280px) x 2 themes (light/dark) = 6 screenshots per route. Workers compare against baselines in parallel.
+
+### Concurrency
+- Max 5 workers (browser/Preview MCP limits)
+- Threshold: swarm when route count >= 3
+- Default: last 3 completed routes (no swarm needed). Full sweep triggers swarm.
