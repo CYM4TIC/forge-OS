@@ -29,10 +29,10 @@ function ResizeHandle({ direction = 'horizontal' }: { direction?: 'horizontal' |
 export default function PanelLayout() {
   return (
     <div className="h-screen w-screen bg-bg-primary p-1.5">
-      <Group direction="vertical" autoSaveId="forge-main-vertical">
+      <Group orientation="vertical">
         {/* Top row: Chat | Canvas | Preview */}
         <Panel defaultSize={60} minSize={30}>
-          <Group direction="horizontal" autoSaveId="forge-top-row">
+          <Group orientation="horizontal">
             <Panel defaultSize={30} minSize={15}>
               <ChatPanel />
             </Panel>
@@ -51,7 +51,7 @@ export default function PanelLayout() {
 
         {/* Bottom row: Team | Connectivity | Timeline placeholder */}
         <Panel defaultSize={40} minSize={15}>
-          <Group direction="horizontal" autoSaveId="forge-bottom-row">
+          <Group orientation="horizontal">
             <Panel defaultSize={30} minSize={15}>
               <TeamPanel />
             </Panel>
