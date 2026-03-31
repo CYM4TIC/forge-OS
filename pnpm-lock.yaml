@@ -14,6 +14,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@forge-os/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@tauri-apps/api':
         specifier: ^2.2.0
         version: 2.10.1
@@ -51,6 +54,12 @@ importers:
       vite:
         specifier: ^6.3.0
         version: 6.4.1(jiti@2.6.1)(lightningcss@1.32.0)
+
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
 
 packages:
 
