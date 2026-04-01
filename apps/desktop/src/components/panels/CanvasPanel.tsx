@@ -5,7 +5,8 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { useBuildState } from '../../hooks/useBuildState';
-import type { PipelineStage, BuildStateSnapshot } from '../../lib/tauri';
+import type { BuildStateSnapshot } from '../../lib/tauri';
+import { PipelineCanvas } from './hud/PipelineCanvas';
 
 interface CanvasPanelProps {
   bootPath?: string;
@@ -70,9 +71,8 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
         className="relative border-b border-border-subtle"
         style={{ height: pipelineHeight }}
       >
-        <PipelinePreview
+        <PipelineCanvas
           stages={pipeline}
-          snapshot={snapshot}
           width={dimensions.width}
           height={pipelineHeight}
         />
@@ -88,59 +88,6 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
         <GaugeCard label="Session" value={snapshot?.current_session ?? '--'} />
         <GaugeCard label="Commit" value={snapshot?.last_commit?.slice(0, 7) ?? '--'} />
       </div>
-    </div>
-  );
-}
-
-/** Temporary pipeline preview — will be replaced by PipelineCanvas in P5-D */
-function PipelinePreview({
-  stages,
-  snapshot,
-  width,
-  height,
-}: {
-  stages: PipelineStage[];
-  snapshot: BuildStateSnapshot | null;
-  width: number;
-  height: number;
-}) {
-  if (!stages.length || width === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <span className="text-text-muted text-sm">No pipeline data</span>
-      </div>
-    );
-  }
-
-  const stageWidth = Math.floor((width - 32) / stages.length);
-
-  return (
-    <div className="flex items-center justify-center gap-2 h-full px-4">
-      {stages.map((stage, i) => (
-        <div key={stage.id} className="flex items-center gap-2">
-          <div
-            className={`
-              flex flex-col items-center justify-center rounded-lg border px-3 py-2
-              ${stage.status === 'active' ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_12px_rgba(99,102,241,0.3)]' : ''}
-              ${stage.status === 'complete' ? 'border-emerald-500/50 bg-emerald-500/5' : ''}
-              ${stage.status === 'idle' ? 'border-border-subtle bg-bg-tertiary/50' : ''}
-              ${stage.status === 'error' ? 'border-red-500 bg-red-500/10' : ''}
-              transition-all duration-300
-            `}
-            style={{ width: Math.min(stageWidth, 140), minHeight: 60 }}
-          >
-            <span className="text-xs font-semibold text-text-primary tracking-wide">
-              {stage.label}
-            </span>
-            <span className="text-[10px] text-text-muted mt-0.5">
-              {stage.status}
-            </span>
-          </div>
-          {i < stages.length - 1 && (
-            <span className="text-text-muted text-xs">→</span>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
