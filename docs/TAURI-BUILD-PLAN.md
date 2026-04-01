@@ -294,32 +294,85 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 7: Team Panel + Agent Presence (2 sessions) — WAS PHASE 6
+## Phase 7: Team Panel + Agent Presence + Action Palette (3 sessions) — WAS PHASE 6
 
-**Goal:** Personas as first-class visible entities with state and direct dispatch.
+**Goal:** Personas as first-class visible entities with state, direct dispatch, and a contextual action palette that surfaces available commands based on persona selection. Multi-select personas to discover orchestrator combinations. The Team Panel becomes the primary interface for understanding what the team CAN do and triggering it.
 
-### Session 6.1 — Team Panel
-- Right sidebar showing all registered agents
-- Grouped by role: Personas, Intelligences, Orchestrators, Utilities
-- Each agent card shows:
-  - Name + icon
-  - Model tier badge (high/medium/fast)
-  - Status (idle/active/findings-pending)
-  - Domain health indicator
-  - Last finding or recommendation (truncated)
-  - Time since last activity
-- Direct dispatch button → opens chat with that persona pre-selected
+### Session 6.1 — Agent Registry + Team Panel
+
+**Rust backend: Agent Registry** — new module `src-tauri/src/commands/registry.rs`
+
+The registry scans `.claude/agents/`, `.claude/agents/sub-agents/`, and `.claude/commands/` on first request, parses YAML frontmatter (name, description, tools, model, user_invocable), and builds a structured in-memory registry cached as `Arc<Mutex<AgentRegistry>>` in Tauri managed state.
+
+Key data structures:
+- `RegistryEntry` — slug, name, description, category (persona/intelligence/orchestrator/utility/sub_agent/command), tools list, parent agent (for sub-agents), file path
+- `AgentRegistry` — all entries + orchestrator membership map
+- `PaletteAction` — slug, name, description, action type (command/sub_agent/orchestrator), dispatch target slug
+- `PaletteResponse` — individual actions + matched orchestrator actions
+
+Sub-agent ownership derived from filename prefix convention: `mara-mobile.md` → parent `mara`, `kehinde-race-conditions.md` → parent `kehinde`.
+
+Three new Tauri commands:
+- `get_agent_registry()` → full registry (called once on mount, refreshable)
+- `get_agent_content(slug)` → full markdown body for system prompt construction
+- `get_palette_actions(selected_slugs)` → resolved actions for current persona selection
+
+**Team Panel rebuild** — right sidebar showing all registered agents:
+- Grouped by role: Personas (10), Intelligences (10), Orchestrators (10), Utilities (10)
+- Each agent card shows: name + icon, model tier badge (high/medium/fast), status (idle/active/findings-pending), domain health indicator, last finding or recommendation (truncated), time since last activity
 - Click agent → expand to see full recent history
 
-### Session 6.2 — Agent Orchestration UI
+### Session 6.2 — Action Palette + Multi-Select
+
+**Persona multi-select** — the 10 persona pills in the presence bar become clickable toggle buttons:
+- Click a pill to select/deselect (multi-select by default, no modifier keys needed)
+- Selected pills get `ring-1 ring-accent` visual feedback
+- Selection state managed via `usePersonaSelection` React hook (session-scoped `Set<string>`)
+
+**Orchestrator recognition** — static membership table hardcoded in Rust (10 orchestrators with known compositions):
+
+| Selection | Recognized As |
+|-----------|--------------|
+| `{pierce, mara, riven}` | Build Triad |
+| `{kehinde, tanaka, vane}` | Systems Triad |
+| `{calloway, voss, sable}` | Strategy Triad |
+| `{pierce, mara, riven, kehinde, tanaka, vane, wraith, sentinel, meridian}` | Full Audit |
+| `{calloway, voss, sable, wraith}` | Launch Sequence |
+| `{all 10 personas}` | The Council |
+| `{pierce, mara, riven}` | Gate Runner (dispatches Triad) |
+| `{chronicle}` | Postmortem (+ relevant domain personas) |
+| Any 2+ personas | Debate (context-dependent, always available) |
+| Any 2+ personas | Decision Council (cognitive-lens, always available) |
+
+Matching algorithm: for each orchestrator, check if the selected persona set is a superset of (or equal to) the orchestrator's member list. Return all matches sorted by member count ascending — most specific first (Build Triad before Council). Empty-member orchestrators (Debate, Decision Council) always appear when 2+ personas are selected.
+
+**Action Palette component** — renders as a third tab ("Actions") in the Team Panel, with a count badge showing number of selected personas:
+- **Empty state** (nothing selected): "Select personas above to browse actions"
+- **Orchestrators section** (when multi-select matches): recognized orchestrator actions with their full command set
+- **Commands section**: user-invocable slash commands relevant to the selected personas
+- **Sub-Agents section**: specialized deep-dive sub-agents owned by the selected personas (e.g., selecting Mara shows `mara-accessibility`, `mara-mobile`, `mara-interaction`)
+- Each action row: name + short description, single click dispatches immediately (no confirmation step)
+
+**Dispatch flow** (click an action):
+1. `useActionPalette` hook calls `get_agent_content(action.dispatch_slug)` → gets full markdown
+2. Constructs a `DispatchRequest` with markdown as system prompt
+3. Calls existing `dispatch_agent` Tauri command
+4. Agent appears in Dispatch tab with status tracking
+
+**React files:**
+- `src/hooks/usePersonaSelection.ts` — toggle/clear/isSelected over `Set<string>`
+- `src/hooks/useActionPalette.ts` — fetches palette on selection change (150ms debounce), exposes `dispatch(action)` handler
+- `src/components/team/ActionPalette.tsx` — grouped action list with click-to-dispatch rows
+- Modified: `AgentPresence.tsx` (click-to-select), `TeamPanel.tsx` (third tab + hook wiring), `tauri.ts` (new types + invoke wrappers)
+
+### Session 6.3 — Agent Orchestration UI
 - Dispatch queue visualization (what's pending, what's running)
 - Parallel execution indicator (e.g., "3 Triad agents running")
 - Gate status display (pass/fail/in-progress per gate)
 - Session timeline (horizontal, shows BOOT.md handoffs as milestones)
-- Orchestrator controls: "Run Build Triad", "Dispatch Scout", "Red Team This"
 - "Export Report" button → generates PDF via document generation engine
 
-**Depends on:** Phase 4 (canvas), Phase 1 (chat), Phase 3 (document gen for export)
+**Depends on:** Phase 4 (canvas), Phase 1 (chat), Phase 3 (agent runtime + document gen for export)
 
 ---
 
@@ -440,13 +493,14 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 |-------|----------|-------------|
 | 1. Tauri Shell + Chat | 3 | Running app, multi-engine streaming, chat works |
 | 2. Content Layer | 5 | 105 agents + 12 reference extractions + 5 skills + model tiering + persona enhancements (parallel) |
-| 3. Pretext Engine + Docs | 3 | Layout engine + canvas components + PDF document generation |
-| 4. Canvas HUD | 3 | Living build state + agent board + findings + flow viz + graph |
-| 5. Preview + Connectivity | 2 | Embedded dev server + service health |
-| 6. Team + Presence | 2 | Agent cards + orchestration UI + report export |
-| 7. Orchestration + LightRAG | 4 | Vault watcher + dispatch pipeline + LightRAG + /init + /link |
-| 8. Integration Test | 2 | End-to-end + DMS reconnection |
-| **Total** | **24** | **~19 on critical path (Phase 2 parallel)** |
+| 3. Agent Runtime | 3 | KAIROS memory + Swarm + dispatch + compact + SQLite state (COMPLETE) |
+| 4. Pretext Engine + Docs | 3 | Layout engine + canvas components + PDF document generation |
+| 5. Canvas HUD | 3 | Living build state + agent board + findings + flow viz + graph |
+| 6. Preview + Connectivity | 2 | Embedded dev server + service health |
+| 7. Team + Presence + Palette | 3 | Agent registry + multi-select + action palette + orchestration UI |
+| 8. Orchestration + LightRAG | 4 | Vault watcher + dispatch pipeline + LightRAG + /init + /link |
+| 9. Integration Test | 2 | End-to-end + DMS reconnection |
+| **Total** | **25** | **~20 on critical path (Phase 2 parallel)** |
 
 ## Verification
 
