@@ -152,3 +152,22 @@ pub fn set_setting(conn: &Connection, key: &str, value: &str) -> Result<(), rusq
     )?;
     Ok(())
 }
+
+// ── Dispatch event audit trail ──
+
+/// Log an agent dispatch lifecycle event for audit purposes.
+pub fn log_dispatch_event(
+    conn: &Connection,
+    dispatch_id: &str,
+    agent_slug: &str,
+    event_type: &str,
+    metadata_json: &str,
+) -> Result<(), rusqlite::Error> {
+    let id = uuid::Uuid::new_v4().to_string();
+    conn.execute(
+        "INSERT INTO dispatch_events (id, dispatch_id, agent_slug, event_type, metadata_json)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![id, dispatch_id, agent_slug, event_type, metadata_json],
+    )?;
+    Ok(())
+}

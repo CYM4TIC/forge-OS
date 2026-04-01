@@ -222,61 +222,72 @@ impl ModelProvider for ClaudeProvider {
         let mut total_in: Option<u64> = None;
         let mut total_out: Option<u64> = None;
 
-        // Read SSE stream line by line
-        let body_text = resp.text().await?;
-        for line in body_text.lines() {
-            let line = line.trim();
-            if !line.starts_with("data: ") {
-                continue;
-            }
-            let json_str = &line[6..];
-            if json_str == "[DONE]" {
-                break;
-            }
+        // Stream SSE events incrementally via bytes_stream
+        use futures::StreamExt;
+        let mut stream = resp.bytes_stream();
+        let mut buffer = String::new();
 
-            if let Ok(event) = serde_json::from_str::<StreamEvent>(json_str) {
-                match event {
-                    StreamEvent::MessageStart { message } => {
-                        if let Some(m) = message.model {
-                            stream_model = m;
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
+            buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+            // Process all complete SSE lines in the buffer
+            while let Some(pos) = buffer.find('\n') {
+                let line = buffer[..pos].trim().to_string();
+                buffer = buffer[pos + 1..].to_string();
+
+                if !line.starts_with("data: ") {
+                    continue;
+                }
+                let json_str = &line[6..];
+                if json_str == "[DONE]" {
+                    break;
+                }
+
+                if let Ok(event) = serde_json::from_str::<StreamEvent>(json_str) {
+                    match event {
+                        StreamEvent::MessageStart { message } => {
+                            if let Some(m) = message.model {
+                                stream_model = m;
+                            }
+                            if let Some(u) = message.usage {
+                                total_in = u.input_tokens;
+                            }
                         }
-                        if let Some(u) = message.usage {
-                            total_in = u.input_tokens;
+                        StreamEvent::ContentBlockDelta { delta } => {
+                            if let Some(text) = delta.text {
+                                let _ = tx
+                                    .send(StreamChunk {
+                                        delta: text,
+                                        model: Some(stream_model.clone()),
+                                        tokens_in: None,
+                                        tokens_out: None,
+                                        done: false,
+                                    })
+                                    .await;
+                            }
                         }
-                    }
-                    StreamEvent::ContentBlockDelta { delta } => {
-                        if let Some(text) = delta.text {
+                        StreamEvent::MessageDelta { usage } => {
+                            if let Some(u) = usage {
+                                total_out = u.output_tokens;
+                            }
+                        }
+                        StreamEvent::MessageStop {} => {
                             let _ = tx
                                 .send(StreamChunk {
-                                    delta: text,
+                                    delta: String::new(),
                                     model: Some(stream_model.clone()),
-                                    tokens_in: None,
-                                    tokens_out: None,
-                                    done: false,
+                                    tokens_in: total_in,
+                                    tokens_out: total_out,
+                                    done: true,
                                 })
                                 .await;
                         }
-                    }
-                    StreamEvent::MessageDelta { usage } => {
-                        if let Some(u) = usage {
-                            total_out = u.output_tokens;
+                        StreamEvent::Error { error } => {
+                            return Err(format!("Claude stream error: {}", error.message).into());
                         }
+                        _ => {}
                     }
-                    StreamEvent::MessageStop {} => {
-                        let _ = tx
-                            .send(StreamChunk {
-                                delta: String::new(),
-                                model: Some(stream_model.clone()),
-                                tokens_in: total_in,
-                                tokens_out: total_out,
-                                done: true,
-                            })
-                            .await;
-                    }
-                    StreamEvent::Error { error } => {
-                        return Err(format!("Claude stream error: {}", error.message).into());
-                    }
-                    _ => {}
                 }
             }
         }

@@ -4,7 +4,6 @@ pub mod summary;
 pub mod restore;
 
 use crate::database::Database;
-
 use self::counter::TokenCounter;
 use self::summary::{CompactionSummary, CompactionVariant};
 use self::threshold::ThresholdStatus;
@@ -72,7 +71,6 @@ impl CompactionEngine {
         session_id: &str,
         messages: &[crate::dispatch::types::AgentMessage],
         variant: CompactionVariant,
-        _db: &Database,
     ) -> Result<CompactionSummary, String> {
         // Build the conversation text for summarization
         let conversation = messages

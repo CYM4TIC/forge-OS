@@ -78,24 +78,11 @@ pub fn respond_permission(
 
 /// Check if a permission request has been responded to.
 /// Returns the response message if found.
+/// Uses a targeted SQL query — no empty-string to_agent, no O(n) scan.
 pub fn get_permission_response(
     conn: &Connection,
     request_id: &str,
 ) -> Result<Option<SwarmMessage>, String> {
-    // Look for a permission_response with matching request_id in payload
-    let messages = mailbox::get_messages(conn, "", false, None)
-        .map_err(|e| format!("Failed to query messages: {}", e))?;
-
-    // Search through responses for one matching this request_id
-    for msg in messages {
-        if msg.msg_type == SwarmMessageType::PermissionResponse.as_str() {
-            if let Ok(payload) = serde_json::from_str::<PermissionResponsePayload>(&msg.payload) {
-                if payload.request_id == request_id {
-                    return Ok(Some(msg));
-                }
-            }
-        }
-    }
-
-    Ok(None)
+    mailbox::get_permission_response_for_request(conn, request_id)
+        .map_err(|e| format!("Failed to query permission response: {}", e))
 }

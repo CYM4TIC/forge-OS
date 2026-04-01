@@ -11,13 +11,17 @@ use self::context::AgentContext;
 use self::lifecycle::{AgentLifecycle, AgentSummary};
 use self::types::{AgentRequest, AgentResult, AgentStatus, DispatchConfig};
 
+use tauri::Manager;
+
+use crate::database::Database;
 use crate::providers::registry::ProviderRegistry;
 use crate::providers::types::{CapabilityTier, ChatMessage};
 
 /// The central agent dispatcher.
 /// Manages forked agent lifecycle, prompt caching, and concurrent dispatch.
+/// Lifecycle is wrapped in Arc<Mutex<>> so spawned tasks can record results.
 pub struct AgentDispatcher {
-    lifecycle: AgentLifecycle,
+    lifecycle: Arc<Mutex<AgentLifecycle>>,
     cache: PromptCache,
     config: DispatchConfig,
 }
@@ -25,7 +29,7 @@ pub struct AgentDispatcher {
 impl AgentDispatcher {
     pub fn new() -> Self {
         Self {
-            lifecycle: AgentLifecycle::new(),
+            lifecycle: Arc::new(Mutex::new(AgentLifecycle::new())),
             cache: PromptCache::new(),
             config: DispatchConfig::default(),
         }
@@ -33,18 +37,21 @@ impl AgentDispatcher {
 
     /// Dispatch an agent. Returns the dispatch_id for tracking.
     /// The actual execution is spawned as a tokio task — this returns immediately.
-    pub fn dispatch(
+    pub async fn dispatch(
         &mut self,
         request: AgentRequest,
         providers: Arc<Mutex<ProviderRegistry>>,
         app_handle: tauri::AppHandle,
     ) -> Result<String, String> {
         // Check concurrency limit
-        if self.lifecycle.active_count() >= self.config.max_concurrent {
-            return Err(format!(
-                "Max concurrent agents reached ({}). Wait for an agent to complete.",
-                self.config.max_concurrent
-            ));
+        {
+            let lifecycle = self.lifecycle.lock().await;
+            if lifecycle.active_count() >= self.config.max_concurrent {
+                return Err(format!(
+                    "Max concurrent agents reached ({}). Wait for an agent to complete.",
+                    self.config.max_concurrent
+                ));
+            }
         }
 
         // Cache the static prompt portion
@@ -56,12 +63,57 @@ impl AgentDispatcher {
         let is_writable = false; // Agents are read-only by default
         let context = AgentContext::new(is_writable, None, 0);
 
-        let cancel_rx = self.lifecycle.register(request.clone(), context);
-        self.lifecycle.mark_running(&dispatch_id);
+        let cancel_rx = {
+            let mut lifecycle = self.lifecycle.lock().await;
+            let rx = lifecycle.register(request.clone(), context);
+            lifecycle.mark_running(&dispatch_id);
+            rx
+        };
+
+        // Clone lifecycle handle so the spawned task can record the result
+        let lifecycle_handle = Arc::clone(&self.lifecycle);
+
+        // Log dispatch event for audit trail
+        let slug_for_log = request.agent_slug.clone();
+        let did_for_log = dispatch_id.clone();
+        if let Some(db) = app_handle.try_state::<Database>() {
+            if let Ok(conn) = db.conn.lock() {
+                let _ = crate::database::queries::log_dispatch_event(
+                    &conn, &did_for_log, &slug_for_log, "registered", "{}",
+                );
+            }
+        }
 
         // Spawn the agent execution as a background task
         tokio::spawn(async move {
             let result = execute_agent(request, providers, cancel_rx).await;
+
+            // Record result in lifecycle — backend state stays in sync
+            {
+                let mut lifecycle = lifecycle_handle.lock().await;
+                lifecycle.complete(result.clone());
+            }
+
+            // Log completion event for audit trail
+            if let Some(db) = app_handle.try_state::<Database>() {
+                if let Ok(conn) = db.conn.lock() {
+                    let event_type = match result.status {
+                        AgentStatus::Complete => "complete",
+                        AgentStatus::Error => "error",
+                        AgentStatus::Timeout => "timeout",
+                        AgentStatus::Cancelled => "cancelled",
+                        _ => "complete",
+                    };
+                    let metadata = serde_json::json!({
+                        "duration_ms": result.duration_ms,
+                        "model": result.model,
+                        "error": result.error,
+                    }).to_string();
+                    let _ = crate::database::queries::log_dispatch_event(
+                        &conn, &result.dispatch_id, &result.agent_slug, event_type, &metadata,
+                    );
+                }
+            }
 
             // Emit result event to frontend
             use tauri::Emitter;
@@ -72,42 +124,50 @@ impl AgentDispatcher {
     }
 
     /// Get the status of a dispatched agent.
-    pub fn get_status(&self, dispatch_id: &str) -> Option<AgentStatus> {
-        self.lifecycle.get_status(dispatch_id)
+    pub async fn get_status(&self, dispatch_id: &str) -> Option<AgentStatus> {
+        let lifecycle = self.lifecycle.lock().await;
+        lifecycle.get_status(dispatch_id)
     }
 
-    /// Get the result of a completed agent.
-    pub fn get_result(&self, dispatch_id: &str) -> Option<&AgentResult> {
-        self.lifecycle.get_result(dispatch_id)
+    /// Get the result of a completed agent (cloned, since lifecycle is behind a Mutex).
+    pub async fn get_result(&self, dispatch_id: &str) -> Option<AgentResult> {
+        let lifecycle = self.lifecycle.lock().await;
+        lifecycle.get_result(dispatch_id).cloned()
     }
 
     /// Cancel a running agent.
-    pub fn cancel(&mut self, dispatch_id: &str) -> bool {
-        self.lifecycle.cancel(dispatch_id)
+    pub async fn cancel(&self, dispatch_id: &str) -> bool {
+        let mut lifecycle = self.lifecycle.lock().await;
+        lifecycle.cancel(dispatch_id)
     }
 
     /// List all active agents.
-    pub fn list_active(&self) -> Vec<AgentSummary> {
-        self.lifecycle.list_active()
+    pub async fn list_active(&self) -> Vec<AgentSummary> {
+        let lifecycle = self.lifecycle.lock().await;
+        lifecycle.list_active()
     }
 
     /// List all agents (active + completed).
-    pub fn list_all(&self) -> Vec<AgentSummary> {
-        self.lifecycle.list_all()
+    pub async fn list_all(&self) -> Vec<AgentSummary> {
+        let lifecycle = self.lifecycle.lock().await;
+        lifecycle.list_all()
     }
 
-    /// Record a completed agent result (called from the spawned task via event).
-    pub fn record_result(&mut self, result: AgentResult) {
-        self.lifecycle.complete(result);
+    /// Record a completed agent result.
+    pub async fn record_result(&self, result: AgentResult) {
+        let mut lifecycle = self.lifecycle.lock().await;
+        lifecycle.complete(result);
     }
 
     /// Run periodic maintenance: check timeouts, evict stale cache entries.
-    pub fn maintenance(&mut self) {
-        self.lifecycle.check_timeouts();
+    pub async fn maintenance(&mut self) {
+        {
+            let mut lifecycle = self.lifecycle.lock().await;
+            lifecycle.check_timeouts();
+            lifecycle.cleanup(60 * 60 * 1000);
+        }
         // Evict cache entries not accessed in 30 minutes
         self.cache.evict_stale(30 * 60 * 1000);
-        // Clean up completed agents older than 1 hour
-        self.lifecycle.cleanup(60 * 60 * 1000);
     }
 
     /// Get cache stats for diagnostics.

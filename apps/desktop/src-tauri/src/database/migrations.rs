@@ -29,5 +29,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 4;")?;
     }
 
+    // Phase 3: Agent dispatch audit trail
+    if current_version < 5 {
+        conn.execute_batch(schema::SCHEMA_V5)?;
+        conn.execute_batch("PRAGMA user_version = 5;")?;
+    }
+
     Ok(())
 }

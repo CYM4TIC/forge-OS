@@ -1,6 +1,10 @@
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
+/// A batch lifecycle record.
+/// Note: `id` is a UUID (primary key). `batch_id` is the human-readable identifier
+/// (e.g., "L4-J"). The `batch_ref` column in the `findings` table references `id` (UUID),
+/// NOT `batch_id` (human-readable).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatchRow {
     pub id: String,

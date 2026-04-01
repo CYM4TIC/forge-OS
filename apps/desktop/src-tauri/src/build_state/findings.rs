@@ -1,6 +1,50 @@
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
+/// Validated finding severity. Deserialization rejects invalid values.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FindingSeverity {
+    Critical,
+    High,
+    Medium,
+    Low,
+    Info,
+}
+
+impl FindingSeverity {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Critical => "critical",
+            Self::High => "high",
+            Self::Medium => "medium",
+            Self::Low => "low",
+            Self::Info => "info",
+        }
+    }
+}
+
+/// Validated finding status. Deserialization rejects invalid values.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FindingStatus {
+    Open,
+    Resolved,
+    Deferred,
+    WontFix,
+}
+
+impl FindingStatus {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Open => "open",
+            Self::Resolved => "resolved",
+            Self::Deferred => "deferred",
+            Self::WontFix => "wont_fix",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FindingRow {
     pub id: String,

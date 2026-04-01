@@ -4,7 +4,7 @@ use tokio::process::Command;
 use tokio::sync::mpsc;
 
 use super::traits::ModelProvider;
-use super::types::{CapabilityTier, ChatMessage, ChatResponse, StreamChunk};
+use super::types::{CapabilityTier, ChatMessage, ChatResponse, StreamChunk, CLAUDE_OPUS, CLAUDE_SONNET};
 
 /// Provider that shells to the locally installed `claude` CLI.
 /// Uses the operator's existing Claude Max plan — no API key required.
@@ -65,8 +65,9 @@ impl ClaudeCodeProvider {
     /// Map capability tier to a claude CLI model flag.
     fn tier_to_model(tier: CapabilityTier) -> &'static str {
         match tier {
-            CapabilityTier::High => "claude-opus-4-6",
-            CapabilityTier::Medium => "claude-sonnet-4-6",
+            CapabilityTier::High => CLAUDE_OPUS,
+            CapabilityTier::Medium => CLAUDE_SONNET,
+            // CLI uses shorter haiku model name (no date suffix)
             CapabilityTier::Fast => "claude-haiku-4-5",
         }
     }

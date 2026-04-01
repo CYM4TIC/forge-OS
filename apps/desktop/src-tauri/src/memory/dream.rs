@@ -48,8 +48,20 @@ pub struct DreamResult {
     pub memory_index: String,
 }
 
+/// Maximum minutes a dream can be in 'running' state before we assume a crash.
+const DREAM_CRASH_TIMEOUT_MINUTES: i64 = 30;
+
 /// Check if a dream is currently running (application-level lock via dream_runs table).
+/// Includes crash recovery: any 'running' record older than 30 minutes is assumed to be
+/// from a crashed process. It's marked as 'failed' and doesn't block new runs.
 pub fn is_dream_running(conn: &Connection) -> Result<bool, rusqlite::Error> {
+    // First, clean up crashed runs (running for longer than the timeout)
+    conn.execute(
+        "UPDATE dream_runs SET status = 'failed', error_message = 'Presumed crash — exceeded timeout', completed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE status = 'running' AND started_at <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?1)",
+        params![format!("-{} minutes", DREAM_CRASH_TIMEOUT_MINUTES)],
+    )?;
+
+    // Now check if any legitimately running dream exists
     let count: u64 = conn.query_row(
         "SELECT COUNT(*) FROM dream_runs WHERE status = 'running'",
         [],
@@ -198,11 +210,13 @@ fn run_pipeline(conn: &Connection, run_id: &str) -> Result<DreamResult, String> 
     // Scan daily logs since last consolidation
     let last_run = get_last_run_at(conn).map_err(|e| format!("Gather: {}", e))?;
 
+    // Use the full timestamp — not just the date portion — so logs already
+    // processed in a previous dream run on the same day are excluded.
     let log_entries = logs::query_logs(
         conn,
         None, // all personas
         None, // all types
-        last_run.as_deref().map(|ts| &ts[..10]), // date portion only
+        last_run.as_deref(), // full timestamp, not &ts[..10]
         None,
         None,
     )

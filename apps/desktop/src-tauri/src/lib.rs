@@ -17,8 +17,7 @@ use providers::claude_code::ClaudeCodeProvider;
 use providers::config::ProviderConfig;
 use providers::openai::OpenAIProvider;
 use providers::registry::ProviderRegistry;
-use providers::types::ModelMapping;
-use state::AppState;
+use providers::types::{ModelMapping, CLAUDE_OPUS, CLAUDE_SONNET, CLAUDE_HAIKU, GPT4O, GPT4O_MINI};
 use tauri::Manager;
 use tokio::sync::Mutex;
 
@@ -46,9 +45,9 @@ fn init_providers(db: &Database) -> ProviderRegistry {
                     .ok()
                     .flatten(),
                 model_mappings: ModelMapping {
-                    high: "claude-opus-4-6".to_string(),
-                    medium: "claude-sonnet-4-6".to_string(),
-                    fast: "claude-haiku-4-5-20251001".to_string(),
+                    high: CLAUDE_OPUS.to_string(),
+                    medium: CLAUDE_SONNET.to_string(),
+                    fast: CLAUDE_HAIKU.to_string(),
                 },
                 is_default: true,
             };
@@ -66,9 +65,9 @@ fn init_providers(db: &Database) -> ProviderRegistry {
                 api_key,
                 base_url,
                 model_mappings: ModelMapping {
-                    high: "gpt-4o".to_string(),
-                    medium: "gpt-4o-mini".to_string(),
-                    fast: "gpt-4o-mini".to_string(),
+                    high: GPT4O.to_string(),
+                    medium: GPT4O_MINI.to_string(),
+                    fast: GPT4O_MINI.to_string(),
                 },
                 is_default: false,
             };
@@ -76,16 +75,17 @@ fn init_providers(db: &Database) -> ProviderRegistry {
         }
     }
 
-    // Also check environment variables as fallback for API providers
+    // Environment variable fallback for development.
+    // In production, prefer the provider settings UI or ClaudeCodeProvider (no key needed).
     if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
         if registry.get("claude").is_none() {
             let config = ProviderConfig {
                 api_key,
                 base_url: None,
                 model_mappings: ModelMapping {
-                    high: "claude-opus-4-6".to_string(),
-                    medium: "claude-sonnet-4-6".to_string(),
-                    fast: "claude-haiku-4-5-20251001".to_string(),
+                    high: CLAUDE_OPUS.to_string(),
+                    medium: CLAUDE_SONNET.to_string(),
+                    fast: CLAUDE_HAIKU.to_string(),
                 },
                 is_default: true,
             };
@@ -98,9 +98,9 @@ fn init_providers(db: &Database) -> ProviderRegistry {
                 api_key,
                 base_url: std::env::var("OPENAI_BASE_URL").ok(),
                 model_mappings: ModelMapping {
-                    high: "gpt-4o".to_string(),
-                    medium: "gpt-4o-mini".to_string(),
-                    fast: "gpt-4o-mini".to_string(),
+                    high: GPT4O.to_string(),
+                    medium: GPT4O_MINI.to_string(),
+                    fast: GPT4O_MINI.to_string(),
                 },
                 is_default: false,
             };
@@ -130,18 +130,29 @@ pub fn run() {
 
             // Initialize providers from settings + env
             let registry = init_providers(&db);
-            let app_state = AppState::new(registry.clone());
 
-            // Async-safe provider registry for agent dispatch
-            let async_registry: Arc<Mutex<ProviderRegistry>> = Arc::new(Mutex::new(registry));
+            // Single provider registry — Arc<tokio::sync::Mutex> for async + sync access
+            let providers: Arc<Mutex<ProviderRegistry>> = Arc::new(Mutex::new(registry));
 
             // Agent dispatcher
             let dispatcher: Arc<Mutex<AgentDispatcher>> = Arc::new(Mutex::new(AgentDispatcher::new()));
 
+            // Clone dispatcher before manage() moves it
+            let maint_dispatcher = dispatcher.clone();
+
             app.manage(db);
-            app.manage(app_state);
-            app.manage(async_registry);
+            app.manage(providers);
             app.manage(dispatcher);
+
+            // Background agent dispatcher maintenance (every 30 seconds)
+            // Handles timeout detection, stale cache eviction, completed agent cleanup.
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                    let mut disp = maint_dispatcher.lock().await;
+                    disp.maintenance().await;
+                }
+            });
 
             // Background dream consolidation check (hourly)
             let db_path = app
@@ -154,7 +165,7 @@ pub fn run() {
                     tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
                     // Open a separate read-write connection for the background task
                     if let Ok(conn) = rusqlite::Connection::open(&db_path) {
-                        let _ = conn.execute_batch("PRAGMA journal_mode=WAL;");
+                        let _ = conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");
                         let _ = memory::dream::check_and_run(&conn);
                     }
                 }

@@ -168,44 +168,54 @@ impl ModelProvider for OpenAIProvider {
             return Err(format!("{} API error {}: {}", self.display_name, status, text).into());
         }
 
-        let body_text = resp.text().await?;
+        // Stream SSE events incrementally via bytes_stream
+        use futures::StreamExt;
+        let mut stream = resp.bytes_stream();
+        let mut buffer = String::new();
         let mut stream_model = model;
 
-        for line in body_text.lines() {
-            let line = line.trim();
-            if !line.starts_with("data: ") {
-                continue;
-            }
-            let json_str = &line[6..];
-            if json_str == "[DONE]" {
-                let _ = tx
-                    .send(StreamChunk {
-                        delta: String::new(),
-                        model: Some(stream_model.clone()),
-                        tokens_in: None,
-                        tokens_out: None,
-                        done: true,
-                    })
-                    .await;
-                break;
-            }
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
+            buffer.push_str(&String::from_utf8_lossy(&chunk));
 
-            if let Ok(data) = serde_json::from_str::<OAIResponse>(json_str) {
-                if let Some(m) = &data.model {
-                    stream_model = m.clone();
+            while let Some(pos) = buffer.find('\n') {
+                let line = buffer[..pos].trim().to_string();
+                buffer = buffer[pos + 1..].to_string();
+
+                if !line.starts_with("data: ") {
+                    continue;
                 }
-                if let Some(choice) = data.choices.first() {
-                    if let Some(delta) = &choice.delta {
-                        if let Some(text) = &delta.content {
-                            let _ = tx
-                                .send(StreamChunk {
-                                    delta: text.clone(),
-                                    model: Some(stream_model.clone()),
-                                    tokens_in: None,
-                                    tokens_out: None,
-                                    done: false,
-                                })
-                                .await;
+                let json_str = &line[6..];
+                if json_str == "[DONE]" {
+                    let _ = tx
+                        .send(StreamChunk {
+                            delta: String::new(),
+                            model: Some(stream_model.clone()),
+                            tokens_in: None,
+                            tokens_out: None,
+                            done: true,
+                        })
+                        .await;
+                    return Ok(());
+                }
+
+                if let Ok(data) = serde_json::from_str::<OAIResponse>(json_str) {
+                    if let Some(m) = &data.model {
+                        stream_model = m.clone();
+                    }
+                    if let Some(choice) = data.choices.first() {
+                        if let Some(delta) = &choice.delta {
+                            if let Some(text) = &delta.content {
+                                let _ = tx
+                                    .send(StreamChunk {
+                                        delta: text.clone(),
+                                        model: Some(stream_model.clone()),
+                                        tokens_in: None,
+                                        tokens_out: None,
+                                        done: false,
+                                    })
+                                    .await;
+                            }
                         }
                     }
                 }

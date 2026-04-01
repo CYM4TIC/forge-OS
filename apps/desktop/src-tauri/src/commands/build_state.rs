@@ -62,7 +62,7 @@ pub fn complete_batch(db: State<'_, Database>, request: CompleteBatchRequest) ->
 #[derive(Debug, Deserialize)]
 pub struct AddFindingRequest {
     pub agent_slug: String,
-    pub severity: String,
+    pub severity: findings::FindingSeverity,
     pub category: String,
     pub description: String,
     pub evidence: Option<String>,
@@ -78,7 +78,7 @@ pub fn add_finding(db: State<'_, Database>, request: AddFindingRequest) -> Resul
         &conn,
         &id,
         &request.agent_slug,
-        &request.severity,
+        request.severity.as_str(),
         &request.category,
         &request.description,
         request.evidence.as_deref(),
@@ -90,9 +90,9 @@ pub fn add_finding(db: State<'_, Database>, request: AddFindingRequest) -> Resul
 }
 
 #[tauri::command]
-pub fn resolve_finding(db: State<'_, Database>, id: String, status: String) -> Result<(), String> {
+pub fn resolve_finding(db: State<'_, Database>, id: String, status: findings::FindingStatus) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    findings::resolve_finding(&conn, &id, &status).map_err(|e| e.to_string())
+    findings::resolve_finding(&conn, &id, status.as_str()).map_err(|e| e.to_string())
 }
 
 // ── BOOT.md generator ──

@@ -3,7 +3,7 @@ use tauri::{Emitter, State};
 use uuid::Uuid;
 
 use crate::database::Database;
-use crate::swarm::{mailbox, permissions, types::{SwarmMessage, SwarmMessageType, SwarmMessageEvent}};
+use crate::swarm::{mailbox, permissions, team_file, types::{SwarmMessage, SwarmMessageType, SwarmMessageEvent}};
 
 // ── Send message ──
 
@@ -23,6 +23,15 @@ pub fn swarm_send(
 ) -> Result<String, String> {
     let msg_type = SwarmMessageType::from_str(&request.msg_type)
         .ok_or_else(|| format!("Invalid msg_type: '{}'. Must be one of: permission_request, permission_response, idle_notification, shutdown_signal, direct_message", request.msg_type))?;
+
+    // Validate agent identifiers against team roster
+    let team = team_file::load_team_config(&db).map_err(|e| e.to_string())?;
+    if team.get_member(&request.from_agent).is_none() {
+        return Err(format!("Unknown agent: '{}'", request.from_agent));
+    }
+    if team.get_member(&request.to_agent).is_none() {
+        return Err(format!("Unknown agent: '{}'", request.to_agent));
+    }
 
     let payload = request.payload.unwrap_or_else(|| "{}".to_string());
     let id = Uuid::new_v4().to_string();

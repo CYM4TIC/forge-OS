@@ -57,7 +57,7 @@ pub async fn dispatch_agent(
     };
 
     let mut disp = dispatcher.lock().await;
-    disp.dispatch(agent_request, providers.inner().clone(), app)
+    disp.dispatch(agent_request, providers.inner().clone(), app).await
 }
 
 /// Get the status of a dispatched agent.
@@ -67,7 +67,7 @@ pub async fn get_agent_status(
     dispatch_id: String,
 ) -> Result<Option<AgentStatus>, String> {
     let disp = dispatcher.lock().await;
-    Ok(disp.get_status(&dispatch_id))
+    Ok(disp.get_status(&dispatch_id).await)
 }
 
 /// List all active agents.
@@ -76,7 +76,7 @@ pub async fn list_active_agents(
     dispatcher: State<'_, Arc<Mutex<AgentDispatcher>>>,
 ) -> Result<Vec<AgentSummary>, String> {
     let disp = dispatcher.lock().await;
-    Ok(disp.list_active())
+    Ok(disp.list_active().await)
 }
 
 /// Cancel a running agent.
@@ -85,6 +85,6 @@ pub async fn cancel_agent(
     dispatcher: State<'_, Arc<Mutex<AgentDispatcher>>>,
     dispatch_id: String,
 ) -> Result<bool, String> {
-    let mut disp = dispatcher.lock().await;
-    Ok(disp.cancel(&dispatch_id))
+    let disp = dispatcher.lock().await;
+    Ok(disp.cancel(&dispatch_id).await)
 }

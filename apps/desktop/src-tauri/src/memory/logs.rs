@@ -75,13 +75,15 @@ pub fn query_logs(
     }
 
     if let Some(df) = date_from {
-        sql.push_str(&format!(" AND log_date >= ?{}", param_idx));
+        // Use created_at for precise filtering — supports both date strings and
+        // full timestamps (e.g., from dream runs) for accurate re-processing avoidance.
+        sql.push_str(&format!(" AND created_at >= ?{}", param_idx));
         param_values.push(Box::new(df.to_string()));
         param_idx += 1;
     }
 
     if let Some(dt) = date_to {
-        sql.push_str(&format!(" AND log_date <= ?{}", param_idx));
+        sql.push_str(&format!(" AND created_at <= ?{}", param_idx));
         param_values.push(Box::new(dt.to_string()));
         param_idx += 1;
     }
@@ -131,15 +133,17 @@ pub fn list_log_dates(
     conn: &Connection,
     limit: Option<u32>,
 ) -> Result<Vec<String>, rusqlite::Error> {
-    let sql = if let Some(lim) = limit {
-        format!(
-            "SELECT DISTINCT log_date FROM memory_logs ORDER BY log_date DESC LIMIT {}",
-            lim
-        )
+    if let Some(lim) = limit {
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT log_date FROM memory_logs ORDER BY log_date DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map(params![lim], |row| row.get(0))?;
+        rows.collect()
     } else {
-        "SELECT DISTINCT log_date FROM memory_logs ORDER BY log_date DESC".to_string()
-    };
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map([], |row| row.get(0))?;
-    rows.collect()
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT log_date FROM memory_logs ORDER BY log_date DESC",
+        )?;
+        let rows = stmt.query_map([], |row| row.get(0))?;
+        rows.collect()
+    }
 }

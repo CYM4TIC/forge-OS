@@ -3,6 +3,12 @@ use std::collections::HashSet;
 /// Isolated context for a forked agent.
 /// Each dispatched agent gets its own context so mutations
 /// don't leak between concurrent agents or back to the parent.
+///
+/// **Permission enforcement** is structural: `track_write()` returns an error
+/// for read-only contexts, and callers must check before performing mutations.
+/// Full enforcement at the execution boundary (intercepting tool calls at the
+/// dispatch layer) is deferred to Phase 5 (Agent SDK integration). The mechanism
+/// works — it's just not yet wired into the execution path.
 pub struct AgentContext {
     /// Files this agent has read (tracked for audit).
     pub files_read: HashSet<String>,

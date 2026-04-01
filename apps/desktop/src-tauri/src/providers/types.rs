@@ -1,5 +1,13 @@
 use serde::{Deserialize, Serialize};
 
+// ── Default model constants ──
+// Centralized here so hardcoded model strings don't scatter across the codebase.
+pub const CLAUDE_OPUS: &str = "claude-opus-4-6";
+pub const CLAUDE_SONNET: &str = "claude-sonnet-4-6";
+pub const CLAUDE_HAIKU: &str = "claude-haiku-4-5-20251001";
+pub const GPT4O: &str = "gpt-4o";
+pub const GPT4O_MINI: &str = "gpt-4o-mini";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CapabilityTier {

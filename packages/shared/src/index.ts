@@ -1,30 +1,3 @@
-export type {
-  Message,
-  MessageRole,
-  MessageStatus,
-} from './types/message';
-
-export type {
-  Session,
-  SessionStatus,
-} from './types/session';
-
-export type {
-  Agent,
-  AgentRole,
-  AgentStatus,
-  CapabilityTier,
-} from './types/agent';
-
-export type {
-  Provider,
-  ProviderType,
-  ProviderConfig,
-  ModelMapping,
-} from './types/provider';
-
-export type {
-  PanelId,
-  PanelConfig,
-  PanelLayout,
-} from './types/panel';
+// Shared types package — currently empty.
+// Authoritative types live in apps/desktop/src/lib/tauri.ts.
+// Shared types will be migrated here once the type system stabilizes (Phase 5+).

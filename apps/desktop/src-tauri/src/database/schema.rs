@@ -1,6 +1,7 @@
 /// All CREATE TABLE statements for the Forge OS local database.
 /// These are executed in order by the migration system.
 pub const SCHEMA_V1: &str = r#"
+BEGIN IMMEDIATE;
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL DEFAULT 'New Session',
@@ -64,11 +65,13 @@ CREATE INDEX IF NOT EXISTS idx_findings_session_id ON findings(session_id);
 CREATE INDEX IF NOT EXISTS idx_findings_agent_slug ON findings(agent_slug);
 CREATE INDEX IF NOT EXISTS idx_findings_status ON findings(status);
 CREATE INDEX IF NOT EXISTS idx_agent_state_slug ON agent_state(agent_slug);
+COMMIT;
 "#;
 
 /// Phase 3 schema additions: KAIROS memory, Swarm mailbox, build state, compaction.
 /// Applied as v2 migration on top of existing v1 tables.
 pub const SCHEMA_V2: &str = r#"
+BEGIN IMMEDIATE;
 -- KAIROS daily-log memory: append-only persona observations
 CREATE TABLE IF NOT EXISTS memory_logs (
     id TEXT PRIMARY KEY NOT NULL,
@@ -151,10 +154,12 @@ CREATE INDEX IF NOT EXISTS idx_session_summaries_session ON session_summaries(se
 -- Extend findings with batch reference (nullable for v1 compatibility)
 ALTER TABLE findings ADD COLUMN batch_ref TEXT;
 CREATE INDEX IF NOT EXISTS idx_findings_batch_ref ON findings(batch_ref);
+COMMIT;
 "#;
 
 /// Phase 3 schema v3: Dream consolidation run tracking.
 pub const SCHEMA_V3: &str = r#"
+BEGIN IMMEDIATE;
 CREATE TABLE IF NOT EXISTS dream_runs (
     id TEXT PRIMARY KEY NOT NULL,
     status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'complete', 'failed')),
@@ -169,10 +174,12 @@ CREATE TABLE IF NOT EXISTS dream_runs (
 
 CREATE INDEX IF NOT EXISTS idx_dream_runs_status ON dream_runs(status);
 CREATE INDEX IF NOT EXISTS idx_dream_runs_started ON dream_runs(started_at);
+COMMIT;
 "#;
 
 /// Phase 3 schema v4: Session checkpoints for crash recovery.
 pub const SCHEMA_V4: &str = r#"
+BEGIN IMMEDIATE;
 -- Session checkpoints: snapshot after each message for crash recovery
 CREATE TABLE IF NOT EXISTS session_checkpoints (
     id TEXT PRIMARY KEY NOT NULL,
@@ -187,4 +194,24 @@ CREATE TABLE IF NOT EXISTS session_checkpoints (
 CREATE INDEX IF NOT EXISTS idx_session_checkpoints_session ON session_checkpoints(session_id);
 
 -- Only keep the most recent checkpoint per session (old ones cleaned up by application)
+COMMIT;
+"#;
+
+/// Phase 3 schema v5: Agent dispatch audit trail.
+/// Persists lifecycle events so dispatch history survives process crashes.
+pub const SCHEMA_V5: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS dispatch_events (
+    id TEXT PRIMARY KEY NOT NULL,
+    dispatch_id TEXT NOT NULL,
+    agent_slug TEXT NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN ('registered', 'running', 'complete', 'error', 'timeout', 'cancelled')),
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_dispatch_events_dispatch_id ON dispatch_events(dispatch_id);
+CREATE INDEX IF NOT EXISTS idx_dispatch_events_agent_slug ON dispatch_events(agent_slug);
+CREATE INDEX IF NOT EXISTS idx_dispatch_events_type ON dispatch_events(event_type);
+COMMIT;
 "#;

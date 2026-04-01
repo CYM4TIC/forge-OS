@@ -31,7 +31,9 @@ impl TokenCounter {
             return 0;
         }
         // Ceiling division to be conservative
-        let chars = text.len() as f64;
+        // Use chars().count() — text.len() returns bytes, not characters,
+        // which would over-count for non-ASCII and trigger premature compaction.
+        let chars = text.chars().count() as f64;
         (chars / self.chars_per_token).ceil() as usize
     }
 

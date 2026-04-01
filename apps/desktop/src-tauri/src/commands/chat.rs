@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use uuid::Uuid;
 
 use crate::database::Database;
 use crate::database::queries::{self, MessageRow};
+use crate::providers::registry::ProviderRegistry;
 use crate::providers::types::{CapabilityTier, ChatMessage, StreamChunk};
-use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct SendMessageRequest {
@@ -37,12 +38,15 @@ pub fn list_messages(db: State<'_, Database>, session_id: String) -> Result<Vec<
 pub async fn send_message(
     app: AppHandle,
     db: State<'_, Database>,
-    app_state: State<'_, AppState>,
+    providers: State<'_, Arc<Mutex<ProviderRegistry>>>,
     request: SendMessageRequest,
 ) -> Result<(), String> {
     let tier = request.tier.unwrap_or(CapabilityTier::Medium);
 
-    // 1. Persist the user message to SQLite
+    // 1. Persist the user message to SQLite BEFORE the provider call.
+    // This is intentional: the user DID send the message, so it should appear in history
+    // even if the provider fails. An orphaned user message is preferable to a lost message.
+    // This matches standard chat app behavior (message sent → response may fail).
     let user_msg_id = Uuid::new_v4().to_string();
     {
         let conn = db.conn.lock().map_err(|e| e.to_string())?;
@@ -75,7 +79,7 @@ pub async fn send_message(
 
     // 3. Get the provider
     let provider = {
-        let registry = app_state.providers.lock().map_err(|e| e.to_string())?;
+        let registry = providers.lock().await;
         if let Some(pid) = &request.provider_id {
             registry.get(pid).cloned()
         } else {

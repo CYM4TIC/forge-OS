@@ -50,9 +50,12 @@ pub struct TriggerCompactResponse {
 
 #[tauri::command]
 pub fn trigger_compact(
-    db: State<'_, Database>,
+    _db: State<'_, Database>,
     request: TriggerCompactRequest,
 ) -> Result<TriggerCompactResponse, String> {
+    // Guard: compact() generates a summary prompt but cannot execute it — LLM dispatch
+    // is not yet wired into the compaction engine. Use store_compact_result() with an
+    // externally-generated summary instead. LLM wiring is Phase 4+ work.
     let engine = CompactionEngine::new(request.context_window_size);
 
     let variant = match request.variant.as_deref() {
@@ -71,7 +74,7 @@ pub fn trigger_compact(
     let conversation_tokens = engine.count_tokens(&conversation_text);
 
     // Generate compaction summary structure with prompt
-    let summary = engine.compact(&request.session_id, &request.messages, variant, &db)?;
+    let summary = engine.compact(&request.session_id, &request.messages, variant)?;
 
     Ok(TriggerCompactResponse {
         summary_id: summary.id,

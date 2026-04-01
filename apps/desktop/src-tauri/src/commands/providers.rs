@@ -1,7 +1,10 @@
 use serde::Serialize;
+use std::sync::Arc;
 use tauri::State;
+use tokio::sync::Mutex;
 
-use crate::state::AppState;
+use crate::database::Database;
+use crate::providers::registry::ProviderRegistry;
 
 #[derive(Debug, Serialize)]
 pub struct ProviderInfo {
@@ -13,10 +16,12 @@ pub struct ProviderInfo {
 }
 
 #[tauri::command]
-pub fn list_providers(state: State<'_, AppState>) -> Result<Vec<ProviderInfo>, String> {
-    let registry = state.providers.lock().map_err(|e| e.to_string())?;
+pub async fn list_providers(
+    providers: State<'_, Arc<Mutex<ProviderRegistry>>>,
+) -> Result<Vec<ProviderInfo>, String> {
+    let registry = providers.lock().await;
     let default_id = registry.default_id().map(|s| s.to_string());
-    let providers = registry
+    let result = registry
         .list()
         .into_iter()
         .map(|(id, p)| ProviderInfo {
@@ -27,11 +32,24 @@ pub fn list_providers(state: State<'_, AppState>) -> Result<Vec<ProviderInfo>, S
             is_default: default_id.as_deref() == Some(id),
         })
         .collect();
-    Ok(providers)
+    Ok(result)
 }
 
 #[tauri::command]
-pub fn set_default_provider(state: State<'_, AppState>, provider_id: String) -> Result<bool, String> {
-    let mut registry = state.providers.lock().map_err(|e| e.to_string())?;
-    Ok(registry.set_default(&provider_id))
+pub async fn set_default_provider(
+    db: State<'_, Database>,
+    providers: State<'_, Arc<Mutex<ProviderRegistry>>>,
+    provider_id: String,
+) -> Result<bool, String> {
+    let mut registry = providers.lock().await;
+    let changed = registry.set_default(&provider_id);
+
+    // Persist to SQLite so the preference survives restart
+    if changed {
+        let conn = db.conn.lock().map_err(|e| e.to_string())?;
+        crate::database::queries::set_setting(&conn, "provider.default", &provider_id)
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(changed)
 }
