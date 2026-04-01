@@ -129,6 +129,24 @@ pub fn run() {
             app.manage(app_state);
             app.manage(async_registry);
             app.manage(dispatcher);
+
+            // Background dream consolidation check (hourly)
+            let db_path = app
+                .path()
+                .app_data_dir()
+                .expect("app data dir for dream bg")
+                .join("forge.db");
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+                    // Open a separate read-write connection for the background task
+                    if let Ok(conn) = rusqlite::Connection::open(&db_path) {
+                        let _ = conn.execute_batch("PRAGMA journal_mode=WAL;");
+                        let _ = memory::dream::check_and_run(&conn);
+                    }
+                }
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -155,6 +173,8 @@ pub fn run() {
             commands::memory::query_memory,
             commands::memory::get_memory_index,
             commands::memory::get_daily_log,
+            commands::memory::trigger_dream,
+            commands::memory::get_dream_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -3,7 +3,7 @@ use tauri::State;
 use uuid::Uuid;
 
 use crate::database::Database;
-use crate::memory::{logs, index, types::{MemoryType, MemoryLogEntry}};
+use crate::memory::{logs, index, dream, types::{MemoryType, MemoryLogEntry}};
 
 // ── Append memory ──
 
@@ -87,4 +87,20 @@ pub fn get_daily_log(
 ) -> Result<Vec<MemoryLogEntry>, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     logs::get_daily_log(&conn, &log_date).map_err(|e| e.to_string())
+}
+
+// ── Trigger dream consolidation ──
+
+#[tauri::command]
+pub fn trigger_dream(db: State<'_, Database>) -> Result<dream::DreamResult, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    dream::run_dream(&conn)
+}
+
+// ── Get dream status ──
+
+#[tauri::command]
+pub fn get_dream_status(db: State<'_, Database>) -> Result<dream::DreamStatus, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    dream::get_status(&conn).map_err(|e| e.to_string())
 }

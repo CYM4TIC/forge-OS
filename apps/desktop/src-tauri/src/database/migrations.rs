@@ -17,8 +17,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 2;")?;
     }
 
-    // Future migrations go here:
-    // if current_version < 3 { ... PRAGMA user_version = 3; }
+    // Phase 3: Dream consolidation run tracking
+    if current_version < 3 {
+        conn.execute_batch(schema::SCHEMA_V3)?;
+        conn.execute_batch("PRAGMA user_version = 3;")?;
+    }
 
     Ok(())
 }

@@ -152,3 +152,21 @@ CREATE INDEX IF NOT EXISTS idx_session_summaries_session ON session_summaries(se
 ALTER TABLE findings ADD COLUMN batch_ref TEXT;
 CREATE INDEX IF NOT EXISTS idx_findings_batch_ref ON findings(batch_ref);
 "#;
+
+/// Phase 3 schema v3: Dream consolidation run tracking.
+pub const SCHEMA_V3: &str = r#"
+CREATE TABLE IF NOT EXISTS dream_runs (
+    id TEXT PRIMARY KEY NOT NULL,
+    status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'complete', 'failed')),
+    topics_created INTEGER NOT NULL DEFAULT 0,
+    topics_updated INTEGER NOT NULL DEFAULT 0,
+    topics_pruned INTEGER NOT NULL DEFAULT 0,
+    logs_processed INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT,
+    started_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    completed_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_dream_runs_status ON dream_runs(status);
+CREATE INDEX IF NOT EXISTS idx_dream_runs_started ON dream_runs(started_at);
+"#;
