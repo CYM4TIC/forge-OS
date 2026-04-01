@@ -164,6 +164,77 @@ pub fn parse_summary_sections(content: &str) -> Vec<(String, String)> {
     sections
 }
 
+/// Build an iterative re-compaction prompt.
+/// When a previous summary exists, the LLM should PRESERVE existing info,
+/// ADD new progress, MOVE completed items, and REMOVE stale info.
+///
+/// This is the Hermes-inspired structured handoff pattern.
+pub fn build_iterative_summary_prompt(
+    conversation: &str,
+    previous_summary: &str,
+    variant: &CompactionVariant,
+) -> String {
+    let variant_instruction = match variant {
+        CompactionVariant::Base => {
+            "Re-summarize the ENTIRE conversation, incorporating the previous summary."
+        }
+        CompactionVariant::Partial => {
+            "Update the previous summary with ONLY the new messages (after the marker)."
+        }
+        CompactionVariant::PartialUpTo => {
+            "Update the previous summary to cover the prefix (up to the marker)."
+        }
+    };
+
+    let sections_template: String = SUMMARY_SECTIONS
+        .iter()
+        .enumerate()
+        .map(|(i, (title, instruction))| {
+            format!("## {}. {}\n{}\n", i + 1, title, instruction)
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!(
+        r#"You are a context compaction engine performing ITERATIVE re-compaction.
+
+You have a PREVIOUS SUMMARY and NEW CONVERSATION to integrate.
+
+ITERATIVE RULES:
+1. PRESERVE existing info from the previous summary that is still relevant.
+2. ADD new progress, decisions, and state changes from the new conversation.
+3. MOVE items from "In Progress" → "Done" when completed in new conversation.
+4. REMOVE info that is now stale or superseded by new conversation.
+5. Section 6 (All User Messages): APPEND new user messages. Keep existing ones.
+6. Section 3 (Files): Update file list — add new files, update modified ones.
+7. Do NOT lose context from the previous summary unless explicitly superseded.
+
+CRITICAL RULES (same as initial compaction):
+1. Section 6 must be VERBATIM — no paraphrasing.
+2. Section 3 must include actual code snippets, not descriptions.
+3. Section 8 must be precise enough to resume immediately.
+4. Do NOT add commentary. Just compress.
+5. Err on the side of inclusion.
+
+VARIANT: {variant_instruction}
+
+OUTPUT FORMAT:
+{sections_template}
+
+---
+
+PREVIOUS SUMMARY:
+
+{previous_summary}
+
+---
+
+NEW CONVERSATION TO INTEGRATE:
+
+{conversation}"#
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

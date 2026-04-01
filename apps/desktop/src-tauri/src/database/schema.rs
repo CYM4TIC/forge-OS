@@ -215,3 +215,73 @@ CREATE INDEX IF NOT EXISTS idx_dispatch_events_agent_slug ON dispatch_events(age
 CREATE INDEX IF NOT EXISTS idx_dispatch_events_type ON dispatch_events(event_type);
 COMMIT;
 "#;
+
+/// Phase 4 schema v6: Tool result TTL tracking for cache-based context pruning.
+pub const SCHEMA_V6: &str = r#"
+BEGIN IMMEDIATE;
+-- Tool results with TTL metadata for context pruning
+CREATE TABLE IF NOT EXISTS tool_results (
+    id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    tool_type TEXT NOT NULL,
+    tool_name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    content TEXT NOT NULL,
+    token_count INTEGER NOT NULL DEFAULT 0,
+    stored_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    expires_at TEXT,
+    pruned INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_tool_results_session ON tool_results(session_id);
+CREATE INDEX IF NOT EXISTS idx_tool_results_type ON tool_results(tool_type);
+CREATE INDEX IF NOT EXISTS idx_tool_results_expires ON tool_results(expires_at) WHERE pruned = 0;
+COMMIT;
+"#;
+
+/// Phase 4 schema v7: FTS5 full-text search on session messages.
+/// Enables cross-session recall: "What did Pierce flag last time?"
+pub const SCHEMA_V7: &str = r#"
+BEGIN IMMEDIATE;
+-- FTS5 virtual table for full-text search on messages
+CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+    content,
+    role,
+    session_id UNINDEXED,
+    content='messages',
+    content_rowid='rowid'
+);
+
+-- Triggers to keep FTS5 in sync with messages table
+CREATE TRIGGER IF NOT EXISTS messages_fts_insert AFTER INSERT ON messages BEGIN
+    INSERT INTO messages_fts(rowid, content, role, session_id)
+    VALUES (new.rowid, new.content, new.role, new.session_id);
+END;
+
+CREATE TRIGGER IF NOT EXISTS messages_fts_delete BEFORE DELETE ON messages BEGIN
+    INSERT INTO messages_fts(messages_fts, rowid, content, role, session_id)
+    VALUES ('delete', old.rowid, old.content, old.role, old.session_id);
+END;
+
+CREATE TRIGGER IF NOT EXISTS messages_fts_update AFTER UPDATE OF content ON messages BEGIN
+    INSERT INTO messages_fts(messages_fts, rowid, content, role, session_id)
+    VALUES ('delete', old.rowid, old.content, old.role, old.session_id);
+    INSERT INTO messages_fts(rowid, content, role, session_id)
+    VALUES (new.rowid, new.content, new.role, new.session_id);
+END;
+COMMIT;
+"#;
+
+/// Phase 4 schema v8: Atomic task checkout on findings.
+/// Prevents two dispatched agents from working on the same finding.
+pub const SCHEMA_V8: &str = r#"
+BEGIN IMMEDIATE;
+ALTER TABLE findings ADD COLUMN checked_out_by TEXT;
+ALTER TABLE findings ADD COLUMN checked_out_at TEXT;
+ALTER TABLE findings ADD COLUMN resolved_at TEXT;
+
+-- Partial unique index: only one agent can check out an unresolved finding at a time
+CREATE UNIQUE INDEX IF NOT EXISTS idx_findings_checkout
+    ON findings(id) WHERE checked_out_by IS NOT NULL AND resolved_at IS NULL;
+COMMIT;
+"#;
