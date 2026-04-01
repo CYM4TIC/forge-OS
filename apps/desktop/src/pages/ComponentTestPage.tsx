@@ -14,7 +14,9 @@ import {
   TokenGauge,
   ContextMeterCanvas,
   DockPill,
+  PersonaGlyph,
 } from '@forge-os/canvas-components';
+import type { PersonaSlug, GlyphState } from '@forge-os/canvas-components';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -140,6 +142,46 @@ export default function ComponentTestPage() {
         <DockPill width={110} height={28} icon="👥" label="Team" variant="minimized" />
         <DockPill width={110} height={28} icon="🖥️" label="Preview" variant="closed" />
         <DockPill width={110} height={28} icon="🔗" label="Services" variant="minimized" badgeCount={12} />
+      </Section>
+
+      {/* PersonaGlyph — All 10 personas at idle */}
+      <Section title="Persona Glyphs — Idle">
+        {(['nyx', 'pierce', 'mara', 'riven', 'kehinde', 'tanaka', 'vane', 'voss', 'calloway', 'sable'] as PersonaSlug[]).map((slug) => (
+          <div key={slug} className="flex flex-col items-center gap-1">
+            <PersonaGlyph size={48} persona={slug} state="idle" />
+            <span className="text-text-muted text-[9px] uppercase">{slug}</span>
+          </div>
+        ))}
+      </Section>
+
+      {/* PersonaGlyph — Size variants (Nyx) */}
+      <Section title="Glyph Sizes — Nyx">
+        <PersonaGlyph size={16} persona="nyx" state="idle" />
+        <PersonaGlyph size={24} persona="nyx" state="idle" />
+        <PersonaGlyph size={36} persona="nyx" state="thinking" />
+        <PersonaGlyph size={48} persona="nyx" state="speaking" />
+        <PersonaGlyph size={64} persona="nyx" state="speaking" />
+        <PersonaGlyph size={96} persona="nyx" state="speaking" />
+      </Section>
+
+      {/* PersonaGlyph — State variants (all states on Pierce) */}
+      <Section title="Glyph States — Pierce">
+        {(['idle', 'thinking', 'speaking', 'finding', 'complete', 'error'] as GlyphState[]).map((s) => (
+          <div key={s} className="flex flex-col items-center gap-1">
+            <PersonaGlyph size={48} persona="pierce" state={s} />
+            <span className="text-text-muted text-[9px] uppercase">{s}</span>
+          </div>
+        ))}
+      </Section>
+
+      {/* PersonaGlyph — All 10 in 'speaking' state */}
+      <Section title="Persona Glyphs — Speaking">
+        {(['nyx', 'pierce', 'mara', 'riven', 'kehinde', 'tanaka', 'vane', 'voss', 'calloway', 'sable'] as PersonaSlug[]).map((slug) => (
+          <div key={slug} className="flex flex-col items-center gap-1">
+            <PersonaGlyph size={64} persona={slug} state="speaking" />
+            <span className="text-text-muted text-[9px] uppercase">{slug}</span>
+          </div>
+        ))}
       </Section>
     </div>
   );

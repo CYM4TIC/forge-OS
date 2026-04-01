@@ -36,3 +36,7 @@ export type { ContextMeterCanvasProps } from './context-meter-canvas.js';
 // ─── Dock (P4-P) ────────────────────────────────────────────────────────────
 export { DockPill } from './dock-pill.js';
 export type { DockPillProps, DockPillVariant } from './dock-pill.js';
+
+// ─── Persona Glyphs ─────────────────────────────────────────────────────────
+export { PersonaGlyph } from './persona-glyph.js';
+export type { PersonaGlyphProps, PersonaSlug, GlyphState } from './persona-glyph.js';
