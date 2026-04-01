@@ -141,7 +141,38 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 3: Pretext Layout Engine + Document Generation (3 sessions)
+## Phase 3: Agent Runtime (3 sessions) — REORDERED
+
+> **Phase reorder (2026-03-31):** Original Phase 3 (Pretext) moved to Phase 4.
+> Runtime systems are more critical than rendering — the OS needs to think before it can draw.
+> Architecture roadmap: `docs/PHASE-3-ARCHITECTURE.md`
+> Batch manifests: `BATCH-MANIFESTS.md` (P3-A through P3-L, 12 batches)
+
+**Goal:** The 5 CRITICAL runtime systems that make Forge OS intelligent.
+
+### Session 3.1 — Foundation: SQLite + Agent Dispatch (P3-A through P3-D)
+- P3-A: Verify `pnpm tauri dev` works + SQLite v2 migration (6 new tables)
+- P3-B: Agent Dispatch Core — `src-tauri/src/dispatch/` (forked agent lifecycle, prompt cache, isolation)
+- P3-C: Agent Dispatch UI — TeamPanel components (status panel, agent cards, dispatch log)
+- P3-D: Build State Manager — `src-tauri/src/build_state/` (batch/finding/risk CRUD, BOOT.md generator)
+
+### Session 3.2 — Memory + Communication (P3-E through P3-H)
+- P3-E: KAIROS Daily-Log Memory — `src-tauri/src/memory/` (append-only logs, 4-type taxonomy, index)
+- P3-F: Dream Consolidation Engine — background Rust task (Orient → Gather → Consolidate → Prune)
+- P3-G: Swarm Mailbox — `src-tauri/src/swarm/` (5 message types, permission flow)
+- P3-H: Communication UI — permission modal, message feed, agent presence
+
+### Session 3.3 — Compaction + Integration (P3-I through P3-L)
+- P3-I: Auto-Compact Engine — `src-tauri/src/compact/` (token counter, 85% threshold, 9-section summary)
+- P3-J: Context Management UI — context meter, compaction indicator, summary viewer
+- P3-K: TeamFile Manager + Persistent Sessions — per-persona config, crash recovery
+- P3-L: Integration Testing — end-to-end verification of all 5 systems
+
+**Depends on:** Phase 1 (Tauri shell, SQLite v1, provider system)
+
+---
+
+## Phase 4: Pretext Layout Engine + Document Generation (3 sessions) — MOVED FROM PHASE 3
 
 **Goal:** The canvas rendering primitive AND the dual-output document engine.
 
@@ -184,7 +215,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 4: Living Canvas HUD (3 sessions)
+## Phase 5: Living Canvas HUD (3 sessions) — WAS PHASE 4
 
 **Goal:** The center panel becomes an animated, GPU-accelerated visualization of system state. Every visual component uses the layout engine from Phase 3. Canvas for presentation, DOM for interaction.
 
@@ -230,7 +261,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 5: Dev Server Preview + Connectivity (2 sessions)
+## Phase 6: Dev Server Preview + Connectivity (2 sessions) — WAS PHASE 5
 
 **Goal:** Embedded live application preview and service health monitoring.
 
@@ -263,7 +294,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 6: Team Panel + Agent Presence (2 sessions)
+## Phase 7: Team Panel + Agent Presence (2 sessions) — WAS PHASE 6
 
 **Goal:** Personas as first-class visible entities with state and direct dispatch.
 
@@ -292,7 +323,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 7: Orchestration Engine + LightRAG (4 sessions)
+## Phase 8: Orchestration Engine + LightRAG (4 sessions) — WAS PHASE 7
 
 **Goal:** The Rust backend intelligence that makes autonomous agent dispatch work, plus knowledge graph.
 
@@ -357,7 +388,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 ---
 
-## Phase 8: Integration Test + DMS Reconnection (2 sessions)
+## Phase 9: Integration Test + DMS Reconnection (2 sessions) — WAS PHASE 8
 
 **Goal:** Prove the full system works end-to-end.
 
