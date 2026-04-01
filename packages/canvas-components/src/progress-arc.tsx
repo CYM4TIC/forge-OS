@@ -37,14 +37,18 @@ export interface ProgressArcProps {
   colorMode?: 'accent' | 'zone';
   /** Whether to animate value changes. Default: true */
   animated?: boolean;
+  /** Override the default aria-label for accessibility */
+  'aria-label'?: string;
   className?: string;
   style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
+// 4-zone model matching ContextMeterCanvas: green < 60%, yellow 60-80%, orange 80-85%, red 85%+
 function getZoneColor(value: number): string {
   if (value < 0.6) return COLORS.success;
-  if (value < 0.85) return COLORS.warning;
+  if (value < 0.8) return COLORS.warning;
+  if (value < 0.85) return '#f97316'; // orange — critical zone
   return COLORS.danger;
 }
 
@@ -57,6 +61,7 @@ export function ProgressArc({
   thickness = 0.12,
   colorMode = 'accent',
   animated = true,
+  'aria-label': ariaLabelProp,
   className,
   style: styleProp,
   onClick,
@@ -173,7 +178,7 @@ export function ProgressArc({
       style={{ width, height, ...styleProp }}
       onClick={onClick}
       role="img"
-      aria-label={`Progress: ${Math.round(value * 100)}%${subLabel ? ` — ${subLabel}` : ''}`}
+      aria-label={ariaLabelProp ?? `Progress: ${Math.round(value * 100)}%${subLabel ? ` — ${subLabel}` : ''}`}
     />
   );
 }
