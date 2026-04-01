@@ -4,6 +4,7 @@ mod database;
 mod dispatch;
 mod memory;
 mod providers;
+mod swarm;
 pub mod state;
 
 use std::sync::Arc;
@@ -175,6 +176,10 @@ pub fn run() {
             commands::memory::get_daily_log,
             commands::memory::trigger_dream,
             commands::memory::get_dream_status,
+            commands::swarm::swarm_send,
+            commands::swarm::swarm_get_messages,
+            commands::swarm::swarm_mark_read,
+            commands::swarm::swarm_respond_permission,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
