@@ -64,6 +64,17 @@ export function shrinkwrap(
   // Establish baseline line count at maxWidth
   const baselineLineCount = countLines(prepared, maxWidth);
 
+  // Empty text — return zero dimensions
+  if (baselineLineCount === 0) {
+    return {
+      width: 0,
+      height: 0,
+      lineCount: 0,
+      savedPixels: maxWidth,
+      iterations: 0,
+    };
+  }
+
   if (baselineLineCount <= 1) {
     // Single line — find exact text width using walkLineRanges
     let textWidth = 0;

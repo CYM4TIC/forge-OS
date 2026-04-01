@@ -298,6 +298,20 @@ export class ForgeWindowManager {
 
     panel.zOrder = this.nextZOrder++;
     this.emit({ type: 'panel_focused', panelId });
+
+    // Normalize z-indices when they get too high (prevent CSS z-index overflow)
+    if (this.nextZOrder > 1000) {
+      this.normalizeZOrder();
+    }
+  }
+
+  /** Compact z-indices to contiguous values (1, 2, 3...) */
+  private normalizeZOrder(): void {
+    const sorted = Array.from(this.panels.values()).sort((a, b) => a.zOrder - b.zOrder);
+    sorted.forEach((panel, i) => {
+      panel.zOrder = i + 1;
+    });
+    this.nextZOrder = sorted.length + 1;
   }
 
   // ── Tab Groups ──

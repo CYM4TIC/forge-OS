@@ -5,7 +5,7 @@
  *   1. Editorial-quality PDF (via jsPDF with Pretext measurement)
  *   2. Clean markdown (for Claude consumption)
  *
- * OS-ADL-020: Dual-output document generation.
+ * OS-ADL-010: Dual-output document generation.
  */
 
 // ─── Core Pipeline ──────────────────────────────────────────────────────────

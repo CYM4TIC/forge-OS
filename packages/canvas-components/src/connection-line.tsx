@@ -33,6 +33,8 @@ export interface ConnectionLineProps {
   arrowSize?: number;
   /** Curvature factor (0 = straight, 1 = full curve). Default: 0.3 */
   curvature?: number;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function ConnectionLine({
@@ -48,6 +50,8 @@ export function ConnectionLine({
   showArrow = true,
   arrowSize = 8,
   curvature = 0.3,
+  className,
+  style: styleProp,
 }: ConnectionLineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -138,7 +142,10 @@ export function ConnectionLine({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      role="img"
+      aria-label="Connection line"
     />
   );
 }

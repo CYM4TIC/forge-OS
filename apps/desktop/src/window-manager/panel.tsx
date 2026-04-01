@@ -2,7 +2,7 @@
 // Individual floating panel: drag handle, 8-edge resize, min/pop-out/close buttons.
 // The content slot receives dynamic width/height — every child must be size-aware.
 
-import { useCallback, useRef, type ReactNode, type MouseEvent } from 'react';
+import { useCallback, useRef, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react';
 import type { PanelInstance, ResizeHandle, PanelPosition, PanelSize } from './types';
 
 interface PanelContainerProps {
@@ -13,6 +13,8 @@ interface PanelContainerProps {
   onPopOut: (panelId: string) => void;
   onClose: (panelId: string) => void;
   onResizeStart: (panelId: string, handle: ResizeHandle, e: MouseEvent) => void;
+  onMove?: (panelId: string, position: PanelPosition) => void;
+  onResize?: (panelId: string, size: PanelSize) => void;
   children: ReactNode;
 }
 
@@ -37,6 +39,8 @@ export function PanelContainer({
   onPopOut,
   onClose,
   onResizeStart,
+  onMove,
+  onResize,
   children,
 }: PanelContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +50,54 @@ export function PanelContainer({
       onFocus(panel.id);
     },
     [panel.id, onFocus],
+  );
+
+  const MOVE_STEP = 20;
+  const RESIZE_STEP = 20;
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      const isShift = e.shiftKey;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          if (isShift && onResize) {
+            onResize(panel.id, { width: panel.size.width, height: panel.size.height - RESIZE_STEP });
+          } else if (onMove) {
+            onMove(panel.id, { x: panel.position.x, y: panel.position.y - MOVE_STEP });
+          }
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (isShift && onResize) {
+            onResize(panel.id, { width: panel.size.width, height: panel.size.height + RESIZE_STEP });
+          } else if (onMove) {
+            onMove(panel.id, { x: panel.position.x, y: panel.position.y + MOVE_STEP });
+          }
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (isShift && onResize) {
+            onResize(panel.id, { width: panel.size.width - RESIZE_STEP, height: panel.size.height });
+          } else if (onMove) {
+            onMove(panel.id, { x: panel.position.x - MOVE_STEP, y: panel.position.y });
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (isShift && onResize) {
+            onResize(panel.id, { width: panel.size.width + RESIZE_STEP, height: panel.size.height });
+          } else if (onMove) {
+            onMove(panel.id, { x: panel.position.x + MOVE_STEP, y: panel.position.y });
+          }
+          break;
+        case 'Escape':
+          onMinimize(panel.id);
+          break;
+      }
+    },
+    [panel.id, panel.position, panel.size, onMove, onResize, onMinimize],
   );
 
   const handleTitleBarMouseDown = useCallback(
@@ -75,7 +127,7 @@ export function PanelContainer({
   return (
     <div
       ref={containerRef}
-      className="absolute select-none"
+      className="absolute select-none focus:outline-none focus:ring-1 focus:ring-accent/50 rounded-lg transition-[transform,opacity] duration-200"
       style={{
         left: panel.position.x,
         top: panel.position.y,
@@ -83,7 +135,12 @@ export function PanelContainer({
         height: panel.size.height,
         zIndex: panel.zOrder,
       }}
+      tabIndex={0}
+      role="dialog"
+      aria-label={panel.title}
       onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      onFocus={() => onFocus(panel.id)}
     >
       {/* Panel frame — glowing border on focus */}
       <div className="h-full w-full rounded-lg border border-border-subtle bg-bg-secondary overflow-hidden flex flex-col shadow-lg shadow-black/40">
@@ -143,8 +200,8 @@ export function PanelContainer({
       {/* Resize handles — 8 edges/corners */}
       {/* North */}
       <div
-        className={`absolute top-0 left-[${HANDLE_SIZE}px] right-[${HANDLE_SIZE}px] h-[${HANDLE_SIZE}px] ${RESIZE_CURSORS.n}`}
-        style={{ top: 0, left: HANDLE_SIZE, right: HANDLE_SIZE, height: HANDLE_SIZE }}
+        className={RESIZE_CURSORS.n}
+        style={{ position: 'absolute', top: 0, left: HANDLE_SIZE, right: HANDLE_SIZE, height: HANDLE_SIZE }}
         onMouseDown={handleResizeMouseDown('n')}
       />
       {/* South */}

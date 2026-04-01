@@ -39,6 +39,9 @@ export interface DockPillProps {
   badgeCount?: number;
   /** Enable pulse animation for active state */
   pulse?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 export function DockPill({
@@ -49,6 +52,9 @@ export function DockPill({
   variant,
   badgeCount = 0,
   pulse = false,
+  className,
+  style: styleProp,
+  onClick,
 }: DockPillProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -156,7 +162,11 @@ export function DockPill({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height, borderRadius: height / 2 }}
+      className={className}
+      style={{ width, height, borderRadius: height / 2, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`${label} (${variant})${badgeCount > 0 ? ` — ${badgeCount} notifications` : ''}`}
     />
   );
 }

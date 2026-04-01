@@ -82,12 +82,14 @@ export function multiColumnLayout(
   config: ColumnConfig,
 ): MultiColumnResult {
   const {
-    columns: numColumns = 2,
+    columns: rawColumns = 2,
     columnGap = 24,
     containerWidth,
     maxColumnHeight,
     lineHeight,
   } = config;
+
+  const numColumns = Math.max(1, rawColumns);
 
   // Calculate column widths
   const totalGaps = (numColumns - 1) * columnGap;

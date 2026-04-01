@@ -54,6 +54,8 @@ export interface ContextMeterCanvasProps {
   isCompacting?: boolean;
   /** Orientation: horizontal bar or vertical bar. Default: 'horizontal' */
   orientation?: 'horizontal' | 'vertical';
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function ContextMeterCanvas({
@@ -64,6 +66,8 @@ export function ContextMeterCanvas({
   tokensTotal,
   isCompacting = false,
   orientation = 'horizontal',
+  className,
+  style: styleProp,
 }: ContextMeterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -188,7 +192,10 @@ export function ContextMeterCanvas({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      role="img"
+      aria-label={`Context window: ${Math.round(value * 100)}%${isCompacting ? ' (compacting)' : ''}`}
     />
   );
 }

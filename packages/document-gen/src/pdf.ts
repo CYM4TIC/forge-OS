@@ -241,6 +241,10 @@ export function renderPdf(
 
     if (pi > 0) doc.addPage([page.width, page.height]);
 
+    // Dark page background (rave/arcade aesthetic — OS-ADL visual direction)
+    doc.setFillColor(18, 18, 26);
+    doc.rect(0, 0, page.width, page.height, 'F');
+
     for (let bi = 0; bi < pageLayout.blockIndices.length; bi++) {
       const blockIdx = pageLayout.blockIndices[bi];
       const yOffset = pageLayout.blockOffsets[bi];
@@ -268,7 +272,7 @@ export function renderPdf(
     );
   }
 
-  return doc.output('arraybuffer') as unknown as Uint8Array;
+  return new Uint8Array(doc.output('arraybuffer'));
 }
 
 // ─── Block Renderer ─────────────────────────────────────────────────────────
@@ -434,7 +438,8 @@ function renderTable(
     for (let c = 0; c < colCount; c++) {
       const cellText = rows[r][c] ?? '';
       const truncated = doc.splitTextToSize(cellText, widths[c] - 8);
-      doc.text(truncated[0] ?? '', colX + 4, currentY + ctx.lineHeight);
+      const display = truncated.length > 1 ? (truncated[0] ?? '') + '...' : (truncated[0] ?? '');
+      doc.text(display, colX + 4, currentY + ctx.lineHeight);
       colX += widths[c];
     }
     currentY += rowHeight;

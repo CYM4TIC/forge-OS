@@ -114,10 +114,17 @@ export const gateReportTemplate: DocumentTemplate<GateReportData> = {
       text: 'Findings',
     });
 
-    blocks.push({
-      type: 'findings_table',
-      findings: data.findings,
-    });
+    if (data.findings.length > 0) {
+      blocks.push({
+        type: 'findings_table',
+        findings: data.findings,
+      });
+    } else {
+      blocks.push({
+        type: 'paragraph',
+        text: 'No findings.',
+      });
+    }
 
     // ── Pull Quotes ──
     if (data.pullQuotes && data.pullQuotes.length > 0) {

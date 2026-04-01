@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use super::engine::{
-    AssembledContext, BootstrapParams, CompactParams, CompactResult, ContextEngine, IngestResult,
-    MaintenanceParams, MaintenanceResult, MemoryEntry, SpawnParams, SpawnPreparation,
+    AssembledContext, BootstrapParams, CompactParams, CompactResult, ContextEngine, ContextError,
+    IngestResult, MaintenanceParams, MaintenanceResult, MemoryEntry, SpawnParams, SpawnPreparation,
     SubagentEndParams, TokenBudget, TurnParams,
 };
 use super::types::MemoryType;
@@ -49,10 +49,10 @@ impl KairosEngine {
     }
 
     /// Get current persona ID or error if not bootstrapped.
-    fn persona(&self) -> Result<&str, String> {
+    fn persona(&self) -> Result<&str, ContextError> {
         self.persona_id
             .as_deref()
-            .ok_or_else(|| "KairosEngine not bootstrapped — call bootstrap() first".to_string())
+            .ok_or_else(|| ContextError::Internal("KairosEngine not bootstrapped — call bootstrap() first".to_string()))
     }
 }
 
@@ -63,7 +63,7 @@ unsafe impl Send for KairosEngine {}
 unsafe impl Sync for KairosEngine {}
 
 impl ContextEngine for KairosEngine {
-    fn bootstrap(&mut self, params: BootstrapParams) -> Result<(), String> {
+    fn bootstrap(&mut self, params: BootstrapParams) -> Result<(), ContextError> {
         self.persona_id = Some(params.persona_id);
         self.project_id = params.project_id;
         self.session_id = Some(params.session_id);
@@ -71,7 +71,7 @@ impl ContextEngine for KairosEngine {
         Ok(())
     }
 
-    fn maintain(&mut self, params: MaintenanceParams) -> Result<MaintenanceResult, String> {
+    fn maintain(&mut self, params: MaintenanceParams) -> Result<MaintenanceResult, ContextError> {
         if !self.is_bootstrapped {
             return Ok(MaintenanceResult {
                 entries_pruned: 0,
@@ -80,7 +80,7 @@ impl ContextEngine for KairosEngine {
             });
         }
 
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let conn = self.conn.lock().map_err(|e| ContextError::Internal(e.to_string()))?;
 
         // Check if dream consolidation should run
         if params.force {
@@ -116,7 +116,7 @@ impl ContextEngine for KairosEngine {
         })
     }
 
-    fn ingest(&mut self, entry: MemoryEntry) -> Result<IngestResult, String> {
+    fn ingest(&mut self, entry: MemoryEntry) -> Result<IngestResult, ContextError> {
         let memory_type = MemoryType::from_str(&entry.memory_type).ok_or_else(|| {
             format!(
                 "Invalid memory_type: '{}'. Must be one of: user, feedback, project, reference",
@@ -129,7 +129,7 @@ impl ContextEngine for KairosEngine {
             .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
         let id = Uuid::new_v4().to_string();
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let conn = self.conn.lock().map_err(|e| ContextError::Internal(e.to_string()))?;
 
         logs::append_log(
             &conn,
@@ -139,7 +139,7 @@ impl ContextEngine for KairosEngine {
             &entry.content,
             &log_date,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| ContextError::Database(e.to_string()))?;
 
         Ok(IngestResult {
             entry_id: id,
@@ -147,17 +147,17 @@ impl ContextEngine for KairosEngine {
         })
     }
 
-    fn after_turn(&mut self, _params: TurnParams) -> Result<(), String> {
+    fn after_turn(&mut self, _params: TurnParams) -> Result<(), ContextError> {
         // KAIROS doesn't need per-turn processing currently.
         // Future: could trigger incremental index updates or TTL checks.
         Ok(())
     }
 
-    fn assemble(&self, budget: TokenBudget) -> Result<AssembledContext, String> {
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+    fn assemble(&self, budget: TokenBudget) -> Result<AssembledContext, ContextError> {
+        let conn = self.conn.lock().map_err(|e| ContextError::Internal(e.to_string()))?;
 
         // Generate the full memory index
-        let full_index = index::generate_memory_index(&conn).map_err(|e| e.to_string())?;
+        let full_index = index::generate_memory_index(&conn).map_err(|e| ContextError::Database(e.to_string()))?;
 
         // Estimate token count (rough: 4 chars per token)
         let estimated_tokens = full_index.len() / 4;
@@ -201,7 +201,7 @@ impl ContextEngine for KairosEngine {
             };
 
             let type_topics =
-                topics::list_topics(&conn, Some(&memory_type), false).map_err(|e| e.to_string())?;
+                topics::list_topics(&conn, Some(&memory_type), false).map_err(|e| ContextError::Database(e.to_string()))?;
 
             if type_topics.is_empty() {
                 continue;
@@ -233,7 +233,7 @@ impl ContextEngine for KairosEngine {
         })
     }
 
-    fn compact(&mut self, _params: CompactParams) -> Result<CompactResult, String> {
+    fn compact(&mut self, _params: CompactParams) -> Result<CompactResult, ContextError> {
         // Compaction is handled by the compact module, not KAIROS directly.
         // This method exists for engines that manage their own compaction.
         // KAIROS delegates to compact::CompactionEngine externally.
@@ -244,7 +244,7 @@ impl ContextEngine for KairosEngine {
         })
     }
 
-    fn prepare_subagent_spawn(&self, params: SpawnParams) -> Result<SpawnPreparation, String> {
+    fn prepare_subagent_spawn(&self, params: SpawnParams) -> Result<SpawnPreparation, ContextError> {
         // Assemble a focused context block for the spawning agent
         let budget = TokenBudget {
             max_tokens: params.token_budget,
@@ -277,9 +277,9 @@ impl ContextEngine for KairosEngine {
         })
     }
 
-    fn on_subagent_ended(&mut self, params: SubagentEndParams) -> Result<(), String> {
+    fn on_subagent_ended(&mut self, params: SubagentEndParams) -> Result<(), ContextError> {
         // Ingest any findings as memory entries
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+        let conn = self.conn.lock().map_err(|e| ContextError::Internal(e.to_string()))?;
         let log_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
 
         for finding in &params.findings {
@@ -297,13 +297,13 @@ impl ContextEngine for KairosEngine {
                 &content,
                 &log_date,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| ContextError::Database(e.to_string()))?;
         }
 
         Ok(())
     }
 
-    fn dispose(&mut self) -> Result<(), String> {
+    fn dispose(&mut self) -> Result<(), ContextError> {
         self.is_bootstrapped = false;
         self.persona_id = None;
         self.project_id = None;
@@ -315,9 +315,9 @@ impl ContextEngine for KairosEngine {
         "kairos"
     }
 
-    fn generate_index(&self) -> Result<String, String> {
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
-        index::generate_memory_index(&conn).map_err(|e| e.to_string())
+    fn generate_index(&self) -> Result<String, ContextError> {
+        let conn = self.conn.lock().map_err(|e| ContextError::Internal(e.to_string()))?;
+        index::generate_memory_index(&conn).map_err(|e| ContextError::Database(e.to_string()))
     }
 }
 

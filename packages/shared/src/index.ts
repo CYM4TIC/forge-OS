@@ -1,3 +1,3 @@
-// Shared types package — currently empty.
-// Authoritative types live in apps/desktop/src/lib/tauri.ts.
-// Shared types will be migrated here once the type system stabilizes (Phase 5+).
+// ─── Persona Registry ───────────────────────────────────────────────────────
+export type { PersonaSlug } from './personas.js';
+export { PERSONA_COLORS, PERSONA_NAMES, PERSONA_GLYPHS } from './personas.js';

@@ -37,6 +37,9 @@ export interface ProgressArcProps {
   colorMode?: 'accent' | 'zone';
   /** Whether to animate value changes. Default: true */
   animated?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 function getZoneColor(value: number): string {
@@ -54,6 +57,9 @@ export function ProgressArc({
   thickness = 0.12,
   colorMode = 'accent',
   animated = true,
+  className,
+  style: styleProp,
+  onClick,
 }: ProgressArcProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatedValue = useRef(0);
@@ -76,7 +82,7 @@ export function ProgressArc({
     const lineWidth = radius * thickness;
 
     const startAngle = -Math.PI / 2; // 12 o'clock
-    const endAngle = startAngle + Math.PI * 2 * Math.min(currentValue, 1);
+    const endAngle = startAngle + Math.PI * 2 * Math.max(0, Math.min(currentValue, 1));
 
     // Track background
     ctx.beginPath();
@@ -163,7 +169,11 @@ export function ProgressArc({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`Progress: ${Math.round(value * 100)}%${subLabel ? ` — ${subLabel}` : ''}`}
     />
   );
 }

@@ -168,19 +168,37 @@ pub struct SeverityCounts {
 /// Check out a finding for exclusive work. Prevents parallel agents from
 /// working on the same finding simultaneously.
 /// Returns Err if the finding is already checked out by another agent.
+/// Stale checkout threshold: checkouts older than this are auto-released.
+const CHECKOUT_TTL_MINUTES: i64 = 30;
+
 pub fn checkout_finding(
     conn: &Connection,
     id: &str,
     agent_slug: &str,
 ) -> Result<(), rusqlite::Error> {
     let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+
+    // First, release any stale checkouts (older than CHECKOUT_TTL_MINUTES)
+    conn.execute(
+        &format!(
+            "UPDATE findings SET checked_out_by = NULL, checked_out_at = NULL
+             WHERE checked_out_by IS NOT NULL
+               AND checked_out_at < datetime('now', '-{} minutes')
+               AND resolved_at IS NULL",
+            CHECKOUT_TTL_MINUTES
+        ),
+        [],
+    )?;
+
     let rows = conn.execute(
         "UPDATE findings SET checked_out_by = ?2, checked_out_at = ?3
          WHERE id = ?1 AND (checked_out_by IS NULL OR resolved_at IS NOT NULL)",
         params![id, agent_slug, now],
     )?;
     if rows == 0 {
-        return Err(rusqlite::Error::QueryReturnedNoRows);
+        return Err(rusqlite::Error::InvalidParameterName(
+            format!("Finding '{}' is already checked out by another agent", id),
+        ));
     }
     Ok(())
 }

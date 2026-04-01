@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@forge-os/layout-engine": "workspace:*",
+    "@forge-os/shared": "workspace:*",
     "jspdf": "^2.5.2"
   },
   "devDependencies": {

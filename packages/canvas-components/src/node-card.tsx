@@ -42,6 +42,9 @@ export interface NodeCardProps {
   bgColor?: string;
   /** Border radius in px. Default: 8 */
   borderRadius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 function statusToColor(status: NodeStatus): string {
@@ -64,6 +67,9 @@ export function NodeCard({
   selected = false,
   bgColor,
   borderRadius = 8,
+  className,
+  style: styleProp,
+  onClick,
 }: NodeCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -128,7 +134,7 @@ export function NodeCard({
       });
 
       const labelY = subLabel ? height * 0.32 : height / 2;
-      ctx.font = `600 ${fit.font}`;
+      ctx.font = fit.font;
       ctx.fillStyle = COLORS.text;
       ctx.textBaseline = 'middle';
       ctx.fillText(label, textX, labelY, textWidth);
@@ -176,7 +182,11 @@ export function NodeCard({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height, borderRadius }}
+      className={className}
+      style={{ width, height, borderRadius, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`${label}${subLabel ? ` — ${subLabel}` : ''} (${status})`}
     />
   );
 }

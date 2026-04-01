@@ -41,6 +41,8 @@ export interface FlowParticleProps {
   showPath?: boolean;
   /** Path line color. Default: '#1f1f2e' */
   pathColor?: string;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 function bezierPoint(t: number, p: BezierPath): { x: number; y: number } {
@@ -67,6 +69,8 @@ export function FlowParticle({
   loop = true,
   showPath = true,
   pathColor = '#1f1f2e',
+  className,
+  style: styleProp,
 }: FlowParticleProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -139,6 +143,7 @@ export function FlowParticle({
       let progress = (elapsed % duration) / duration;
 
       if (!loop && elapsed > duration) {
+        cancelAnimationFrame(animFrameRef.current);
         draw(1);
         return;
       }
@@ -154,7 +159,10 @@ export function FlowParticle({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      role="img"
+      aria-label="Flow particle animation"
     />
   );
 }

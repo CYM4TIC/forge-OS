@@ -11,9 +11,9 @@ import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type PersonaSlug =
-  | 'nyx' | 'pierce' | 'mara' | 'riven' | 'kehinde'
-  | 'tanaka' | 'vane' | 'voss' | 'calloway' | 'sable';
+// PersonaSlug imported from @forge-os/shared (single source of truth)
+export type { PersonaSlug } from '@forge-os/shared';
+import type { PersonaSlug } from '@forge-os/shared';
 
 export type GlyphState = 'idle' | 'thinking' | 'speaking' | 'finding' | 'complete' | 'error';
 
@@ -30,6 +30,9 @@ export interface PersonaGlyphProps {
   severityColor?: string;
   /** Glow intensity multiplier. Default: 1 */
   glowIntensity?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 // ─── Persona Registry ────────────────────────────────────────────────────────
@@ -61,6 +64,9 @@ export function PersonaGlyph({
   color: colorOverride,
   severityColor,
   glowIntensity = 1,
+  className,
+  style: styleProp,
+  onClick,
 }: PersonaGlyphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -118,12 +124,17 @@ export function PersonaGlyph({
       return () => cancelAnimationFrame(animFrameRef.current);
     }
 
-    // Error state: rapid shake
+    // Error state: rapid shake for 1.5s, then settle to static
     if (state === 'error') {
       const startTime = performance.now();
+      const errorDuration = 1500;
       function animate(now: number) {
-        const elapsed = (now - startTime) / 150;
-        render(elapsed);
+        const elapsed = now - startTime;
+        if (elapsed > errorDuration) {
+          render(0); // Settle to static error state
+          return;
+        }
+        render(elapsed / 150);
         animFrameRef.current = requestAnimationFrame(animate);
       }
       animFrameRef.current = requestAnimationFrame(animate);
@@ -150,7 +161,11 @@ export function PersonaGlyph({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width: size, height: size }}
+      className={className}
+      style={{ width: size, height: size, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`${persona} persona (${state})`}
       title={persona}
     />
   );

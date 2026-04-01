@@ -35,6 +35,12 @@ export interface StatCardProps {
   trendText?: string;
   /** Override accent color for the value */
   valueColor?: string;
+  /** Additional CSS class name */
+  className?: string;
+  /** Additional inline styles (merged with internal styles) */
+  style?: React.CSSProperties;
+  /** Click handler */
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 export function StatCard({
@@ -45,6 +51,9 @@ export function StatCard({
   trend,
   trendText,
   valueColor,
+  className,
+  style: styleProp,
+  onClick,
 }: StatCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -68,9 +77,10 @@ export function StatCard({
     const trendZoneTop = labelZoneTop + labelZoneHeight;
     const trendZoneHeight = height * 0.2;
 
-    // Value — large, centered, accent-colored
+    // Value — large, centered, accent-colored (empty/undefined → dash placeholder)
+    const displayValue = value || '—';
     const valueFontSize = Math.min(Math.floor(height * 0.3), 48);
-    renderText(ctx, value, {
+    renderText(ctx, displayValue, {
       width, height: valueZoneHeight,
       font: `bold ${valueFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`,
       lineHeight: Math.ceil(valueFontSize * 1.2),
@@ -123,7 +133,11 @@ export function StatCard({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height, borderRadius: 8 }}
+      className={className}
+      style={{ width, height, borderRadius: 8, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`${label}: ${value}${trend ? ` (${trend}${trendText ? ' ' + trendText : ''})` : ''}`}
     />
   );
 }

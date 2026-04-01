@@ -304,7 +304,8 @@ export function setupCanvasForHiDPI(
   canvas.style.width = `${logicalWidth}px`;
   canvas.style.height = `${logicalHeight}px`;
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to get 2D canvas context');
   // Note: don't scale here — renderText/renderStyledSpans handle their own DPR scaling
   return ctx;
 }

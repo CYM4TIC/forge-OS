@@ -8,7 +8,7 @@
  */
 
 import { useRef, useEffect, useCallback, useMemo } from 'react';
-import { setupCanvasForHiDPI, measureText } from '@forge-os/layout-engine';
+import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
 const COLORS = {
   text: '#e8e8ed',
@@ -33,6 +33,8 @@ export interface TokenGaugeProps {
   fontSize?: number;
   /** Text alignment. Default: 'center' */
   align?: 'left' | 'center' | 'right';
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function TokenGauge({
@@ -44,6 +46,8 @@ export function TokenGauge({
   valueColor = COLORS.accent,
   fontSize: fontSizeProp,
   align = 'center',
+  className,
+  style: styleProp,
 }: TokenGaugeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -52,11 +56,10 @@ export function TokenGauge({
   const font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
 
   const reservedWidth = useMemo(() => {
-    const measurement = measureText(maxValue, width, { font }, { lineHeight: Math.ceil(fontSize * 1.2) });
-    // We don't use height here — we need the text width from canvas
-    // Fall back to character count estimate: fontSize * 0.6 per char
+    // Reserve width for widest possible value to prevent layout shift.
+    // Use character count estimate: fontSize * 0.6 per char (monospace-safe).
     return maxValue.length * fontSize * 0.6;
-  }, [maxValue, width, font, fontSize]);
+  }, [maxValue, fontSize]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -124,7 +127,10 @@ export function TokenGauge({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      role="img"
+      aria-label={`${label ? label + ': ' : ''}${value}`}
     />
   );
 }

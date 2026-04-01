@@ -7,6 +7,47 @@
 //! The dispatch pipeline calls ContextEngine methods — never KAIROS directly.
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
+/// Typed errors for ContextEngine operations.
+/// Richer than `String` — callers can distinguish error classes.
+/// `.to_string()` conversion happens only at the Tauri command boundary.
+#[derive(Debug)]
+pub enum ContextError {
+    /// Database or storage operation failed
+    Database(String),
+    /// Requested resource not found
+    NotFound(String),
+    /// Token budget exceeded or miscalculated
+    Budget(String),
+    /// Internal/unexpected error
+    Internal(String),
+}
+
+impl fmt::Display for ContextError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Database(msg) => write!(f, "database error: {}", msg),
+            Self::NotFound(msg) => write!(f, "not found: {}", msg),
+            Self::Budget(msg) => write!(f, "budget error: {}", msg),
+            Self::Internal(msg) => write!(f, "internal error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ContextError {}
+
+impl From<rusqlite::Error> for ContextError {
+    fn from(e: rusqlite::Error) -> Self {
+        ContextError::Database(e.to_string())
+    }
+}
+
+impl From<String> for ContextError {
+    fn from(s: String) -> Self {
+        ContextError::Internal(s)
+    }
+}
 
 /// Parameters for bootstrapping a context engine at session start.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -166,35 +207,35 @@ pub struct SubagentEndParams {
 /// 9. `dispose` — called at session end for cleanup
 pub trait ContextEngine: Send + Sync {
     /// Initialize the engine for a session. Load relevant memory, set up indices.
-    fn bootstrap(&mut self, params: BootstrapParams) -> Result<(), String>;
+    fn bootstrap(&mut self, params: BootstrapParams) -> Result<(), ContextError>;
 
     /// Periodic maintenance: TTL expiry, index refresh, cleanup.
-    fn maintain(&mut self, params: MaintenanceParams) -> Result<MaintenanceResult, String>;
+    fn maintain(&mut self, params: MaintenanceParams) -> Result<MaintenanceResult, ContextError>;
 
     /// Ingest a new memory entry (from a persona's work during a session).
-    fn ingest(&mut self, entry: MemoryEntry) -> Result<IngestResult, String>;
+    fn ingest(&mut self, entry: MemoryEntry) -> Result<IngestResult, ContextError>;
 
     /// Post-turn hook: update state after each conversation turn.
-    fn after_turn(&mut self, params: TurnParams) -> Result<(), String>;
+    fn after_turn(&mut self, params: TurnParams) -> Result<(), ContextError>;
 
     /// Assemble context for prompt injection, respecting a token budget.
-    fn assemble(&self, budget: TokenBudget) -> Result<AssembledContext, String>;
+    fn assemble(&self, budget: TokenBudget) -> Result<AssembledContext, ContextError>;
 
     /// Compact the context when the window is getting full.
-    fn compact(&mut self, params: CompactParams) -> Result<CompactResult, String>;
+    fn compact(&mut self, params: CompactParams) -> Result<CompactResult, ContextError>;
 
     /// Prepare context for a subagent about to be spawned.
-    fn prepare_subagent_spawn(&self, params: SpawnParams) -> Result<SpawnPreparation, String>;
+    fn prepare_subagent_spawn(&self, params: SpawnParams) -> Result<SpawnPreparation, ContextError>;
 
     /// Process results from a completed subagent.
-    fn on_subagent_ended(&mut self, params: SubagentEndParams) -> Result<(), String>;
+    fn on_subagent_ended(&mut self, params: SubagentEndParams) -> Result<(), ContextError>;
 
     /// Cleanup at session end. Flush pending writes, close resources.
-    fn dispose(&mut self) -> Result<(), String>;
+    fn dispose(&mut self) -> Result<(), ContextError>;
 
     /// Human-readable name for this engine implementation.
     fn name(&self) -> &str;
 
     /// Generate the current memory index (MEMORY.md equivalent).
-    fn generate_index(&self) -> Result<String, String>;
+    fn generate_index(&self) -> Result<String, ContextError>;
 }

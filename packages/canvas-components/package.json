@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@forge-os/layout-engine": "workspace:*",
-    "react": "^19.0.0"
+    "@forge-os/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

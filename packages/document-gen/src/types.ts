@@ -4,7 +4,7 @@
  * Dual-output document generation: same content blocks produce both
  * editorial-quality PDF (via Pretext + jsPDF) and clean markdown (for Claude).
  *
- * OS-ADL-020: Dual-output document generation.
+ * OS-ADL-010: Dual-output document generation.
  */
 
 import type { PersonaSlug } from './persona-colors.js';

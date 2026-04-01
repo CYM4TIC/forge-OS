@@ -32,12 +32,31 @@ pub struct SearchResult {
 /// - Boolean: "Pierce AND flagged"
 /// - Prefix: "set*"
 /// - Column filter: "role:assistant"
+/// Sanitize a query for FTS5 MATCH safety.
+/// Wraps in double-quotes for literal matching if the query contains
+/// potentially problematic FTS5 syntax characters.
+fn sanitize_fts5_query(query: &str) -> String {
+    let trimmed = query.trim();
+    if trimmed.is_empty() {
+        return "\"\"".to_string();
+    }
+    // If query contains unbalanced quotes or bare operators, wrap for safety
+    let has_special = trimmed.contains('"') && trimmed.matches('"').count() % 2 != 0;
+    if has_special {
+        // Escape embedded quotes and wrap
+        format!("\"{}\"", trimmed.replace('"', "\"\""))
+    } else {
+        trimmed.to_string()
+    }
+}
+
 pub fn search_sessions(
     conn: &Connection,
     query: &str,
     limit: Option<u32>,
 ) -> Result<Vec<SearchResult>, rusqlite::Error> {
     let limit = limit.unwrap_or(20).min(100);
+    let safe_query = sanitize_fts5_query(query);
 
     let mut stmt = conn.prepare(
         "SELECT
@@ -55,7 +74,7 @@ pub fn search_sessions(
          LIMIT ?2",
     )?;
 
-    let rows = stmt.query_map(params![query, limit], |row| {
+    let rows = stmt.query_map(params![safe_query, limit], |row| {
         Ok(SearchResult {
             content: row.get(0)?,
             role: row.get(1)?,

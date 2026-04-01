@@ -31,6 +31,9 @@ export interface StatusBadgeProps {
   label?: string;
   /** Enable pulse animation for active/danger states. Default: true for active/danger */
   pulse?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
 function statusColor(status: BadgeStatus): string {
@@ -49,6 +52,9 @@ export function StatusBadge({
   status,
   label,
   pulse,
+  className,
+  style: styleProp,
+  onClick,
 }: StatusBadgeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -75,8 +81,6 @@ export function StatusBadge({
       const alpha = 0.4 * (1 - pulsePhase);
       ctx.beginPath();
       ctx.arc(dotX, dotY, glowRadius, 0, Math.PI * 2);
-      ctx.fillStyle = color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
-      // Fallback for hex colors
       ctx.globalAlpha = alpha;
       ctx.fillStyle = color;
       ctx.fill();
@@ -128,7 +132,11 @@ export function StatusBadge({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width, height }}
+      className={className}
+      style={{ width, height, ...styleProp }}
+      onClick={onClick}
+      role="img"
+      aria-label={`Status: ${status}${label ? ` — ${label}` : ''}`}
     />
   );
 }

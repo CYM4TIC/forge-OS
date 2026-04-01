@@ -123,8 +123,8 @@ export function DockBar({
       className="flex items-center px-3 border-t border-border-subtle bg-bg-primary/80 backdrop-blur-sm"
       style={{ height: DOCK_BAR_HEIGHT }}
     >
-      {/* Panel pills — full width, no scroll needed now that presets are in titlebar */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      {/* Panel pills — horizontal scroll for overflow */}
+      <div className="flex items-center gap-1.5 overflow-x-auto" style={{ maxHeight: DOCK_BAR_HEIGHT - 8 }}>
         {pills.map((pill, i) => (
           <DockPill
             key={pill.panelId ?? `${pill.type}-${i}`}
@@ -137,4 +137,4 @@ export function DockBar({
   );
 }
 
-export { DOCK_BAR_HEIGHT };
+// DOCK_BAR_HEIGHT exported from snapping.ts via index barrel

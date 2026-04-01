@@ -44,8 +44,9 @@ export interface BatchPrepareResult {
 // ─── Font Cache ──────────────────────────────────────────────────────────────
 
 /**
- * LRU-style cache for prepared text. Keyed by `${font}::${text}::${whiteSpace}`.
+ * LRU cache for prepared text. Keyed by `${font}::${text}::${whiteSpace}`.
  * Prevents redundant canvas.measureText() calls across re-renders.
+ * On access, entries are moved to end of Map to implement true LRU eviction.
  */
 const preparedCache = new Map<string, PreparedText>();
 const segmentsCache = new Map<string, PreparedTextWithSegments>();
@@ -56,9 +57,15 @@ function cacheKey(text: string, font: string, whiteSpace: string): string {
   return `${font}::${whiteSpace}::${text}`;
 }
 
+/** Move a key to the end of the Map (most recently used). */
+function touchLru<V>(cache: Map<string, V>, key: string, value: V): void {
+  cache.delete(key);
+  cache.set(key, value);
+}
+
 function evictIfNeeded(cache: Map<string, unknown>): void {
   if (cache.size > MAX_CACHE_SIZE) {
-    // Drop oldest 25% (simple eviction — not true LRU, but sufficient)
+    // Drop oldest 25% (LRU — oldest entries are at the front of the Map)
     const dropCount = Math.floor(MAX_CACHE_SIZE * 0.25);
     const keys = cache.keys();
     for (let i = 0; i < dropCount; i++) {
@@ -82,7 +89,10 @@ export function prepareSingle(
   const key = cacheKey(text, options.font, ws);
 
   const cached = preparedCache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    touchLru(preparedCache, key, cached);
+    return cached;
+  }
 
   const result = pretextPrepare(text, options.font, { whiteSpace: ws });
   evictIfNeeded(preparedCache);
@@ -101,7 +111,10 @@ export function prepareSingleWithSegments(
   const key = cacheKey(text, options.font, ws);
 
   const cached = segmentsCache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    touchLru(segmentsCache, key, cached);
+    return cached;
+  }
 
   const result = pretextPrepareWithSegments(text, options.font, { whiteSpace: ws });
   evictIfNeeded(segmentsCache);
@@ -131,6 +144,7 @@ export function batchPrepare(
     let pt = preparedCache.get(ck);
     if (pt) {
       cacheHits++;
+      touchLru(preparedCache, ck, pt);
     } else {
       pt = pretextPrepare(item.text, options.font, { whiteSpace: ws });
       evictIfNeeded(preparedCache);
@@ -140,7 +154,9 @@ export function batchPrepare(
 
     // PreparedTextWithSegments (always — needed for fit/canvas render)
     let seg = segmentsCache.get(ck);
-    if (!seg) {
+    if (seg) {
+      touchLru(segmentsCache, ck, seg);
+    } else {
       seg = pretextPrepareWithSegments(item.text, options.font, { whiteSpace: ws });
       evictIfNeeded(segmentsCache);
       segmentsCache.set(ck, seg);

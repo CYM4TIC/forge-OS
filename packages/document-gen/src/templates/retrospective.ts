@@ -14,6 +14,7 @@ import type {
   DocumentTemplate,
 } from '../types.js';
 import type { PersonaSlug } from '../persona-colors.js';
+import { PERSONA_NAMES } from '../persona-colors.js';
 
 // ─── Template Data ──────────────────────────────────────────────────────────
 
@@ -218,7 +219,7 @@ export const retrospectiveTemplate: DocumentTemplate<RetrospectiveData> = {
         headers: ['Action', 'Owner', 'Due'],
         rows: data.actionItems.map(ai => [
           ai.text,
-          ai.owner ?? '—',
+          ai.owner ? PERSONA_NAMES[ai.owner] ?? ai.owner : '—',
           ai.dueBy ?? '—',
         ]),
         columnWidths: [0.60, 0.20, 0.20],

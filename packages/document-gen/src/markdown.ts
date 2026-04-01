@@ -1,7 +1,7 @@
 /**
  * Markdown output generator — converts ContentBlock[] to clean markdown.
  *
- * The second half of OS-ADL-020 (dual output). Same content blocks that
+ * The second half of OS-ADL-010 (dual output). Same content blocks that
  * produce editorial PDF also produce markdown that Claude can read and
  * reason about. No visual formatting — just structured text.
  */
@@ -69,16 +69,20 @@ function renderBlockToMarkdown(block: ContentBlock): string {
   }
 }
 
+function escapeMdCell(s: string): string {
+  return s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
+
 function renderTableMd(headers: string[], rows: string[][]): string {
   const lines: string[] = [];
 
   // Header row
-  lines.push(`| ${headers.join(' | ')} |`);
+  lines.push(`| ${headers.map(escapeMdCell).join(' | ')} |`);
   lines.push(`| ${headers.map(() => '---').join(' | ')} |`);
 
   // Data rows
   for (const row of rows) {
-    const cells = headers.map((_, i) => row[i] ?? '');
+    const cells = headers.map((_, i) => escapeMdCell(row[i] ?? ''));
     lines.push(`| ${cells.join(' | ')} |`);
   }
 
