@@ -15,3 +15,13 @@ export type { ProgressArcProps } from './progress-arc.js';
 
 export { StatusBadge } from './status-badge.js';
 export type { StatusBadgeProps, BadgeStatus } from './status-badge.js';
+
+// ─── Flow Components (P4-N) ─────────────────────────────────────────────────
+export { FlowParticle } from './flow-particle.js';
+export type { FlowParticleProps, BezierPath } from './flow-particle.js';
+
+export { ConnectionLine } from './connection-line.js';
+export type { ConnectionLineProps } from './connection-line.js';
+
+export { NodeCard } from './node-card.js';
+export type { NodeCardProps, NodeStatus } from './node-card.js';
