@@ -8,3 +8,4 @@ pub mod memory;
 pub mod swarm;
 pub mod compact;
 pub mod team;
+pub mod search;

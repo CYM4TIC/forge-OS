@@ -35,5 +35,27 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 5;")?;
     }
 
+    // Phase 4: Tool result TTL tracking
+    if current_version < 6 {
+        conn.execute_batch(schema::SCHEMA_V6)?;
+        conn.execute_batch("PRAGMA user_version = 6;")?;
+    }
+
+    // Phase 4: FTS5 full-text search on messages
+    if current_version < 7 {
+        // Populate FTS5 index from existing messages
+        conn.execute_batch(schema::SCHEMA_V7)?;
+        conn.execute_batch(
+            "INSERT INTO messages_fts(rowid, content, role, session_id) SELECT rowid, content, role, session_id FROM messages;"
+        )?;
+        conn.execute_batch("PRAGMA user_version = 7;")?;
+    }
+
+    // Phase 4: Atomic task checkout on findings
+    if current_version < 8 {
+        conn.execute_batch(schema::SCHEMA_V8)?;
+        conn.execute_batch("PRAGMA user_version = 8;")?;
+    }
+
     Ok(())
 }
