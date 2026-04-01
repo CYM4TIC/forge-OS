@@ -564,3 +564,77 @@ export function checkoutFinding(findingId: string, agentSlug: string): Promise<v
 export function releaseFinding(findingId: string): Promise<void> {
   return invoke('release_finding', { findingId });
 }
+
+// ── Layout Persistence commands ──
+
+export interface SaveLayoutRequest {
+  panels_json: string;
+  tab_groups_json: string;
+  active_preset_id: string | null;
+}
+
+export interface LoadLayoutResponse {
+  panels_json: string;
+  tab_groups_json: string;
+  active_preset_id: string | null;
+}
+
+export interface PresetRow {
+  id: string;
+  name: string;
+  description: string;
+  is_built_in: number;
+  panels_json: string;
+  created_at: string;
+}
+
+export function savePanelLayout(request: SaveLayoutRequest): Promise<void> {
+  return invoke('save_panel_layout', { request });
+}
+
+export function loadPanelLayout(): Promise<LoadLayoutResponse | null> {
+  return invoke('load_panel_layout');
+}
+
+export function saveWorkspacePreset(request: {
+  id: string;
+  name: string;
+  description: string;
+  is_built_in: boolean;
+  panels_json: string;
+}): Promise<void> {
+  return invoke('save_workspace_preset', { request });
+}
+
+export function loadWorkspacePresets(): Promise<PresetRow[]> {
+  return invoke('load_workspace_presets');
+}
+
+// ── Pop-Out Window commands ──
+
+export interface CreatePanelWindowRequest {
+  panel_id: string;
+  panel_type: string;
+  title: string;
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+}
+
+export interface PanelWindowInfo {
+  panel_id: string;
+  label: string;
+}
+
+export function createPanelWindow(request: CreatePanelWindowRequest): Promise<PanelWindowInfo> {
+  return invoke('create_panel_window', { request });
+}
+
+export function closePanelWindow(panelId: string): Promise<boolean> {
+  return invoke('close_panel_window', { panelId });
+}
+
+export function listPanelWindows(): Promise<string[]> {
+  return invoke('list_panel_windows');
+}

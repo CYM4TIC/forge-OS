@@ -9,3 +9,5 @@ pub mod swarm;
 pub mod compact;
 pub mod team;
 pub mod search;
+pub mod layout;
+pub mod windows;

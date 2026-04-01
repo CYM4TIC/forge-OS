@@ -216,6 +216,13 @@ pub fn run() {
             commands::search::search_sessions,
             commands::build_state::checkout_finding,
             commands::build_state::release_finding,
+            commands::layout::save_panel_layout,
+            commands::layout::load_panel_layout,
+            commands::layout::save_workspace_preset,
+            commands::layout::load_workspace_presets,
+            commands::windows::create_panel_window,
+            commands::windows::close_panel_window,
+            commands::windows::list_panel_windows,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

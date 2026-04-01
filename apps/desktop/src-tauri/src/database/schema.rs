@@ -285,3 +285,49 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_findings_checkout
     ON findings(id) WHERE checked_out_by IS NOT NULL AND resolved_at IS NULL;
 COMMIT;
 "#;
+
+/// Phase 4 schema v9: Window manager layout persistence.
+/// Replaces the v1 panel_layout blob table with structured per-panel state.
+pub const SCHEMA_V9: &str = r#"
+BEGIN IMMEDIATE;
+-- Panel layout state: one row per panel instance
+CREATE TABLE IF NOT EXISTS panel_layouts_v2 (
+    panel_id TEXT PRIMARY KEY NOT NULL,
+    panel_type TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'docked' CHECK (state IN ('docked', 'floating', 'minimized', 'popped_out')),
+    x INTEGER NOT NULL DEFAULT 0,
+    y INTEGER NOT NULL DEFAULT 0,
+    width INTEGER NOT NULL DEFAULT 400,
+    height INTEGER NOT NULL DEFAULT 300,
+    z_order INTEGER NOT NULL DEFAULT 0,
+    monitor INTEGER NOT NULL DEFAULT 0,
+    tab_group_id TEXT,
+    tab_order INTEGER NOT NULL DEFAULT 0,
+    workspace_preset TEXT,
+    title TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_panel_layouts_v2_type ON panel_layouts_v2(panel_type);
+CREATE INDEX IF NOT EXISTS idx_panel_layouts_v2_state ON panel_layouts_v2(state);
+CREATE INDEX IF NOT EXISTS idx_panel_layouts_v2_tab_group ON panel_layouts_v2(tab_group_id) WHERE tab_group_id IS NOT NULL;
+
+-- Workspace presets: named layout snapshots
+CREATE TABLE IF NOT EXISTS workspace_presets (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    is_built_in INTEGER NOT NULL DEFAULT 0,
+    panels_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Layout state blob: full serialized state for quick save/restore
+CREATE TABLE IF NOT EXISTS layout_state (
+    id TEXT PRIMARY KEY NOT NULL DEFAULT 'current',
+    panels_json TEXT NOT NULL DEFAULT '[]',
+    tab_groups_json TEXT NOT NULL DEFAULT '[]',
+    active_preset_id TEXT,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+COMMIT;
+"#;

@@ -57,5 +57,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 8;")?;
     }
 
+    // Phase 4: Window manager layout persistence
+    if current_version < 9 {
+        conn.execute_batch(schema::SCHEMA_V9)?;
+        conn.execute_batch("PRAGMA user_version = 9;")?;
+    }
+
     Ok(())
 }
