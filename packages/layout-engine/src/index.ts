@@ -57,6 +57,49 @@ export {
   createIncrementalHeightMap,
 } from './virtual.js';
 
+// ─── Shrinkwrap (zero wasted pixels) ─────────────────────────────────────────
+export { shrinkwrap, shrinkwrapText, batchShrinkwrap } from './shrinkwrap.js';
+export type { ShrinkwrapResult, ShrinkwrapOptions } from './shrinkwrap.js';
+
+// ─── Rich Inline (atomic chips + text flow) ──────────────────────────────────
+export { layoutRichInline } from './rich-inline.js';
+export type {
+  TextRun,
+  InlineChip,
+  InlineElement,
+  RichLayoutLine,
+  PlacedInlineElement,
+  RichLayoutResult,
+  RichLayoutOptions,
+} from './rich-inline.js';
+
+// ─── Obstacle-Aware Flow (text around elements) ─────────────────────────────
+export { flowAroundObstacles, flowTextAroundObstacles } from './obstacle-flow.js';
+export type {
+  Obstacle,
+  FlowLine,
+  ObstacleFlowResult,
+  ObstacleFlowOptions,
+} from './obstacle-flow.js';
+
+// ─── Multi-Column Flow ───────────────────────────────────────────────────────
+export { multiColumnLayout, multiColumnText, balancedMultiColumnText } from './multicolumn.js';
+export type {
+  ColumnConfig,
+  ColumnLine,
+  MultiColumnResult,
+  ColumnInfo,
+} from './multicolumn.js';
+
+// ─── Accordion (pre-computed expand/collapse) ────────────────────────────────
+export {
+  computeAccordionHeights,
+  computeAccordionHeightsFromText,
+  batchAccordionHeights,
+  createReactiveAccordion,
+} from './accordion.js';
+export type { AccordionHeights, AccordionOptions } from './accordion.js';
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type {
   LayoutResult,
