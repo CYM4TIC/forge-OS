@@ -16,7 +16,7 @@
     "lint": "echo 'lint placeholder'"
   },
   "dependencies": {
-    "@chenglou/pretext": "^0.0.4"
+    "@chenglou/pretext": "*"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

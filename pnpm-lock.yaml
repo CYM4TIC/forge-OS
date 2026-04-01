@@ -96,7 +96,7 @@ importers:
   packages/layout-engine:
     dependencies:
       '@chenglou/pretext':
-        specifier: ^0.0.4
+        specifier: '*'
         version: 0.0.4
     devDependencies:
       typescript:
