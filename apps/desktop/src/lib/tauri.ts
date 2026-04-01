@@ -166,3 +166,138 @@ export function onAgentResult(
 ): Promise<UnlistenFn> {
   return listen<AgentResult>('agent:result', (e) => callback(e.payload));
 }
+
+// ── Swarm types ──
+
+export interface SwarmMessage {
+  id: string;
+  from_agent: string;
+  to_agent: string;
+  msg_type: 'permission_request' | 'permission_response' | 'idle_notification' | 'shutdown_signal' | 'direct_message';
+  payload: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface SwarmMessageEvent {
+  message: SwarmMessage;
+}
+
+export interface PermissionRequestPayload {
+  action: string;
+  target: string;
+  reason: string;
+  is_destructive: boolean;
+}
+
+export interface PermissionResponsePayload {
+  request_id: string;
+  approved: boolean;
+  reason: string | null;
+}
+
+// ── Swarm commands ──
+
+export function swarmSend(request: {
+  from_agent: string;
+  to_agent: string;
+  msg_type: string;
+  payload?: string;
+}): Promise<string> {
+  return invoke('swarm_send', { request });
+}
+
+export function swarmGetMessages(request: {
+  to_agent: string;
+  unread_only?: boolean;
+  limit?: number;
+}): Promise<SwarmMessage[]> {
+  return invoke('swarm_get_messages', { request });
+}
+
+export function swarmMarkRead(messageId: string): Promise<void> {
+  return invoke('swarm_mark_read', { messageId });
+}
+
+export function swarmRespondPermission(request: {
+  request_id: string;
+  responder_agent: string;
+  approved: boolean;
+  reason?: string;
+}): Promise<string> {
+  return invoke('swarm_respond_permission', { request });
+}
+
+// ── Swarm event listeners ──
+
+export function onSwarmMessage(
+  callback: (event: SwarmMessageEvent) => void,
+): Promise<UnlistenFn> {
+  return listen<SwarmMessageEvent>('swarm-message', (e) => callback(e.payload));
+}
+
+// ── Memory types ──
+
+export interface MemoryLogEntry {
+  id: string;
+  persona_id: string;
+  memory_type: string;
+  content: string;
+  log_date: string;
+  created_at: string;
+}
+
+export interface DreamStatus {
+  is_running: boolean;
+  last_run_at: string | null;
+  last_run_status: string | null;
+  sessions_since_last: number;
+  can_trigger: boolean;
+  cooldown_remaining_hours: number | null;
+}
+
+export interface DreamResult {
+  run_id: string;
+  topics_created: number;
+  topics_updated: number;
+  topics_pruned: number;
+  logs_processed: number;
+  memory_index: string;
+}
+
+// ── Memory commands ──
+
+export function appendMemory(request: {
+  persona_id: string;
+  memory_type: string;
+  content: string;
+  log_date?: string;
+}): Promise<string> {
+  return invoke('append_memory', { request });
+}
+
+export function queryMemory(request: {
+  persona_id?: string;
+  memory_type?: string;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+}): Promise<MemoryLogEntry[]> {
+  return invoke('query_memory', { request });
+}
+
+export function getMemoryIndex(): Promise<string> {
+  return invoke('get_memory_index');
+}
+
+export function getDailyLog(logDate: string): Promise<MemoryLogEntry[]> {
+  return invoke('get_daily_log', { logDate });
+}
+
+export function triggerDream(): Promise<DreamResult> {
+  return invoke('trigger_dream');
+}
+
+export function getDreamStatus(): Promise<DreamStatus> {
+  return invoke('get_dream_status');
+}
