@@ -11,8 +11,14 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 1;")?;
     }
 
+    // Phase 3: KAIROS memory, Swarm mailbox, build state, compaction
+    if current_version < 2 {
+        conn.execute_batch(schema::SCHEMA_V2)?;
+        conn.execute_batch("PRAGMA user_version = 2;")?;
+    }
+
     // Future migrations go here:
-    // if current_version < 2 { ... PRAGMA user_version = 2; }
+    // if current_version < 3 { ... PRAGMA user_version = 3; }
 
     Ok(())
 }

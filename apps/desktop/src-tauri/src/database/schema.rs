@@ -65,3 +65,90 @@ CREATE INDEX IF NOT EXISTS idx_findings_agent_slug ON findings(agent_slug);
 CREATE INDEX IF NOT EXISTS idx_findings_status ON findings(status);
 CREATE INDEX IF NOT EXISTS idx_agent_state_slug ON agent_state(agent_slug);
 "#;
+
+/// Phase 3 schema additions: KAIROS memory, Swarm mailbox, build state, compaction.
+/// Applied as v2 migration on top of existing v1 tables.
+pub const SCHEMA_V2: &str = r#"
+-- KAIROS daily-log memory: append-only persona observations
+CREATE TABLE IF NOT EXISTS memory_logs (
+    id TEXT PRIMARY KEY NOT NULL,
+    persona_id TEXT NOT NULL,
+    memory_type TEXT NOT NULL CHECK (memory_type IN ('user', 'feedback', 'project', 'reference')),
+    content TEXT NOT NULL,
+    log_date TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Consolidated knowledge from dream cycles
+CREATE TABLE IF NOT EXISTS memory_topics (
+    id TEXT PRIMARY KEY NOT NULL,
+    memory_type TEXT NOT NULL CHECK (memory_type IN ('user', 'feedback', 'project', 'reference')),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    content TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Swarm inter-agent message bus
+CREATE TABLE IF NOT EXISTS mailbox (
+    id TEXT PRIMARY KEY NOT NULL,
+    from_agent TEXT NOT NULL,
+    to_agent TEXT NOT NULL,
+    msg_type TEXT NOT NULL CHECK (msg_type IN ('permission_request', 'permission_response', 'idle_notification', 'shutdown_signal', 'direct_message')),
+    payload TEXT NOT NULL DEFAULT '{}',
+    is_read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Build state: batch lifecycle (replaces BOOT.md as source of truth)
+CREATE TABLE IF NOT EXISTS batches (
+    id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT REFERENCES sessions(id) ON DELETE SET NULL,
+    batch_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'complete', 'blocked')),
+    started_at TEXT,
+    completed_at TEXT,
+    findings_count INTEGER NOT NULL DEFAULT 0,
+    files_modified TEXT NOT NULL DEFAULT '[]',
+    handoff TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Open risks with lifecycle tracking
+CREATE TABLE IF NOT EXISTS risks (
+    id TEXT PRIMARY KEY NOT NULL,
+    description TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low')),
+    batch_id TEXT,
+    resolved_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- Compaction summaries for context restoration
+CREATE TABLE IF NOT EXISTS session_summaries (
+    id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    summary_type TEXT NOT NULL DEFAULT 'base' CHECK (summary_type IN ('base', 'partial', 'partial_up_to')),
+    content TEXT NOT NULL,
+    token_count INTEGER,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+-- v2 indexes
+CREATE INDEX IF NOT EXISTS idx_memory_logs_persona ON memory_logs(persona_id);
+CREATE INDEX IF NOT EXISTS idx_memory_logs_date ON memory_logs(log_date);
+CREATE INDEX IF NOT EXISTS idx_memory_logs_type ON memory_logs(memory_type);
+CREATE INDEX IF NOT EXISTS idx_memory_topics_type ON memory_topics(memory_type);
+CREATE INDEX IF NOT EXISTS idx_mailbox_to_agent ON mailbox(to_agent);
+CREATE INDEX IF NOT EXISTS idx_mailbox_unread ON mailbox(to_agent, is_read) WHERE is_read = 0;
+CREATE INDEX IF NOT EXISTS idx_batches_batch_id ON batches(batch_id);
+CREATE INDEX IF NOT EXISTS idx_batches_status ON batches(status);
+CREATE INDEX IF NOT EXISTS idx_risks_severity ON risks(severity);
+CREATE INDEX IF NOT EXISTS idx_session_summaries_session ON session_summaries(session_id);
+
+-- Extend findings with batch reference (nullable for v1 compatibility)
+ALTER TABLE findings ADD COLUMN batch_ref TEXT;
+CREATE INDEX IF NOT EXISTS idx_findings_batch_ref ON findings(batch_ref);
+"#;
