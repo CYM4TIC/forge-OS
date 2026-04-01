@@ -322,3 +322,70 @@ Before the Queen reports "swarm complete":
 ```
 
 This gate prevents "all green" reports that mask incomplete or shallow reviews.
+
+---
+
+## 11. Claude Code Integration Patterns
+
+> Adapted from SOURCE-DEEP-DIVE-V2 Swarm/Teams analysis.
+
+### TeamFile Manifest
+
+In Phase 3+, the swarm dispatch system evolves into a full TeamFile manifest. Each persona gets a persistent agent entry:
+
+```json
+{
+  "leadAgentId": "nyx",
+  "teamAllowedPaths": ["forge/", "docs/", "projects/"],
+  "members": [
+    {
+      "agentId": "pierce",
+      "name": "Dr. Pierce",
+      "color": "#EF4444",
+      "model": "opus",
+      "permissionMode": "read-only",
+      "subscriptions": ["gate-results", "findings"],
+      "backendType": "in-process"
+    }
+  ]
+}
+```
+
+- `teamAllowedPaths` — Paths all team members can edit without permission prompt
+- `subscriptions` — Message topics the agent receives (enables selective notification)
+- `backendType` — `in-process` (lightweight, shared process) or `worktree` (git isolation)
+- `color` — Visual identification in UI and permission prompts
+
+### Mailbox Message Types
+
+Replace TEAM-COMMS.md flat file with typed message bus:
+
+| Type | Direction | Purpose |
+|------|-----------|---------|
+| `PermissionRequest` | Worker → Queen | Destructive action needs approval |
+| `PermissionResponse` | Queen → Worker | Approve/deny with rationale |
+| `IdleNotification` | Worker → Queen | Finished or stalled |
+| `ShutdownSignal` | Queen → Worker | Terminate gracefully |
+| `DirectMessage` | Agent → Agent | Cross-persona communication |
+
+Messages are file-locked to prevent race conditions. In-memory bus for real-time, file-based fallback for persistence.
+
+### Permission Sync Flow
+
+When a worker needs to perform a destructive action:
+1. Worker sends `PermissionRequest` to Queen (via mailbox)
+2. Queen's UI shows approval prompt to operator
+3. Operator approves/denies
+4. Queen sends `PermissionResponse` back via mailbox
+5. Worker continues or aborts based on response
+
+### Failure Mode Catalog
+
+| Failure | Detection | Recovery |
+|---------|-----------|----------|
+| Worker timeout | Duration > timeout bound | Accept partial, reassign remaining targets |
+| Worker crash | No result + no heartbeat | Re-dispatch replacement worker |
+| Inconsistent findings | Workers flag same thing at different severities | Queen takes higher severity |
+| Silent failure | Worker returns empty but target has issues | Re-check random sample (Section 10) |
+| Queue starvation | Workers complete but new targets appear | Batch new targets, dispatch second wave |
+| Context overflow | Queen can't hold all worker results | Vault-based streaming (Section 4) |

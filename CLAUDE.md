@@ -365,16 +365,66 @@ projects/{name}/
 
 ---
 
+---
+
+## Architecture Reference Docs
+
+| Doc | Purpose |
+|-----|---------|
+| `docs/PHASE-3-ARCHITECTURE.md` | Phase 3+ implementation roadmap — KAIROS, Swarm, Agent Dispatch, SQLite State, Auto-Compact |
+| `docs/SWARM-PROTOCOL.md` | Queen/Worker parallel dispatch — TeamFile, Mailbox, concurrency limits, failure catalog |
+| `docs/EXECUTION-GATES.md` | Pre-build validation, circuit breakers, severity calibration, gate-persona mapping |
+| `docs/HANDOFF-PROTOCOL.md` | Structured context transfer — 9-section canonical handoff format |
+| `docs/PERSISTENCE-PROTOCOL.md` | Task crystallization, verification loops, deslop pass |
+| `docs/DEEP-INTERVIEW-PROTOCOL.md` | Ambiguity resolution, interview loop, convergence signals |
+| `docs/DESIGN-INTELLIGENCE.md` | UX checklist, token anatomy, dark mode testing, severity mapping |
+| `docs/ECOSYSTEM-INTEL.md` | Tiered ecosystem index — what to adopt, what to skip |
+| `docs/ECOSYSTEM-PATTERNS.md` | Token optimization, anti-drift, self-learning loop, quality enforcement |
+| `docs/ARCHITECTURE-PLAN.md` | Overall Tauri v2 architecture plan |
+| `docs/TAURI-BUILD-PLAN.md` | 8 phases, 24 sessions — full build sequence |
+
+## Reference Sources
+
+| Source | Location | What It Contains |
+|--------|----------|-----------------|
+| Claude Code source (v2) | `references/claude-code/SOURCE-DEEP-DIVE-V2.md` | 11 systems: KAIROS, Swarm, Coordinator, Dream, Magic Docs, Session Memory, Agent Summary, LSP, UltraPlan, Team Memory Sync, Buddy |
+| Claude Code systems (v2) | `references/claude-code/SOURCE-DEEP-DIVE-V2-SYSTEMS.md` | Core internals: prompt construction, compaction engine, memory extraction, agent dispatch, permissions, hooks |
+| Desktop app patterns | `references/ecosystem/DESKTOP-APP-PATTERNS.md` | 6 patterns from OpenCode/OpenClaude/Claw Dev |
+| Claude Code patterns | `references/claude-code/*.md` | 7 pattern files: coordinator, skill system, state management, permission model, memory system, tool interface |
+| Full reference index | `references/INDEX.md` | All 15 reference sources categorized |
+
+## Entity Inventory
+
+| Category | Count | Location |
+|----------|-------|----------|
+| Core Personas | 10 | `agents/*.md` (nyx, pierce, mara, riven, kehinde, tanaka, vane, voss, calloway, sable) |
+| Intelligences | 10 | `agents/*.md` (scout, sentinel, wraith, meridian, chronicle, arbiter, compass, scribe, kiln, beacon) |
+| Orchestrators | 10 | `agents/*.md` (triad, systems-triad, strategy-triad, gate-runner, council, decision-council, debate, full-audit, launch-sequence, postmortem) |
+| Customer Lens | 1 | `agents/customer-lens.md` |
+| Utilities | 10 | `agents/*.md` (seed-generator, test-generator, api-docs, launch-readiness, onboarding, scaffold, changelog, dep-audit, env-validator, migration-planner) |
+| Sub-Agents | 34 | `agents/sub-agents/*.md` |
+| Build Commands | 30 | `commands/*.md` |
+| OS Commands | 5 | `.claude/commands/*.md` (init, link, start, status, introspect) |
+| Skills | 5 | `.claude/skills/*/SKILL.md` (postgres, security, stripe, nextjs, tailwind) |
+| Persona Identities | 10 | `personas/*/` (4 files each: PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
+| **Total Entities** | **105** | (agents: 41 + sub-agents: 34 + commands: 30) |
+
+Full catalog: `forge/ENTITY-CATALOG.md`
+
+---
+
 *Forge OS — CLAUDE.md bridge.*
 *Auto-loaded by Claude Code on every session start.*
-*Phase 1 foundation complete. Tauri Phase 1 build next (P1-A: Monorepo Scaffold).*
+*Phase 1 complete. Phase 2 complete. Phase 3 (Agent Runtime) next.*
 
 ---
 
 ## Current Build State
 
 **Architecture:** Tauri v2 desktop app (Rust backend + React frontend).
-**Phase:** 1 — Tauri Shell + Chat. Batched into 12 micro-batches (P1-A through P1-L).
+**Phase:** 2 COMPLETE — Content Layer. All 105 entities genericized + protocols + references.
+**Phase 3 next:** Agent Runtime — KAIROS memory, Swarm dispatch, SQLite state, auto-compact.
 **Build state tracked at:** `forge-dms-brain/forge-os/BOOT.md` (DMS vault hosts OS state until OS is self-managing).
 **Batch manifests:** `forge-dms-brain/forge-os/BATCH-MANIFESTS.md`
 **Full build plan:** `docs/TAURI-BUILD-PLAN.md` (8 phases, 24 sessions)
+**Phase 3 architecture:** `docs/PHASE-3-ARCHITECTURE.md` (synthesized from Claude Code source + ecosystem research)

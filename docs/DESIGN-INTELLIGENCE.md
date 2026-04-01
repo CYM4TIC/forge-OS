@@ -152,3 +152,52 @@ When setting up a new project's design system:
 7. **Document anti-patterns** — What NOT to do, with severity
 
 The tailwind-design-system skill handles implementation. This document handles the reasoning.
+
+---
+
+## Component Token Anatomy
+
+> From Claude Code source analysis. Token hierarchy for design system enforcement.
+
+### Three-Layer Token Architecture
+
+```
+Brand Tokens (project-level)
+  └─ color-brand-primary: #2563EB
+  └─ color-brand-secondary: #7C3AED
+  └─ font-family-heading: 'Inter'
+
+    Semantic Tokens (meaning-level)
+      └─ color-text-primary: var(--color-brand-primary)
+      └─ color-bg-elevated: var(--color-neutral-800)
+      └─ color-status-success: var(--color-green-500)
+
+        Component Tokens (component-level)
+          └─ button-bg-primary: var(--color-text-primary)
+          └─ card-bg: var(--color-bg-elevated)
+          └─ badge-bg-success: var(--color-status-success)
+```
+
+### Riven Enforcement
+
+Riven checks tokens from the BOTTOM UP:
+1. Component uses component token? Pass.
+2. Component uses semantic token directly? Flag R-MED (should use component token).
+3. Component uses brand token directly? Flag R-HIGH (skip two layers).
+4. Component uses raw hex/rgb value? Flag R-CRIT (no token at all).
+
+### Dark Mode Testing Pattern
+
+From DESKTOP-APP-PATTERNS — verify dark mode systematically:
+
+```
+FOR each surface:
+  1. Toggle to dark mode (preview_resize with colorScheme: 'dark')
+  2. Check: no invisible text (text color = bg color)
+  3. Check: no unreadable text (contrast < 4.5:1)
+  4. Check: no missing borders (elements that rely on shadow for separation)
+  5. Check: no hardcoded white/black (should use semantic tokens)
+  6. Toggle back to light mode — verify nothing broke
+```
+
+Riven's `riven-theme-check` sub-agent automates this check.

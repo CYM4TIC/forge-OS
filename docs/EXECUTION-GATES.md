@@ -223,3 +223,49 @@ Each lens doesn't require a separate pass. During a single review, the reviewer 
 | Realist check | After self-audit | Calibrates severity against realistic impact |
 | Pre-mortem | Before high-risk builds | Identifies 3 failure scenarios, creates mitigations |
 | Multi-perspective | During review | Rotates through security/new-hire/ops lenses |
+
+---
+
+## 7. Gate-to-Persona Dispatch Mapping
+
+> Which gates dispatch which personas, and when to escalate.
+
+### Automatic Dispatch Rules
+
+| Surface Type | Always Dispatch | Conditional Dispatch | Wraith Trigger |
+|-------------|-----------------|---------------------|----------------|
+| **Frontend (any)** | Build Triad (Pierce + Mara + Riven) | — | If auth-gated or handles PII |
+| **Backend RPC** | Pierce + Kehinde | Tanaka (if auth/RLS) | If handles payments or deletion |
+| **Edge Function** | Pierce + Kehinde | Tanaka (if handles secrets) | If webhook or external API |
+| **Payment flow** | Pierce + Vane + Tanaka | Voss (if terms/consent) | Always |
+| **Auth/session** | Pierce + Tanaka + Kehinde | — | Always |
+| **Data migration** | Pierce + Kehinde | Tanaka (if PII) | If destructive |
+| **Customer-facing** | Build Triad + Sable | Calloway (if pricing/tiers) | If public API |
+| **Infrastructure** | Kehinde + Tanaka | Beacon (post-deploy) | If DNS/routing |
+
+### Escalation Procedures
+
+**When to dispatch Wraith (beyond the table above):**
+- Any surface handling financial data
+- Any surface with deletion capabilities
+- Any surface accepting external input (webhooks, API endpoints)
+- When Scout identifies high complexity during pre-build
+- When operator explicitly requests red-team (`/red-team`)
+
+**When to escalate to operator:**
+- Circuit breaker fires (3 failed fix attempts)
+- Conflicting CRIT findings from different personas
+- Pre-mortem identifies risk with no clear mitigation
+- Any finding touching ADL violations
+
+### Gate Bypass Conditions
+
+Gates can be bypassed ONLY when:
+1. Operator explicitly uses `force:` prefix — they accept the risk
+2. Surface is documentation-only (no code changes)
+3. Surface is seed data only (no schema or logic changes)
+
+**Gates that can NEVER be bypassed:**
+- Build Triad on frontend surfaces
+- Tanaka on auth/payment surfaces
+- Adversarial check (Rule 27)

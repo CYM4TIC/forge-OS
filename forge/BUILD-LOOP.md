@@ -58,3 +58,65 @@ INTROSPECTION CHECK
 - Heavy batches: 1-2 per session
 - Frontend batches: 1 per session
 - Stop at 70% context. BOOT.md handoff preserves continuity.
+- Phase 3+: auto-compact at 85% threshold replaces manual stop (see docs/PHASE-3-ARCHITECTURE.md)
+
+## Micro-Batch Size Definition
+
+A micro-batch is a self-contained unit of work that can be verified independently:
+
+| Type | Files per Micro-Batch | Example |
+|------|----------------------|---------|
+| Route wiring | 1-2 | Route config + placeholder page |
+| Page layout | 2-3 | Page component + hooks + types |
+| Component group | 1-3 | Related components (modal + form + list item) |
+| Data hook | 1-2 | Hook + types |
+| RPC + migration | 1-2 | SQL file + verification SQL |
+
+**Rule:** Each micro-batch must be browser-verifiable before starting the next. Don't stack unverified work.
+
+## Error Recovery Flows
+
+### Scout Fails
+```
+IF Scout dispatch fails (timeout, crash, empty result):
+  1. Log the failure
+  2. Proceed with build, but INCREASE verification effort
+  3. Query live schema manually (what Scout would have done)
+  4. Note "Scout unavailable" in handoff
+  DO NOT skip pre-build intelligence entirely
+```
+
+### Build Triad Findings Unfixable
+```
+IF a finding cannot be fixed (architectural constraint, missing dependency):
+  1. Classify: is it truly unfixable or just hard?
+     - Hard → try harder, escalate approach
+     - Truly unfixable → document with rationale
+  2. IF unfixable CRIT: STOP. Report to operator. Do not continue.
+  3. IF unfixable HIGH: Document, carry as open risk, continue
+  4. IF unfixable MED/LOW: Document, continue
+  Never mark unfixable findings as "fixed"
+```
+
+### Agent Timeout
+```
+IF agent doesn't return within timeout (per SWARM-PROTOCOL):
+  Sub-agent: 2 min
+  Persona: 4 min
+  Orchestrator: 8 min
+
+  1. Check: did the agent produce partial results?
+  2. IF yes: accept partial, note incomplete coverage
+  3. IF no: re-dispatch with simplified scope
+  4. IF second dispatch also fails: manual review, report to operator
+```
+
+### Context Window Emergency
+```
+IF context > 85% and no auto-compact available:
+  1. STOP current micro-batch
+  2. Push all pending changes
+  3. Write BOOT.md handoff with precise resume point
+  4. Report: "Context exhausted. Handoff written. Resume in fresh session."
+  DO NOT attempt to finish "just one more thing"
+```

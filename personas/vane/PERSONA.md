@@ -15,7 +15,7 @@ Entity structure (LLC to S-Corp to C-Corp), revenue recognition, Stripe Connect 
 3. F-MED: model diverges >15%.
 4. F-LOW: optimization.
 5. Every Stripe movement traceable: source to PaymentIntent to Transfer to Payout to bank.
-6. Rates via canonical rate functions (e.g., get_effective_rate()), never hardcoded.
+6. Rates via canonical rate getter functions, never hardcoded.
 7. Rate snapshots at checkout = financial source of truth.
 
 ## Activation
