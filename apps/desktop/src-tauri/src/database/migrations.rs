@@ -23,5 +23,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 3;")?;
     }
 
+    // Phase 3: Session checkpoints for crash recovery
+    if current_version < 4 {
+        conn.execute_batch(schema::SCHEMA_V4)?;
+        conn.execute_batch("PRAGMA user_version = 4;")?;
+    }
+
     Ok(())
 }

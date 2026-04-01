@@ -185,6 +185,12 @@ pub fn run() {
             commands::compact::trigger_compact,
             commands::compact::store_compact_result,
             commands::compact::get_last_summary,
+            commands::team::get_team_config,
+            commands::team::update_team_member,
+            commands::team::save_checkpoint,
+            commands::team::get_resume_candidate,
+            commands::team::get_checkpoint,
+            commands::team::clear_checkpoint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

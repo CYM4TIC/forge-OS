@@ -170,3 +170,21 @@ CREATE TABLE IF NOT EXISTS dream_runs (
 CREATE INDEX IF NOT EXISTS idx_dream_runs_status ON dream_runs(status);
 CREATE INDEX IF NOT EXISTS idx_dream_runs_started ON dream_runs(started_at);
 "#;
+
+/// Phase 3 schema v4: Session checkpoints for crash recovery.
+pub const SCHEMA_V4: &str = r#"
+-- Session checkpoints: snapshot after each message for crash recovery
+CREATE TABLE IF NOT EXISTS session_checkpoints (
+    id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    message_count INTEGER NOT NULL,
+    last_message_id TEXT,
+    context_tokens INTEGER,
+    checkpoint_data TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_checkpoints_session ON session_checkpoints(session_id);
+
+-- Only keep the most recent checkpoint per session (old ones cleaned up by application)
+"#;

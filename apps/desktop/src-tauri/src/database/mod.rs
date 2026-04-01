@@ -1,6 +1,7 @@
 pub mod schema;
 pub mod migrations;
 pub mod queries;
+pub mod checkpoints;
 
 use rusqlite::Connection;
 use std::path::PathBuf;
