@@ -723,38 +723,42 @@ export function updatePipelineStage(stage: PipelineStage): Promise<void> {
 
 // ── HUD Event Listeners ──
 
+// Rust HudEvent uses #[serde(tag = "type", content = "payload")],
+// so the Tauri event payload is { type: string, payload: T }.
+interface HudEventEnvelope<T> { type: string; payload: T }
+
 export function onBuildStateChanged(
   callback: (snapshot: BuildStateSnapshot) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:build-state-changed', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<BuildStateSnapshot>>('hud:build-state-changed', (e) => callback(e.payload.payload));
 }
 
 export function onPipelineStageChanged(
   callback: (stage: PipelineStage) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:pipeline-stage-changed', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<PipelineStage>>('hud:pipeline-stage-changed', (e) => callback(e.payload.payload));
 }
 
 export function onAgentStatusChanged(
   callback: (event: AgentStatusEvent) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:agent-status-changed', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<AgentStatusEvent>>('hud:agent-status-changed', (e) => callback(e.payload.payload));
 }
 
 export function onFindingAdded(
   callback: (finding: HudFinding) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:finding-added', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<HudFinding>>('hud:finding-added', (e) => callback(e.payload.payload));
 }
 
 export function onFindingResolved(
   callback: (event: FindingResolvedEvent) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:finding-resolved', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<FindingResolvedEvent>>('hud:finding-resolved', (e) => callback(e.payload.payload));
 }
 
 export function onDispatchFlow(
   callback: (event: DispatchFlowEvent) => void,
 ): Promise<UnlistenFn> {
-  return listen('hud:dispatch-flow', (e) => callback((e.payload as any).payload));
+  return listen<HudEventEnvelope<DispatchFlowEvent>>('hud:dispatch-flow', (e) => callback(e.payload.payload));
 }

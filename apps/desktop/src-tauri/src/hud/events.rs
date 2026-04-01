@@ -106,5 +106,7 @@ pub fn emit_hud_event<R: tauri::Runtime>(
         HudEvent::FindingResolved(_) => "hud:finding-resolved",
         HudEvent::DispatchFlow(_) => "hud:dispatch-flow",
     };
-    let _ = app.emit(event_name, event);
+    if let Err(e) = app.emit(event_name, event) {
+        eprintln!("[HUD] Failed to emit event {}: {}", event_name, e);
+    }
 }

@@ -62,7 +62,11 @@ function agentToPersona(agent: string | null | undefined): PersonaSlug | null {
   ];
   // Check direct match or intelligence names
   if (known.includes(slug as PersonaSlug)) return slug as PersonaSlug;
-  // Intelligence agents: scout → nyx (dispatched by), triad → pierce+mara+riven, sentinel → pierce
+  // Intelligence agents get a representative persona glyph.
+  // "build" and "triad" stages are omitted — they derive their persona
+  // from PipelineStage.agent field set at dispatch time (e.g., "nyx" for build,
+  // "pierce" for triad lead). Only intelligence names that always map to
+  // one persona are listed here.
   const intelligenceMap: Record<string, PersonaSlug> = {
     scout: 'nyx',
     sentinel: 'pierce',

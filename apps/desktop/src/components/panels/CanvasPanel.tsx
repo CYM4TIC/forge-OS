@@ -83,7 +83,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
         className="flex gap-2 p-2 overflow-hidden"
         style={{ height: gaugesHeight }}
       >
-        <GaugeCard label="Batch" value={snapshot ? `${snapshot.batches_done}/${snapshot.phases_total * 4}` : '--'} />
+        <GaugeCard label="Batch" value={snapshot ? `${snapshot.batches_done}` : '--'} />
         <GaugeCard label="Phase" value={snapshot?.phase ?? '--'} />
         <GaugeCard label="Session" value={snapshot?.current_session ?? '--'} />
         <GaugeCard label="Commit" value={snapshot?.last_commit?.slice(0, 7) ?? '--'} />

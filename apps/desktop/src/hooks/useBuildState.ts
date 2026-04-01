@@ -84,7 +84,7 @@ export function useBuildState(bootPath: string | null): UseBuildStateReturn {
     );
 
     return () => {
-      unlisteners.forEach((p) => p.then((unlisten) => unlisten()));
+      unlisteners.forEach((p) => p.then((unlisten) => unlisten()).catch(() => {}));
     };
   }, []);
 

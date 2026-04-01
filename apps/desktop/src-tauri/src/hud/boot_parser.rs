@@ -64,8 +64,9 @@ pub fn parse_boot_md(content: &str) -> Option<BuildStateSnapshot> {
     }
 
     let phase_str = map.get("phase").cloned().unwrap_or_default();
+    // Check both the phase string and any phase_N_complete flag in BOOT.md YAML
     let phase_complete = phase_str.ends_with("COMPLETE")
-        || map.get("phase_4_complete").map(|v| v == "true").unwrap_or(false);
+        || map.iter().any(|(k, v)| k.starts_with("phase_") && k.ends_with("_complete") && v == "true");
 
     Some(BuildStateSnapshot {
         project: map.get("project").cloned().unwrap_or_default(),
