@@ -539,3 +539,28 @@ export function getCheckpoint(sessionId: string): Promise<CheckpointRow | null> 
 export function clearCheckpoint(sessionId: string): Promise<void> {
   return invoke('clear_checkpoint', { sessionId });
 }
+
+// ── Search (FTS5 cross-session recall) ──
+
+export interface SearchResult {
+  content: string;
+  role: string;
+  session_id: string;
+  session_title: string | null;
+  created_at: string;
+  rank: number;
+}
+
+export function searchSessions(query: string, limit?: number): Promise<SearchResult[]> {
+  return invoke('search_sessions', { query, limit });
+}
+
+// ── Finding Checkout (atomic task checkout for parallel agents) ──
+
+export function checkoutFinding(findingId: string, agentSlug: string): Promise<void> {
+  return invoke('checkout_finding', { findingId, agentSlug });
+}
+
+export function releaseFinding(findingId: string): Promise<void> {
+  return invoke('release_finding', { findingId });
+}

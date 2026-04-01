@@ -213,6 +213,9 @@ pub fn run() {
             commands::team::get_resume_candidate,
             commands::team::get_checkpoint,
             commands::team::clear_checkpoint,
+            commands::search::search_sessions,
+            commands::build_state::checkout_finding,
+            commands::build_state::release_finding,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

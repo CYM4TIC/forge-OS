@@ -165,6 +165,35 @@ pub struct SeverityCounts {
     pub info: i64,
 }
 
+/// Check out a finding for exclusive work. Prevents parallel agents from
+/// working on the same finding simultaneously.
+/// Returns Err if the finding is already checked out by another agent.
+pub fn checkout_finding(
+    conn: &Connection,
+    id: &str,
+    agent_slug: &str,
+) -> Result<(), rusqlite::Error> {
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let rows = conn.execute(
+        "UPDATE findings SET checked_out_by = ?2, checked_out_at = ?3
+         WHERE id = ?1 AND (checked_out_by IS NULL OR resolved_at IS NOT NULL)",
+        params![id, agent_slug, now],
+    )?;
+    if rows == 0 {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+    Ok(())
+}
+
+/// Release a checked-out finding (e.g., if the agent can't fix it).
+pub fn release_finding(conn: &Connection, id: &str) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "UPDATE findings SET checked_out_by = NULL, checked_out_at = NULL WHERE id = ?1",
+        params![id],
+    )?;
+    Ok(())
+}
+
 fn map_finding(row: &rusqlite::Row) -> rusqlite::Result<FindingRow> {
     Ok(FindingRow {
         id: row.get(0)?,

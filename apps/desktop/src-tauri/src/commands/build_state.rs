@@ -95,6 +95,28 @@ pub fn resolve_finding(db: State<'_, Database>, id: String, status: findings::Fi
     findings::resolve_finding(&conn, &id, status.as_str()).map_err(|e| e.to_string())
 }
 
+// ── Finding checkout (atomic task checkout for parallel agents) ──
+
+#[tauri::command]
+pub fn checkout_finding(
+    db: State<'_, Database>,
+    finding_id: String,
+    agent_slug: String,
+) -> Result<(), String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    findings::checkout_finding(&conn, &finding_id, &agent_slug)
+        .map_err(|_| format!("Finding {} is already checked out by another agent", finding_id))
+}
+
+#[tauri::command]
+pub fn release_finding(
+    db: State<'_, Database>,
+    finding_id: String,
+) -> Result<(), String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    findings::release_finding(&conn, &finding_id).map_err(|e| e.to_string())
+}
+
 // ── BOOT.md generator ──
 
 #[tauri::command]
