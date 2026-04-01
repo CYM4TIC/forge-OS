@@ -47,6 +47,7 @@ export function TokenGaugeDisplay({ status, isCompacting, width, height }: Token
 /** Format token count for compact display (e.g., 150000 → "150K") */
 function formatTokens(tokens: number): string {
   if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
-  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K`;
+  if (tokens >= 10_000) return `${Math.round(tokens / 1_000)}K`;
+  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}K`;
   return `${tokens}`;
 }

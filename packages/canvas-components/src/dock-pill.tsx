@@ -10,17 +10,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-const COLORS = {
-  activeBg: 'rgba(99, 102, 241, 0.2)',
-  activeBorder: 'rgba(99, 102, 241, 0.4)',
-  activeText: '#6366f1',
-  dimBg: 'rgba(26, 26, 37, 0.6)',
-  dimBorder: 'rgba(31, 31, 46, 1)',
-  dimText: '#5a5a6e',
-  badgeBg: '#ef4444',
-  badgeText: '#ffffff',
-  glow: 'rgba(99, 102, 241, 0.3)',
-};
+import { DOCK } from './canvas-tokens';
+
+const COLORS = DOCK;
 
 export type DockPillVariant = 'active' | 'minimized' | 'closed';
 

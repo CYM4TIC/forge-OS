@@ -11,33 +11,16 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-const ZONE_COLORS = {
-  comfortable: '#22c55e',  // green — 0-60%
-  warning: '#f59e0b',      // yellow — 60-80%
-  critical: '#f97316',     // orange — 80-85%
-  compacting: '#ef4444',   // red — 85%+
-};
+import { CANVAS, ZONES, getZoneColor, getZoneLabel } from './canvas-tokens';
+
+const ZONE_COLORS = ZONES;
 
 const COLORS = {
-  bg: '#12121a',
-  trackBg: '#1f1f2e',
-  text: '#e8e8ed',
-  label: '#5a5a6e',
+  bg: CANVAS.bg,
+  trackBg: CANVAS.trackBg,
+  text: CANVAS.text,
+  label: CANVAS.muted,
 };
-
-function getZoneColor(value: number): string {
-  if (value < 0.6) return ZONE_COLORS.comfortable;
-  if (value < 0.8) return ZONE_COLORS.warning;
-  if (value < 0.85) return ZONE_COLORS.critical;
-  return ZONE_COLORS.compacting;
-}
-
-function getZoneLabel(value: number): string {
-  if (value < 0.6) return 'COMFORTABLE';
-  if (value < 0.8) return 'WARNING';
-  if (value < 0.85) return 'CRITICAL';
-  return 'COMPACTING';
-}
 
 export interface ContextMeterCanvasProps {
   /** Container width in px */

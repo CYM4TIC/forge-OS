@@ -10,10 +10,12 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
+import { CANVAS, STATUS } from './canvas-tokens';
+
 const COLORS = {
-  text: '#e8e8ed',
-  label: '#5a5a6e',
-  accent: '#6366f1',
+  text: CANVAS.text,
+  label: CANVAS.muted,
+  accent: STATUS.accent,
 };
 
 export interface TokenGaugeProps {

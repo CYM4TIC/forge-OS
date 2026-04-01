@@ -9,15 +9,17 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
+import { CANVAS, STATUS, getZoneColor as _getZoneColor } from './canvas-tokens';
+
 const COLORS = {
-  bg: '#12121a',
-  trackBg: '#1f1f2e',
-  accent: '#6366f1',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  text: '#e8e8ed',
-  label: '#5a5a6e',
+  bg: CANVAS.bg,
+  trackBg: CANVAS.trackBg,
+  accent: STATUS.accent,
+  success: STATUS.success,
+  warning: STATUS.warning,
+  danger: STATUS.danger,
+  text: CANVAS.text,
+  label: CANVAS.muted,
 };
 
 export interface ProgressArcProps {
@@ -44,13 +46,8 @@ export interface ProgressArcProps {
   onClick?: (e: React.MouseEvent<HTMLCanvasElement>) => void;
 }
 
-// 4-zone model matching ContextMeterCanvas: green < 60%, yellow 60-80%, orange 80-85%, red 85%+
-function getZoneColor(value: number): string {
-  if (value < 0.6) return COLORS.success;
-  if (value < 0.8) return COLORS.warning;
-  if (value < 0.85) return '#f97316'; // orange — critical zone
-  return COLORS.danger;
-}
+// Delegate to shared 4-zone model from canvas-tokens
+const getZoneColor = _getZoneColor;
 
 export function ProgressArc({
   width,
@@ -131,7 +128,7 @@ export function ProgressArc({
 
     // Sub-label
     if (subLabel) {
-      const subFontSize = Math.floor(size * 0.08) * dpr;
+      const subFontSize = Math.max(Math.floor(size * 0.08), 9) * dpr;
       ctx.font = `600 ${subFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.fillStyle = COLORS.label;
       ctx.textAlign = 'center';

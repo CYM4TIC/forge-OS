@@ -9,15 +9,16 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI, renderText } from '@forge-os/layout-engine';
 
-// ─── Theme tokens (from globals.css @theme) ──────────────────────────────────
+import { CANVAS, STATUS } from './canvas-tokens';
+
 const COLORS = {
-  bg: '#12121a',
-  text: '#e8e8ed',
-  label: '#5a5a6e',
-  accent: '#6366f1',
-  trendUp: '#22c55e',
-  trendDown: '#ef4444',
-  trendNeutral: '#5a5a6e',
+  bg: CANVAS.bg,
+  text: CANVAS.text,
+  label: CANVAS.muted,
+  accent: STATUS.accent,
+  trendUp: STATUS.success,
+  trendDown: STATUS.danger,
+  trendNeutral: CANVAS.muted,
 };
 
 export interface StatCardProps {

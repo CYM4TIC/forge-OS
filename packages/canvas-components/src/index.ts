@@ -6,6 +6,9 @@
  * Built on @forge-os/layout-engine for Pretext-measured text rendering.
  */
 
+// ─── Design Tokens ─────────────────────────────────────────────────────────
+export { CANVAS, STATUS, ZONES, DOCK, getZoneColor, getZoneLabel } from './canvas-tokens.js';
+
 // ─── Core Gauges (P4-M) ─────────────────────────────────────────────────────
 export { StatCard } from './stat-card.js';
 export type { StatCardProps } from './stat-card.js';

@@ -7,18 +7,14 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI, fitToContainer, renderText } from '@forge-os/layout-engine';
+import { CANVAS, STATUS } from './canvas-tokens';
 
 const COLORS = {
-  bg: '#12121a',
-  bgElevated: '#1a1a25',
-  border: '#2a2a3a',
-  text: '#e8e8ed',
-  label: '#8b8b9e',
-  muted: '#5a5a6e',
-  accent: '#6366f1',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  danger: '#ef4444',
+  ...CANVAS,
+  accent: STATUS.accent,
+  success: STATUS.success,
+  warning: STATUS.warning,
+  danger: STATUS.danger,
 };
 
 export type NodeStatus = 'idle' | 'active' | 'complete' | 'error' | 'warning';

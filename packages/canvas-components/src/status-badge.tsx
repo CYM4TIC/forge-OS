@@ -8,14 +8,16 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
+import { CANVAS, STATUS } from './canvas-tokens';
+
 const COLORS = {
-  success: '#22c55e',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  neutral: '#5a5a6e',
-  accent: '#6366f1',
-  text: '#e8e8ed',
-  label: '#8b8b9e',
+  success: STATUS.success,
+  warning: STATUS.warning,
+  danger: STATUS.danger,
+  neutral: STATUS.neutral,
+  accent: STATUS.accent,
+  text: CANVAS.text,
+  label: CANVAS.label,
 };
 
 export type BadgeStatus = 'success' | 'warning' | 'danger' | 'neutral' | 'active';
