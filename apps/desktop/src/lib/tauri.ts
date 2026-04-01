@@ -638,3 +638,123 @@ export function closePanelWindow(panelId: string): Promise<boolean> {
 export function listPanelWindows(): Promise<string[]> {
   return invoke('list_panel_windows');
 }
+
+// ── HUD Commands (Phase 5) ──
+
+export interface BuildStateSnapshot {
+  project: string;
+  architecture: string;
+  phase: string;
+  current_session: string;
+  current_batch: string;
+  batches_done: number;
+  phases_total: number;
+  sessions_total: number;
+  last_commit: string;
+  last_updated: string;
+  phase_complete: boolean;
+}
+
+export type StageStatus = 'idle' | 'active' | 'complete' | 'error';
+
+export interface PipelineStage {
+  id: string;
+  label: string;
+  status: StageStatus;
+  agent: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export type AgentHudStatus = 'idle' | 'dispatched' | 'running' | 'complete' | 'error';
+
+export interface AgentStatusEvent {
+  agent_id: string;
+  persona: string;
+  status: AgentHudStatus;
+  model_tier: string | null;
+}
+
+export type FlowType = 'dispatch' | 'findings_return' | 'context_transfer';
+
+export interface DispatchFlowEvent {
+  source_agent: string;
+  target_agents: string[];
+  flow_type: FlowType;
+  severity: string | null;
+  timestamp: string;
+}
+
+export interface HudFinding {
+  id: string;
+  session_id: string | null;
+  batch_id: string | null;
+  severity: string;
+  persona: string;
+  title: string;
+  description: string;
+  status: string;
+  file_path: string | null;
+  line_number: number | null;
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export interface FindingResolvedEvent {
+  finding_id: string;
+  resolved_at: string;
+}
+
+export function getBuildStateSnapshot(bootPath: string): Promise<BuildStateSnapshot> {
+  return invoke('get_build_state_snapshot', { bootPath });
+}
+
+export function getPipelineStages(): Promise<PipelineStage[]> {
+  return invoke('get_pipeline_stages');
+}
+
+export function refreshBuildState(bootPath: string): Promise<BuildStateSnapshot> {
+  return invoke('refresh_build_state', { bootPath });
+}
+
+export function updatePipelineStage(stage: PipelineStage): Promise<void> {
+  return invoke('update_pipeline_stage', { stage });
+}
+
+// ── HUD Event Listeners ──
+
+export function onBuildStateChanged(
+  callback: (snapshot: BuildStateSnapshot) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:build-state-changed', (e) => callback((e.payload as any).payload));
+}
+
+export function onPipelineStageChanged(
+  callback: (stage: PipelineStage) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:pipeline-stage-changed', (e) => callback((e.payload as any).payload));
+}
+
+export function onAgentStatusChanged(
+  callback: (event: AgentStatusEvent) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:agent-status-changed', (e) => callback((e.payload as any).payload));
+}
+
+export function onFindingAdded(
+  callback: (finding: HudFinding) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:finding-added', (e) => callback((e.payload as any).payload));
+}
+
+export function onFindingResolved(
+  callback: (event: FindingResolvedEvent) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:finding-resolved', (e) => callback((e.payload as any).payload));
+}
+
+export function onDispatchFlow(
+  callback: (event: DispatchFlowEvent) => void,
+): Promise<UnlistenFn> {
+  return listen('hud:dispatch-flow', (e) => callback((e.payload as any).payload));
+}

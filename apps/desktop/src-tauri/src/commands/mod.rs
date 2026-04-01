@@ -11,3 +11,4 @@ pub mod team;
 pub mod search;
 pub mod layout;
 pub mod windows;
+pub mod hud;

@@ -224,6 +224,10 @@ pub fn run() {
             commands::windows::create_panel_window,
             commands::windows::close_panel_window,
             commands::windows::list_panel_windows,
+            commands::hud::get_build_state_snapshot,
+            commands::hud::get_pipeline_stages,
+            commands::hud::refresh_build_state,
+            commands::hud::update_pipeline_stage,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
