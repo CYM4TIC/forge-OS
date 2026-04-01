@@ -3,6 +3,7 @@ mod commands;
 mod compact;
 mod database;
 mod dispatch;
+pub mod hud;
 mod memory;
 mod providers;
 mod swarm;
