@@ -5,6 +5,65 @@
 
 ---
 
+## Visual Direction — The Soul of Forge OS
+
+> **This is not a dashboard. This is not an IDE. This is a living machine you can see the energy moving through.**
+
+### Reference Points
+- A **stage during a rave** — dark void, saturated color, light moving with rhythm and intent
+- A **colorful arcade dashboard** — bold, unapologetic, every indicator glowing and alive
+- **Knight Rider's KITT** — a dark cockpit where the instruments ARE the personality
+- **Meow Wolf** — an immersive art installation where every surface has something happening, but it's not chaos — it's orchestrated wonder
+
+### What This Means in Practice
+
+**The void is the canvas.** The dark navy background (`#0F172A`) is not a "dark theme" — it's the void that makes everything else radiate. Never fill it with gray cards. Let it breathe. The emptiness between glowing elements is part of the design.
+
+**Everything alive has light.** Active pipeline nodes don't just change color — they glow, pulse, breathe. Idle nodes dim but never fully die — a faint ember, not a gray box. The difference between "running" and "idle" should be visible from across the room.
+
+**Movement is information.** Particle streams between agents aren't decoration — they show data flowing through the system. But even at rest, the canvas has ambient life: subtle node drift, slow pulse cycles, dock pills with gentle luminance shifts. A static screen means the system is off, not idle.
+
+**Color is bold and saturated.** Not muted enterprise pastels. The success green glows. The error red burns. Agent dispatch lights up like tracer fire. Severity colors (P-CRIT red, P-HIGH orange, P-MED amber, P-LOW cyan) should be immediately readable at a glance — they're signal lights, not labels.
+
+**The dock bar is a light strip.** Not a Windows taskbar. A row of glowing jewels at the bottom edge — each pill pulses with the activity of its panel. Minimized panels dim. Active panels shine. A panel with unread findings throbs gently. The dock itself is a status display.
+
+**Typography glows against the void.** White text on dark void is the baseline, but key numbers and labels can have subtle text-shadow glow effects — especially in canvas-rendered components where we control every pixel. Token gauges, stat cards, batch counters — these are readouts on a command console, not spreadsheet cells.
+
+### Design Rules (Mara + Riven Enforcement)
+
+| Rule | Severity | What It Means |
+|------|----------|---------------|
+| No static canvas | **R-HIGH** | The Canvas HUD must have ambient animation at all times. Stillness = broken. |
+| Glow > flat fill | **R-MED** | Active/important elements should use glow effects (box-shadow, text-shadow, radial gradients), not just flat color fills. |
+| Color saturation minimum | **R-MED** | Status colors must be vivid and saturated. No pastel/muted variants for primary indicators. Muted tones are reserved for disabled/inactive states only. |
+| Void preservation | **R-MED** | Don't fill the dark background with cards/containers wall-to-wall. Let the void show between elements. Negative space is a design element. |
+| Particle flow fidelity | **R-HIGH** | Agent dispatch and communication flows must render as animated particles on bezier paths. Static arrows or simple lines fail this gate. |
+| Dock bar luminance | **R-MED** | Dock pills must reflect panel state through luminance/pulse, not just icon swaps. The dock is a light strip, not a toolbar. |
+| Ambient idle state | **R-MED** | Every canvas component must define an idle animation (however subtle). The app should look alive even when no build is running. |
+| Distance readability | **M-HIGH** | Key status indicators (pipeline state, gate pass/fail, active agent count) must be identifiable from 6+ feet away. Big, bright, unambiguous. |
+
+### Color Direction (Extends Dark Theme Palette)
+
+The base palette below remains the structural foundation. The visual direction adds an **energy layer** on top:
+
+| Energy | Effect | Usage |
+|--------|--------|-------|
+| Node glow | `box-shadow: 0 0 20px {color}40` | Active pipeline nodes, agent cards |
+| Text glow | `text-shadow: 0 0 8px {color}60` | Key readouts: token counts, batch progress, stat card numbers |
+| Pulse animation | `opacity 0.7→1.0, 2s ease-in-out infinite` | Idle-but-alive nodes, dock pills |
+| Breathe animation | `scale 0.98→1.02, 3s ease-in-out infinite` | Active agents, running pipeline stages |
+| Particle trail | `opacity 1.0→0.0 over 500ms, along bezier path` | Agent dispatch, findings return, context transfer |
+| Ember idle | `opacity 0.3→0.5, 4s ease-in-out infinite` | Inactive nodes — never fully dark |
+
+### What This Is NOT
+
+- **Not a rave for the sake of chaos.** Every animation carries meaning. Every glow indicates state. It's orchestrated, not random.
+- **Not dark-mode-with-neon.** It's not a regular app with colored accents. The entire spatial design assumes darkness as the primary medium.
+- **Not distracting during work.** Ambient animations are subtle (long durations, small ranges). Active animations fire on real events. The system is calm when idle, alive when working — like an engine at rest vs under load.
+- **Not inaccessible.** `prefers-reduced-motion` still respected — reduce animations to state changes only, keep glow/color. Color is never the sole indicator. Contrast ratios still enforced.
+
+---
+
 ## Pre-Delivery Checklist (Build Triad Gate)
 
 Every frontend surface must pass ALL items before completion:
@@ -111,19 +170,57 @@ Every frontend surface must pass ALL items before completion:
 
 For projects building developer-focused tools:
 
+### Structural Layer (surfaces, text, borders)
+
 | Token | Value | Usage |
 |-------|-------|-------|
-| Primary background | `#0F172A` | Page background (navy void) |
-| Card background | `#1B2336` | Cards, panels, elevated surfaces |
+| Primary background | `#0F172A` | The void — page background |
+| Card background | `#1B2336` | Panels, elevated surfaces |
 | Secondary surface | `#1E293B` | Sidebars, secondary areas |
 | Tertiary surface | `#334155` | Hover states, active items |
 | Text primary | `#F8FAFC` | Body text (near-white, not pure white) |
 | Text secondary | `#94A3B8` | Labels, descriptions |
 | Text muted | `#64748B` | Placeholders, disabled text |
-| Accent success | `#22C55E` | Success states, positive indicators |
-| Accent warning | `#F59E0B` | Warnings, attention required |
-| Accent error | `#EF4444` | Errors, destructive actions |
 | Border default | `#334155` | Borders, dividers |
+
+### Energy Layer (status, agents, pipeline)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Accent success | `#22C55E` | Gates passed, healthy services, build complete |
+| Accent warning | `#F59E0B` | Warnings, attention required, P-MED findings |
+| Accent error | `#EF4444` | Errors, P-CRIT findings, destructive states |
+| Accent dispatch | `#3B82F6` | Agent dispatch, context transfer, active pipeline |
+| Accent findings | `#F97316` | Findings returning, P-HIGH severity |
+| Accent intelligence | `#8B5CF6` | Intelligence agents (Scout, Sentinel, Wraith), orchestrators |
+| Accent low | `#06B6D4` | P-LOW findings, informational, cool accent |
+| Accent persona | `#EC4899` | Persona activation, team presence highlights |
+| Glow success | `#22C55E40` | box-shadow for success states (25% opacity) |
+| Glow dispatch | `#3B82F640` | box-shadow for dispatch/active states |
+| Glow error | `#EF444440` | box-shadow for error/critical states |
+| Glow intelligence | `#8B5CF640` | box-shadow for intelligence agent activity |
+| Ember idle | `#94A3B820` | Faint glow for idle-but-alive elements |
+
+### Pipeline Node Colors (per stage)
+
+| Stage | Active Color | Glow | Idle |
+|-------|-------------|------|------|
+| Scout | `#8B5CF6` (purple) | `0 0 24px #8B5CF640` | `opacity: 0.35` |
+| Build | `#3B82F6` (blue) | `0 0 24px #3B82F640` | `opacity: 0.35` |
+| Triad | `#F59E0B` (amber) | `0 0 24px #F59E0B40` | `opacity: 0.35` |
+| Sentinel | `#22C55E` (green) | `0 0 24px #22C55E40` | `opacity: 0.35` |
+| Wraith | `#EF4444` (red) | `0 0 24px #EF444440` | `opacity: 0.35` |
+
+### Particle Stream Colors
+
+| Flow Type | Color | Example |
+|-----------|-------|---------|
+| Dispatch | `#3B82F6` → fades to transparent | Nyx dispatching Scout, Triad, Sentinel |
+| Findings return | `#F97316` | Triad returning findings to Nyx |
+| Critical findings | `#EF4444` | P-CRIT findings — brighter, faster particles |
+| Context transfer | `#22C55E` | Scout brief delivery, handoff data |
+| Red team probe | `#EF4444` with trail | Wraith probing system surfaces |
+| Communication | `#8B5CF6` | Inter-agent swarm messages |
 
 ---
 

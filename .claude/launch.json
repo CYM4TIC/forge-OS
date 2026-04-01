@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "desktop-fe",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@forge-os/desktop", "dev:fe"],
+      "port": 5173
+    }
+  ]
+}

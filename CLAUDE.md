@@ -381,7 +381,7 @@ projects/{name}/
 | `docs/ECOSYSTEM-INTEL.md` | Tiered ecosystem index — what to adopt, what to skip |
 | `docs/ECOSYSTEM-PATTERNS.md` | Token optimization, anti-drift, self-learning loop, quality enforcement |
 | `docs/ARCHITECTURE-PLAN.md` | Overall Tauri v2 architecture plan |
-| `docs/TAURI-BUILD-PLAN.md` | 8 phases, 24 sessions — full build sequence |
+| `docs/TAURI-BUILD-PLAN.md` | 9 phases, 29 sessions — full build sequence |
 
 ## Reference Sources
 
@@ -426,5 +426,5 @@ Full catalog: `forge/ENTITY-CATALOG.md`
 **Phase 3 next:** Agent Runtime — KAIROS memory, Swarm dispatch, SQLite state, auto-compact.
 **Build state tracked at:** `forge-dms-brain/forge-os/BOOT.md` (DMS vault hosts OS state until OS is self-managing).
 **Batch manifests:** `forge-dms-brain/forge-os/BATCH-MANIFESTS.md`
-**Full build plan:** `docs/TAURI-BUILD-PLAN.md` (8 phases, 24 sessions)
+**Full build plan:** `docs/TAURI-BUILD-PLAN.md` (9 phases, 29 sessions)
 **Phase 3 architecture:** `docs/PHASE-3-ARCHITECTURE.md` (synthesized from Claude Code source + ecosystem research)
