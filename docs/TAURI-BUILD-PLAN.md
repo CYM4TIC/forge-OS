@@ -379,6 +379,7 @@ Prevents two dispatched agents from working on the same finding during parallel 
 - `ContextMeter` — per-session context window fill gauge + **text density visualization**: actual text content rendered as progressively denser typography as usage climbs. Early context = spacious text. At 85% = compressed, tight lineHeight. Compaction = text dissolves and re-emerges sparser. Animated lineHeight/maxWidth transitions via Pretext.
 - Reads state from BOOT.md (parsed by Rust backend, emitted as Tauri events)
 - Ambient idle animation (subtle node drift, pulse, **persona glyph ember states**)
+- **Protocol enforcement point #8 — Ambient accountability:** The HUD visualizes protocol compliance in real time. Pipeline stages glow when active, dim when skipped. Findings feed shows unresolved items with a count badge that cannot be hidden. The operator glances at the canvas and knows instantly if a gate was skipped, a finding was unresolved, or a step was out of sequence. Transparency replaces trust.
 
 ### Session 5.2 — Agent Board + Findings Feed
 - **Agent Board and Findings Feed are separate panel types** — each registers with the window manager and can be floated, tabbed, minimized, or popped out independently. They don't have to live inside the Canvas HUD.
@@ -414,6 +415,8 @@ Prevents two dispatched agents from working on the same finding during parallel 
 - `GraphViewer` — **separate panel type.** Knowledge graph with Pretext-measured labels on every node and edge, canvas pan/zoom, entity highlighting. Registers with window manager.
 
 **New panel types registered in this phase:** Canvas HUD, Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer (6 new, bringing total to ~12)
+
+**Protocol enforcement foundation:** P5-G (findings SQLite) is enforcement point #2 from the Protocol Enforcement Vision — every gate finding gets an ID, severity, and status in SQLite. A batch cannot close with `status = 'open'` rows. The database is the proof, not commit messages. See `memory/project_os_protocol_enforcement.md` for the full 8-point enforcement plan.
 
 **Depends on:** Phase 4 (window manager + Pretext + canvas components + document gen)
 
@@ -578,6 +581,7 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 - Gate status display (pass/fail/in-progress per gate)
 - Session timeline (horizontal, shows BOOT.md handoffs as milestones)
 - "Export Report" button → generates PDF via document generation engine
+- **Protocol enforcement point #1:** Gate dispatch is a pipeline stage, not an option. The dispatch queue refuses to advance a batch past "Build" until Triad agents have been dispatched and the findings table (P5-G) shows zero open items. No silent skipping.
 
 **New panel types registered in this phase:** Team Panel (rebuilt), Action Palette, Dispatch Queue (3 new, total ~17)
 
@@ -590,6 +594,11 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 **Goal:** The Rust backend intelligence that makes autonomous agent dispatch work, knowledge graph, self-improving skills, and the persona evolution engine that makes the 10 personas genuinely learn and grow through use.
 
 ### Session 8.1 — Vault Watcher + State Engine + Skills Crystallization
+
+**Protocol enforcement points #6 and #7:**
+- **#6 Context window hard stop:** useContextUsage (Phase 3) enforces 70% as a hard gate — state engine emits warning event, blocks new batch start, forces handoff write. The agent cannot ignore context limits.
+- **#7 Handoff integrity check:** State engine verifies BOOT.md was updated AFTER the last git push. If BOOT.md timestamp precedes the last push, the batch is flagged as incomplete. Catches sequencing errors that cause state drift.
+
 - Rust `notify` crate for filesystem watching
   - Watch BOOT.md, BUILD-LEARNINGS.md, agent files, INTROSPECTION.md files
   - Parse BOOT.md YAML frontmatter → emit state updates
@@ -622,6 +631,13 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
   - **Cross-project persistence:** Skills live in the OS directory (not per-project), so patterns learned in DMS carry to the next project.
 
 ### Session 8.2 — Agent Dispatch Pipeline + Goal Ancestry + Injection Scanning
+
+**Protocol enforcement points #1, #3, #4, #5:**
+- **#1 Gate dispatch as pipeline stage:** The orchestration engine enforces Scout → Build → Triad → Sentinel as mandatory stages. The pipeline will not advance past Build until Triad agents have been dispatched and all findings in SQLite are resolved. This is the central enforcement mechanism — the system physically cannot skip gates.
+- **#3 Batch decomposition validation:** Before a phase begins, the pipeline validates that every batch in the manifest has gate assignments. No assignments = phase won't start. Prevents batches shipping without gate coverage.
+- **#4 Diff-aware gate routing:** The pipeline knows what files changed per batch. Rust files → auto-assign Kehinde. TSX/CSS → auto-assign Mara + Riven. SQL/migrations → auto-assign Tanaka. Auth code → auto-assign Tanaka. Gate map partially automated from file diffs.
+- **#5 Read-back verification in audit trail:** The dispatch audit trail verifies that for every file written during a batch, a corresponding read-back occurred. If not, the batch is flagged incomplete before gates can run.
+
 - Orchestration engine in Rust:
   - Sequential: Scout → Build → Gate → Sentinel
   - Parallel: 3 Triad agents simultaneously (3 concurrent provider streams)
