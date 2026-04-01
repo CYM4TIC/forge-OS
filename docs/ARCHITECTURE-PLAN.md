@@ -6,7 +6,7 @@
 
 ## Context
 
-Forge OS is extracted from a 105-entity AI development system (the "Cathedral") built during a real production SaaS project (57 batches, 326 build steps, 9 failure modes discovered). ~90% of the system is generic methodology (how to build, verify, gate, review) and ~10% was domain-specific. This plan documents how the generic methodology becomes a standalone, project-agnostic development platform.
+Forge OS is extracted from a 105-entity AI development system (the "Cathedral") built during a real production SaaS project (57 batches, 326 build steps, 10 failure modes discovered). ~90% of the system is generic methodology (how to build, verify, gate, review) and ~10% was domain-specific. This plan documents how the generic methodology becomes a standalone, project-agnostic development platform.
 
 **Deployment model:** Standalone workspace. Clone forge-OS, open Claude Code in it, point it at any project repo. Personas persist across projects. Project repos stay clean.
 
@@ -46,7 +46,7 @@ forge-OS/
 │   ├── EXECUTION-CONTRACTS.md         # 7 contracts (schema_query, api_read, etc.)
 │   ├── GATE-PROTOCOL.md              # How gates work, triad dispatch
 │   ├── ACTIVATION-TIERS.md           # 5-tier persona wake system
-│   ├── FAILURE-MODES.md              # 9 failure modes + defenses
+│   ├── FAILURE-MODES.md              # 10 failure modes + defenses
 │   ├── CONTEXT-MANAGEMENT.md         # Token budgets, when to stop, handoffs
 │   ├── SPEC-FIRST-WORKFLOW.md        # Vision → specs → ADL → batches → build
 │   └── INTROSPECTION-PROTOCOL.md     # 12-dimension matrices, failure mode propagation
@@ -156,7 +156,7 @@ Before `/init` or `/link`, Nyx walks the user through what Forge OS IS and what 
 
 **4. The Build Philosophy**
 - Spec-first methodology with external agent verification
-- 41 rules and 9 failure modes from real production builds
+- 41 rules and 10 failure modes from real production builds
 - "You own the decisions. I own the execution."
 
 **5. Two Paths**
@@ -233,7 +233,7 @@ A discovery-then-confirm flow. Agents scan, Nyx presents findings, user corrects
 
 ## Introspection Lifecycle
 
-Introspection is how the team gets smarter. 9 failure modes were discovered through this process, each preventing real production mistakes in subsequent batches.
+Introspection is how the team gets smarter. 10 failure modes were discovered through this process, each preventing real production mistakes in subsequent batches.
 
 ### Three-Layer Failure Mode Architecture
 
@@ -298,7 +298,7 @@ Introspection is how the team gets smarter. 9 failure modes were discovered thro
 - WAKE_UP_PROTOCOL.md → `forge/ACTIVATION-TIERS.md`
 - EXECUTION-PROTOCOL.md → `forge/EXECUTION-CONTRACTS.md` + `forge/BUILD-LOOP.md`
 - 41 rules → `forge/METHODOLOGY.md`
-- 9 failure modes → `forge/FAILURE-MODES.md`
+- 10 failure modes → `forge/FAILURE-MODES.md`
 
 ### Create new:
 - `forge-os.config.json`, `/init`, `/link`, `/status`, `/start`, `/introspect` commands
@@ -354,4 +354,4 @@ Introspection is how the team gets smarter. 9 failure modes were discovered thro
 
 ---
 
-*Architecture plan written 2026-03-30. Phase 1 complete. Source: Forge DMS Cathedral (57 batches, 326 steps, 9 failure modes).*
+*Architecture plan written 2026-03-30. Phase 1 complete. Source: Forge DMS Cathedral (57 batches, 326 steps, 10 failure modes).*

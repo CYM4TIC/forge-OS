@@ -276,7 +276,7 @@ Each persona has 4 identity files in `personas/{name}/`:
 | METHODOLOGY.md | `forge/` | 41 rules in 6 categories |
 | BUILD-LOOP.md | `forge/` | 33-step build execution cycle |
 | EXECUTION-CONTRACTS.md | `forge/` | Per-phase contracts |
-| FAILURE-MODES.md | `forge/` | 9 documented failure modes with defenses |
+| FAILURE-MODES.md | `forge/` | 10 documented failure modes with defenses |
 | ACTIVATION-TIERS.md | `forge/` | 5-tier persona activation (quick → deep → build) |
 | GATE-PROTOCOL.md | `forge/` | Persona gate enforcement |
 | INTROSPECTION-PROTOCOL.md | `forge/` | 3-layer introspection system |

@@ -12,7 +12,7 @@ Forge OS is a standalone Tauri v2 desktop application — a native program where
 - **10 utilities** for scaffolding, documentation, dependency audits, and more
 - **35 sub-agents** for focused checks (accessibility, security, performance, etc.)
 - **35 slash commands** that automate common workflows
-- **A spec-first build methodology** with 41 rules and 9 documented failure modes
+- **A spec-first build methodology** with 41 rules and 10 documented failure modes
 
 You describe what you want to build. The team builds it, verifies it, and learns from every mistake.
 
@@ -66,4 +66,4 @@ Start with GitHub + your database. Add the rest as you need them.
 
 ---
 
-*Extracted from the Cathedral — 57 batches, 326 build steps, 9 failure modes discovered, 0 repeated.*
+*Extracted from the Cathedral — 57 batches, 326 build steps, 10 failure modes discovered, 0 repeated.*

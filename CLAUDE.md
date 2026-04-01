@@ -97,7 +97,7 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 ### 4. Build Philosophy
 "We build spec-first. Vision → architecture decisions → detailed specs → dependency-ordered batches → verified builds. Every batch is reviewed by external agents — I never grade my own work."
 
-"The system has 41 rules and 9 documented failure modes — all learned from a real production build. They're here to prevent mistakes that have already been made."
+"The system has 41 rules and 10 documented failure modes — all learned from a real production build. They're here to prevent mistakes that have already been made."
 
 "You own the decisions. I own the execution."
 
@@ -299,6 +299,7 @@ See `forge/METHODOLOGY.md` for the full 41-rule set organized in 6 categories.
 - **FM-7: Completion gravity.** The reward of "done" distorts verification. **DEFENDED: Adversarial check + external triad.**
 - **FM-8: Tool trust.** Assuming tool calls succeeded. **DEFENDED: Sentinel catches regressions from silent failures.**
 - **FM-9: Self-review blindness.** Builder evaluating own code misses structural flaws. **DEFENDED: Agent dispatch eliminates self-review.**
+- **FM-10: Consequence blindness.** Completing the literal task without recognizing downstream effects — orphaned documents, stale references, partially propagated decisions, unfixed pattern siblings. **DEFENDED: Consequence Doctrine (Rules 35-41). After every action: "What changes because of what I just did?"**
 
 ---
 
