@@ -25,3 +25,10 @@ export type { ConnectionLineProps } from './connection-line.js';
 
 export { NodeCard } from './node-card.js';
 export type { NodeCardProps, NodeStatus } from './node-card.js';
+
+// ─── Token Display (P4-O) ───────────────────────────────────────────────────
+export { TokenGauge } from './token-gauge.js';
+export type { TokenGaugeProps } from './token-gauge.js';
+
+export { ContextMeterCanvas } from './context-meter-canvas.js';
+export type { ContextMeterCanvasProps } from './context-meter-canvas.js';
