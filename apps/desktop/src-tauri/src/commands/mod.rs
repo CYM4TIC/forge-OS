@@ -4,3 +4,4 @@ pub mod providers;
 pub mod agents;
 pub mod dispatch;
 pub mod build_state;
+pub mod memory;

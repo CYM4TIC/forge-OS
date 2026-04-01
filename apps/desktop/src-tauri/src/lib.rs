@@ -2,6 +2,7 @@ mod build_state;
 mod commands;
 mod database;
 mod dispatch;
+mod memory;
 mod providers;
 pub mod state;
 
@@ -150,6 +151,10 @@ pub fn run() {
             commands::build_state::add_finding,
             commands::build_state::resolve_finding,
             commands::build_state::generate_boot_md,
+            commands::memory::append_memory,
+            commands::memory::query_memory,
+            commands::memory::get_memory_index,
+            commands::memory::get_daily_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
