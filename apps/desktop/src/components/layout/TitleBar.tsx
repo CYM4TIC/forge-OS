@@ -1,14 +1,24 @@
 import { useEffect, useRef } from 'react';
 import type { Window as TauriWindow } from '@tauri-apps/api/window';
 import type { ThresholdStatus } from '../../lib/tauri';
+import type { WorkspacePreset } from '../../window-manager/types';
 import ContextMeter from '../status/ContextMeter';
 
 interface TitleBarProps {
   contextStatus?: ThresholdStatus | null;
   isCompacting?: boolean;
+  presets?: WorkspacePreset[];
+  activePresetId?: string | null;
+  onApplyPreset?: (presetId: string) => void;
 }
 
-export default function TitleBar({ contextStatus, isCompacting }: TitleBarProps) {
+export default function TitleBar({
+  contextStatus,
+  isCompacting,
+  presets,
+  activePresetId,
+  onApplyPreset,
+}: TitleBarProps) {
   const appWindow = useRef<TauriWindow | null>(null);
 
   useEffect(() => {
@@ -18,6 +28,7 @@ export default function TitleBar({ contextStatus, isCompacting }: TitleBarProps)
       });
     }
   }, []);
+
   return (
     <div
       data-tauri-drag-region
@@ -31,8 +42,32 @@ export default function TitleBar({ contextStatus, isCompacting }: TitleBarProps)
         <ContextMeter status={contextStatus ?? null} isCompacting={isCompacting ?? false} />
       </div>
 
-      {/* Window controls */}
-      <div className="flex h-full">
+      {/* Workspace mode switcher + Window controls */}
+      <div className="flex items-center h-full">
+        {/* Mode switcher — segmented control */}
+        {presets && presets.length > 0 && onApplyPreset && (
+          <div className="flex items-center gap-px mr-2 rounded-full bg-bg-elevated/60 border border-border-subtle/50 p-0.5">
+            {presets.slice(0, 5).map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => onApplyPreset(preset.id)}
+                className={`
+                  px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase
+                  transition-all duration-200
+                  ${activePresetId === preset.id
+                    ? 'bg-accent/25 text-accent shadow-[0_0_6px_rgba(99,102,241,0.25)]'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated/80'
+                  }
+                `}
+                title={preset.description}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Window controls */}
         <button
           onClick={() => appWindow.current?.minimize()}
           className="inline-flex items-center justify-center w-11 h-full text-text-muted hover:bg-bg-elevated hover:text-text-secondary transition-colors"

@@ -4,18 +4,15 @@
 // Scales to 20+ panel types. Rave aesthetic: pulsing jewels, not corporate tabs.
 
 import { useCallback } from 'react';
-import type { PanelInstance, PanelType, WorkspacePreset } from './types';
+import type { PanelInstance, PanelType } from './types';
 import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
 
 interface DockBarProps {
   panels: PanelInstance[];
-  presets: WorkspacePreset[];
-  activePresetId: string | null;
   onRestore: (panelId: string) => void;
   onOpen: (type: PanelType) => void;
   onFocus: (panelId: string) => void;
-  onApplyPreset: (presetId: string) => void;
 }
 
 type DockPillState = 'active' | 'minimized' | 'closed';
@@ -102,12 +99,9 @@ function DockPill({
 
 export function DockBar({
   panels,
-  presets,
-  activePresetId,
   onRestore,
   onOpen,
   onFocus,
-  onApplyPreset,
 }: DockBarProps) {
   const pills = buildDockPills(panels);
 
@@ -126,37 +120,17 @@ export function DockBar({
 
   return (
     <div
-      className="flex items-center justify-between px-3 border-t border-border-subtle bg-bg-primary/80 backdrop-blur-sm"
+      className="flex items-center px-3 border-t border-border-subtle bg-bg-primary/80 backdrop-blur-sm"
       style={{ height: DOCK_BAR_HEIGHT }}
     >
-      {/* Panel pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      {/* Panel pills — full width, no scroll needed now that presets are in titlebar */}
+      <div className="flex items-center gap-1.5 flex-wrap">
         {pills.map((pill, i) => (
           <DockPill
             key={pill.panelId ?? `${pill.type}-${i}`}
             pill={pill}
             onClick={() => handlePillClick(pill)}
           />
-        ))}
-      </div>
-
-      {/* Workspace preset switcher */}
-      <div className="flex items-center gap-1 ml-3 shrink-0">
-        {presets.slice(0, 5).map((preset) => (
-          <button
-            key={preset.id}
-            onClick={() => onApplyPreset(preset.id)}
-            className={`
-              px-2 py-0.5 rounded text-[10px] font-medium border transition-all duration-200
-              ${activePresetId === preset.id
-                ? 'bg-accent/20 border-accent/40 text-accent'
-                : 'bg-bg-elevated/40 border-border-subtle/50 text-text-muted hover:bg-bg-elevated hover:text-text-secondary'
-              }
-            `}
-            title={preset.description}
-          >
-            {preset.name}
-          </button>
         ))}
       </div>
     </div>

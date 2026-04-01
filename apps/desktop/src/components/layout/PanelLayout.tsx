@@ -1,18 +1,33 @@
 // ── PanelLayout — Window Manager ──
 // Replaced react-resizable-panels with floating window manager.
 // Every panel is independently sizable, movable, minimizable, and pop-outable.
+// Preset switching moved to TitleBar (P4-I.1).
 
-import { useEffect, useRef, type ReactNode } from 'react';
-import { useWindowManager } from '../../hooks/useWindowManager';
+import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
 import { PanelContainer } from '../../window-manager/panel';
 import { DockBar } from '../../window-manager/dock';
 import { DOCK_BAR_HEIGHT } from '../../window-manager/snapping';
-import type { PanelType, PanelInstance } from '../../window-manager/types';
+import type { PanelType, PanelInstance, ResizeHandle } from '../../window-manager/types';
 import ChatPanel from '../panels/ChatPanel';
 import CanvasPanel from '../panels/CanvasPanel';
 import PreviewPanel from '../panels/PreviewPanel';
 import ConnectivityPanel from '../panels/ConnectivityPanel';
 import TeamPanel from '../panels/TeamPanel';
+
+interface PanelLayoutProps {
+  panels: PanelInstance[];
+  isReady: boolean;
+  addPanel: (type: PanelType) => void;
+  removePanel: (id: string) => void;
+  minimizePanel: (id: string) => void;
+  restorePanel: (id: string) => void;
+  popOutPanel: (id: string) => void;
+  focusPanel: (id: string) => void;
+  handleDragStart: (panelId: string, e: MouseEvent) => void;
+  handleResizeStart: (panelId: string, handle: ResizeHandle, e: MouseEvent) => void;
+  applyPreset: (presetId: string) => void;
+  setFrameSize: (width: number, height: number) => void;
+}
 
 /** Map panel type to its content component */
 function PanelContent({ panel }: { panel: PanelInstance }): ReactNode {
@@ -46,24 +61,20 @@ function PanelContent({ panel }: { panel: PanelInstance }): ReactNode {
   }
 }
 
-export default function PanelLayout() {
+export default function PanelLayout({
+  panels,
+  isReady,
+  addPanel,
+  removePanel,
+  minimizePanel,
+  restorePanel,
+  popOutPanel,
+  focusPanel,
+  handleDragStart,
+  handleResizeStart,
+  setFrameSize,
+}: PanelLayoutProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const {
-    panels,
-    presets,
-    activePresetId,
-    isReady,
-    addPanel,
-    removePanel,
-    minimizePanel,
-    restorePanel,
-    popOutPanel,
-    focusPanel,
-    handleDragStart,
-    handleResizeStart,
-    applyPreset,
-    setFrameSize,
-  } = useWindowManager();
 
   // Track container dimensions for snapping
   useEffect(() => {
@@ -119,12 +130,9 @@ export default function PanelLayout() {
       <div className="absolute bottom-0 left-0 right-0">
         <DockBar
           panels={panels}
-          presets={presets}
-          activePresetId={activePresetId}
           onRestore={restorePanel}
           onOpen={addPanel}
           onFocus={focusPanel}
-          onApplyPreset={applyPreset}
         />
       </div>
     </div>
