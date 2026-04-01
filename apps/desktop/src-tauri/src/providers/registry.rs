@@ -3,6 +3,7 @@ use std::sync::Arc;
 use super::traits::ModelProvider;
 use super::types::CapabilityTier;
 
+#[derive(Clone)]
 pub struct ProviderRegistry {
     providers: HashMap<String, Arc<dyn ModelProvider>>,
     default_id: Option<String>,

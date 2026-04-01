@@ -1,11 +1,13 @@
 mod commands;
 mod database;
+mod dispatch;
 mod providers;
 pub mod state;
 
 use std::sync::Arc;
 
 use database::Database;
+use dispatch::AgentDispatcher;
 use providers::claude::ClaudeProvider;
 use providers::config::ProviderConfig;
 use providers::openai::OpenAIProvider;
@@ -13,6 +15,7 @@ use providers::registry::ProviderRegistry;
 use providers::types::ModelMapping;
 use state::AppState;
 use tauri::Manager;
+use tokio::sync::Mutex;
 
 /// Load provider configurations from SQLite settings.
 /// Keys: provider.{id}.api_key, provider.{id}.base_url, provider.default
@@ -112,10 +115,18 @@ pub fn run() {
 
             // Initialize providers from settings + env
             let registry = init_providers(&db);
-            let app_state = AppState::new(registry);
+            let app_state = AppState::new(registry.clone());
+
+            // Async-safe provider registry for agent dispatch
+            let async_registry: Arc<Mutex<ProviderRegistry>> = Arc::new(Mutex::new(registry));
+
+            // Agent dispatcher
+            let dispatcher: Arc<Mutex<AgentDispatcher>> = Arc::new(Mutex::new(AgentDispatcher::new()));
 
             app.manage(db);
             app.manage(app_state);
+            app.manage(async_registry);
+            app.manage(dispatcher);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -128,6 +139,10 @@ pub fn run() {
             commands::providers::list_providers,
             commands::providers::set_default_provider,
             commands::agents::list_agents,
+            commands::dispatch::dispatch_agent,
+            commands::dispatch::get_agent_status,
+            commands::dispatch::list_active_agents,
+            commands::dispatch::cancel_agent,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
