@@ -42,20 +42,6 @@ function PanelContent({ panel }: { panel: PanelInstance }): ReactNode {
       return <ConnectivityPanel />;
     case 'team':
       return <TeamPanel />;
-    case 'findings':
-    case 'agent_board':
-    case 'vault_browser':
-    case 'graph_viewer':
-    case 'session_timeline':
-    case 'context_meter':
-    case 'document_gen':
-      return (
-        <div className="flex items-center justify-center h-full bg-bg-secondary">
-          <span className="text-text-muted text-sm font-medium tracking-wide uppercase">
-            {panel.title}
-          </span>
-        </div>
-      );
     default:
       return null;
   }

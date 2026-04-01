@@ -20,6 +20,10 @@ type EventListener = (event: WindowManagerEvent) => void;
 
 // ── Panel Type Registry — what CAN exist ──
 
+// Only register panel types that have actual component implementations.
+// Future panels (findings, agent_board, vault_browser, graph_viewer,
+// session_timeline, context_meter, document_gen) will be added when their
+// phases build them. No placeholder pills in the dock bar.
 const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
   ['chat', {
     type: 'chat', label: 'Chat', icon: '💬',
@@ -51,48 +55,6 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     allowMultiple: false,
     defaultSize: { width: 400, height: 200 },
   }],
-  ['findings', {
-    type: 'findings', label: 'Findings', icon: '🔍',
-    defaultConstraints: { minWidth: 300, minHeight: 200 },
-    allowMultiple: false,
-    defaultSize: { width: 400, height: 400 },
-  }],
-  ['agent_board', {
-    type: 'agent_board', label: 'Agents', icon: '🤖',
-    defaultConstraints: { minWidth: 300, minHeight: 200 },
-    allowMultiple: false,
-    defaultSize: { width: 400, height: 400 },
-  }],
-  ['vault_browser', {
-    type: 'vault_browser', label: 'Vault', icon: '📁',
-    defaultConstraints: { minWidth: 280, minHeight: 200 },
-    allowMultiple: false,
-    defaultSize: { width: 350, height: 500 },
-  }],
-  ['graph_viewer', {
-    type: 'graph_viewer', label: 'Graph', icon: '🕸️',
-    defaultConstraints: { minWidth: 400, minHeight: 300 },
-    allowMultiple: false,
-    defaultSize: { width: 500, height: 400 },
-  }],
-  ['session_timeline', {
-    type: 'session_timeline', label: 'Timeline', icon: '📊',
-    defaultConstraints: { minWidth: 400, minHeight: 150 },
-    allowMultiple: false,
-    defaultSize: { width: 600, height: 200 },
-  }],
-  ['context_meter', {
-    type: 'context_meter', label: 'Context', icon: '📏',
-    defaultConstraints: { minWidth: 200, minHeight: 100 },
-    allowMultiple: false,
-    defaultSize: { width: 250, height: 120 },
-  }],
-  ['document_gen', {
-    type: 'document_gen', label: 'Documents', icon: '📄',
-    defaultConstraints: { minWidth: 400, minHeight: 300 },
-    allowMultiple: false,
-    defaultSize: { width: 500, height: 500 },
-  }],
 ]);
 
 // ── Built-in Workspace Presets ──
@@ -112,12 +74,11 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'review',
     name: 'Review Mode',
-    description: 'Findings + preview big, canvas minimized',
+    description: 'Preview + chat big, canvas minimized',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'findings', state: 'floating', position: { x: 340, y: 20 }, size: { width: 500, height: 400 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'preview', state: 'floating', position: { x: 340, y: 200 }, size: { width: 500, height: 350 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'preview', state: 'floating', position: { x: 340, y: 20 }, size: { width: 560, height: 550 }, tabGroupId: null, tabOrder: 0 },
       { type: 'canvas_hud', state: 'minimized', position: { x: 0, y: 0 }, size: { width: 640, height: 600 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
