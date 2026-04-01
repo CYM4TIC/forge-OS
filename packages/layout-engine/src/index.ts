@@ -41,5 +41,27 @@ export type {
   MultiBreakpointResult,
 } from './measure.js';
 
+// ─── Fit (binary search solver) ──────────────────────────────────────────────
+export { fitToContainer, fitToBox } from './fit.js';
+
+// ─── Canvas Render ───────────────────────────────────────────────────────────
+export {
+  renderText,
+  renderStyledSpans,
+  setupCanvasForHiDPI,
+} from './canvas.js';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+export type {
+  LayoutResult,
+  FitOptions,
+  FitResult,
+  StyledSpan,
+  CanvasRenderOptions,
+  CanvasRenderResult,
+  VirtualHeightMapOptions,
+  VirtualHeightMap,
+} from './types.js';
+
 // ─── Re-export Pretext types for consumers ───────────────────────────────────
 export type { PreparedText, PreparedTextWithSegments } from '@chenglou/pretext';
