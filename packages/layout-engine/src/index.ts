@@ -51,6 +51,12 @@ export {
   setupCanvasForHiDPI,
 } from './canvas.js';
 
+// ─── Virtual List Heights ────────────────────────────────────────────────────
+export {
+  createVirtualHeightMap,
+  createIncrementalHeightMap,
+} from './virtual.js';
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type {
   LayoutResult,
