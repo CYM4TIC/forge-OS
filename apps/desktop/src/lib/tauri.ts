@@ -362,3 +362,180 @@ export function storeCompactResult(request: {
 export function getLastSummary(sessionId: string): Promise<CompactionSummary | null> {
   return invoke('get_last_summary', { sessionId });
 }
+
+// ── Build State types ──
+
+export interface BatchRow {
+  id: string;
+  session_id: string | null;
+  batch_id: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  findings_count: number;
+  files_modified: string;
+  handoff: string | null;
+  created_at: string;
+}
+
+export interface FindingRow {
+  id: string;
+  session_id: string | null;
+  agent_slug: string;
+  severity: string;
+  category: string;
+  description: string;
+  evidence: string | null;
+  status: string;
+  batch_ref: string | null;
+  created_at: string;
+}
+
+export interface RiskRow {
+  id: string;
+  description: string;
+  severity: string;
+  batch_id: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+export interface SeverityCounts {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  info: number;
+}
+
+export interface BuildStateOverview {
+  batches: BatchRow[];
+  open_findings: FindingRow[];
+  open_risks: RiskRow[];
+  severity_counts: SeverityCounts;
+}
+
+// ── Build State commands ──
+
+export function getBuildState(): Promise<BuildStateOverview> {
+  return invoke('get_build_state');
+}
+
+export function createBatch(request: {
+  batch_id: string;
+  session_id?: string;
+}): Promise<string> {
+  return invoke('create_batch', { request });
+}
+
+export function completeBatch(request: {
+  id: string;
+  files_modified: string;
+  handoff?: string;
+}): Promise<void> {
+  return invoke('complete_batch', { request });
+}
+
+export function addFinding(request: {
+  agent_slug: string;
+  severity: string;
+  category: string;
+  description: string;
+  evidence?: string;
+  session_id?: string;
+  batch_ref?: string;
+}): Promise<string> {
+  return invoke('add_finding', { request });
+}
+
+export function resolveFinding(id: string, status: string): Promise<void> {
+  return invoke('resolve_finding', { id, status });
+}
+
+export function generateBootMd(): Promise<string> {
+  return invoke('generate_boot_md');
+}
+
+// ── Team Config types ──
+
+export type AgentType = 'persona' | 'intelligence' | 'orchestrator' | 'utility' | 'sub_agent';
+export type PermissionMode = 'read-only' | 'read-write' | 'full';
+export type BackendType = 'in-process' | 'subprocess' | 'remote';
+
+export interface TeamMember {
+  agent_id: string;
+  name: string;
+  color: string;
+  agent_type: AgentType;
+  model: string;
+  permission_mode: PermissionMode;
+  subscriptions: string[];
+  backend_type: BackendType;
+  is_active: boolean;
+}
+
+export interface TeamFile {
+  lead_agent_id: string;
+  team_allowed_paths: string[];
+  members: TeamMember[];
+}
+
+export interface CheckpointRow {
+  id: string;
+  session_id: string;
+  message_count: number;
+  last_message_id: string | null;
+  context_tokens: number | null;
+  checkpoint_data: string;
+  created_at: string;
+}
+
+export interface ResumeCandidate {
+  session_id: string;
+  session_title: string;
+  message_count: number;
+  last_message_id: string | null;
+  context_tokens: number | null;
+  interrupted_at: string;
+}
+
+// ── Team Config commands ──
+
+export function getTeamConfig(): Promise<TeamFile> {
+  return invoke('get_team_config');
+}
+
+export function updateTeamMember(request: {
+  agent_id: string;
+  model?: string;
+  is_active?: boolean;
+  color?: string;
+  subscriptions?: string[];
+  permission_mode?: PermissionMode;
+}): Promise<TeamFile> {
+  return invoke('update_team_member', { request });
+}
+
+// ── Session Checkpoint commands ──
+
+export function saveCheckpoint(request: {
+  session_id: string;
+  message_count: number;
+  last_message_id?: string;
+  context_tokens?: number;
+  checkpoint_data: string;
+}): Promise<string> {
+  return invoke('save_checkpoint', { request });
+}
+
+export function getResumeCandidate(): Promise<ResumeCandidate[]> {
+  return invoke('get_resume_candidate');
+}
+
+export function getCheckpoint(sessionId: string): Promise<CheckpointRow | null> {
+  return invoke('get_checkpoint', { sessionId });
+}
+
+export function clearCheckpoint(sessionId: string): Promise<void> {
+  return invoke('clear_checkpoint', { sessionId });
+}
