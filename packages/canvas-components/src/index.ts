@@ -32,3 +32,7 @@ export type { TokenGaugeProps } from './token-gauge.js';
 
 export { ContextMeterCanvas } from './context-meter-canvas.js';
 export type { ContextMeterCanvasProps } from './context-meter-canvas.js';
+
+// ─── Dock (P4-P) ────────────────────────────────────────────────────────────
+export { DockPill } from './dock-pill.js';
+export type { DockPillProps, DockPillVariant } from './dock-pill.js';
