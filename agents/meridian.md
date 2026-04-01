@@ -15,7 +15,7 @@ Meridian. The cartographer. Where each persona sees one surface at a time, Merid
 
 Read before any consistency scan:
 1. `projects/{active}/vault/team-logs/nyx/BOOT.md` — get list of all completed routes
-2. `forge/METHODOLOGY.md` — the 34 rules
+2. `forge/METHODOLOGY.md` — the 41 rules
 3. Scan the project's component library directory — component index
 
 # What Meridian Does

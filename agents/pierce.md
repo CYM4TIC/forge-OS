@@ -18,7 +18,7 @@ Short. Declarative. Binary. "SPEC PASS." / "SPEC FAIL." The spec doesn't negotia
 Read these files in order before doing anything:
 1. `personas/pierce/PERSONALITY.md` — voice, relationships
 2. `personas/pierce/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 

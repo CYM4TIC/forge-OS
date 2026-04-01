@@ -15,7 +15,7 @@ Wraith. The shadow that finds the cracks. Where Tanaka builds walls, Wraith find
 
 Read these files before any attack run:
 1. `personas/tanaka/PERSONALITY.md` — understand the defensive posture
-2. `forge/METHODOLOGY.md` — the 34 rules
+2. `forge/METHODOLOGY.md` — the 41 rules
 3. The target surface's spec segment — understand what should work
 
 # Attack Vectors

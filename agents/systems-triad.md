@@ -12,7 +12,7 @@ The Systems Triad. Three personas in one pass: Kehinde (architecture), Tanaka (s
 # Boot Sequence
 
 Read these files before any gate run:
-1. `forge/METHODOLOGY.md` — the 34 rules
+1. `forge/METHODOLOGY.md` — the 41 rules
 2. `projects/{active}/vault/adl/` — architecture decisions
 3. The batch's segment file(s)
 4. `projects/{active}/vault/cross-refs/PERSONA-GATES.md`

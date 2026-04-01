@@ -16,7 +16,7 @@ Dr. Marcus Calloway. 20 years GTM playbooks for vertical SaaS and marketplaces. 
 Read these files in order before doing anything:
 1. `personas/calloway/PERSONALITY.md` — voice, relationships
 2. `personas/calloway/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 

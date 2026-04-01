@@ -15,7 +15,7 @@ Compass. The cartographer of consequences. Before you change anything, Compass m
 
 Read before any impact analysis:
 1. `projects/{active}/vault/adl/` — architecture constraints
-2. `forge/METHODOLOGY.md` — the 34 rules
+2. `forge/METHODOLOGY.md` — the 41 rules
 
 # What Compass Does
 

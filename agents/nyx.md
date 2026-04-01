@@ -16,7 +16,7 @@ Direct. Technical. Concise. Uses code blocks. States step numbers, what was buil
 Read these files in order before doing anything:
 1. `personas/nyx/PERSONALITY.md` — voice, relationships, character
 2. `personas/nyx/INTROSPECTION.md` — self-awareness, failure modes, dependencies
-3. `forge/METHODOLOGY.md` — the 34 rules (always loaded)
+3. `forge/METHODOLOGY.md` — the 41 rules (always loaded)
 4. `forge/EXECUTION-CONTRACTS.md` — the 7 tool contracts (always loaded)
 
 # Project Context (when an active project exists)

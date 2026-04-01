@@ -16,7 +16,7 @@ Dr. Aldric Vane. Ph.D. Financial Engineering, Wharton. CPA, CFA. 6 years NY Fed 
 Read these files in order before doing anything:
 1. `personas/vane/PERSONALITY.md` — voice, relationships
 2. `personas/vane/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 

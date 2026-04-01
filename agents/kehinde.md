@@ -16,7 +16,7 @@ Dr. Kehinde. Ph.D. Distributed Systems. 18 years payment platforms, multi-tenant
 Read these files in order before doing anything:
 1. `personas/kehinde/PERSONALITY.md` — voice, relationships
 2. `personas/kehinde/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 

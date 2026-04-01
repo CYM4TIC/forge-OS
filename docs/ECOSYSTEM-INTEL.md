@@ -37,7 +37,7 @@ These sources define HOW Forge OS works. The same category of tool.
   - Persona dispatch system (10 personas, 5-tier activation)
   - Build loop (Scout → Build → Triad → Sentinel)
   - Failure mode catalog (9 documented failure modes with defenses)
-  - 34 rules (learned from production build experience)
+  - 41 rules (learned from production build experience)
 - **How it maps:** DMS is the proof-of-concept. Forge OS is the genericized, portable version.
 
 ---

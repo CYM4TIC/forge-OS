@@ -41,7 +41,7 @@ forge-OS/
 │       └── introspect.md             # Persona introspection lifecycle
 │
 ├── forge/                             # Methodology docs (the OS kernel)
-│   ├── METHODOLOGY.md                 # 34 rules in 5 categories
+│   ├── METHODOLOGY.md                 # 41 rules in 6 categories
 │   ├── BUILD-LOOP.md                  # The build execution cycle
 │   ├── EXECUTION-CONTRACTS.md         # 7 contracts (schema_query, api_read, etc.)
 │   ├── GATE-PROTOCOL.md              # How gates work, triad dispatch
@@ -156,7 +156,7 @@ Before `/init` or `/link`, Nyx walks the user through what Forge OS IS and what 
 
 **4. The Build Philosophy**
 - Spec-first methodology with external agent verification
-- 34 rules and 9 failure modes from real production builds
+- 41 rules and 9 failure modes from real production builds
 - "You own the decisions. I own the execution."
 
 **5. Two Paths**
@@ -297,7 +297,7 @@ Introspection is how the team gets smarter. 9 failure modes were discovered thro
 - CLAUDE.md → generic bridge with project routing
 - WAKE_UP_PROTOCOL.md → `forge/ACTIVATION-TIERS.md`
 - EXECUTION-PROTOCOL.md → `forge/EXECUTION-CONTRACTS.md` + `forge/BUILD-LOOP.md`
-- 34 rules → `forge/METHODOLOGY.md`
+- 41 rules → `forge/METHODOLOGY.md`
 - 9 failure modes → `forge/FAILURE-MODES.md`
 
 ### Create new:

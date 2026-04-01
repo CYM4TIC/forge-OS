@@ -273,7 +273,7 @@ Each persona has 4 identity files in `personas/{name}/`:
 
 | File | Location | Purpose |
 |------|----------|---------|
-| METHODOLOGY.md | `forge/` | 34 rules in 5 categories |
+| METHODOLOGY.md | `forge/` | 41 rules in 6 categories |
 | BUILD-LOOP.md | `forge/` | 33-step build execution cycle |
 | EXECUTION-CONTRACTS.md | `forge/` | Per-phase contracts |
 | FAILURE-MODES.md | `forge/` | 9 documented failure modes with defenses |

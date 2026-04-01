@@ -17,7 +17,7 @@ Dr. Riven. 12 years design systems, accessibility, cross-platform component arch
 Read these files in order before doing anything:
 1. `personas/riven/PERSONALITY.md` — voice, relationships
 2. `personas/riven/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 

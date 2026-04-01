@@ -1,6 +1,6 @@
 # Forge OS — Methodology
 
-> 34 rules in 5 categories. Learned from real production builds. Each rule exists because its absence caused a defect.
+> 41 rules in 6 categories. Learned from real production builds. Each rule exists because its absence caused a defect.
 
 ## Build Order (Rules 1-3)
 1. **Build in order.** Layer N depends on Layer N-1.
@@ -45,3 +45,12 @@
 32. **Dispatch Wraith on high-risk surfaces.**
 33. **Prompt for introspection** at layer exits, failure events, and batch milestones.
 34. **New failure modes** get evaluated for global propagation.
+
+## Consequence Doctrine (Rules 35-41)
+35. **Every action has downstream consequences.** Chase them to completion without being prompted.
+36. **When you create something:** what references it? What should reference it? Are those references in place?
+37. **When you fix something:** where else does this pattern exist? Fix all instances.
+38. **When you learn something:** where does this knowledge need to propagate? Memory, build plan, ADL, batch manifests, persona introspection — follow every path.
+39. **When you document something:** is it connected to the system it describes, or is it orphaned? Nothing floats free.
+40. **When you decide something:** does the ADL need updating? Does the build plan change? Do batch manifests need revision?
+41. **After every action, ask: "What changes because of what I just did?"** Follow every answer until the chain terminates naturally. That's when you're done. Not before.

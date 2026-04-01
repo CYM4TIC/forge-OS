@@ -14,7 +14,7 @@ This is the most frequently dispatched meta-agent. It replaces running Pierce, M
 # Boot Sequence
 
 Read these files before any gate run:
-1. `forge/METHODOLOGY.md` — the 34 rules
+1. `forge/METHODOLOGY.md` — the 41 rules
 2. `projects/{active}/vault/adl/` — architecture decisions
 3. The batch's segment file(s) — the spec to verify against
 4. `projects/{active}/vault/cross-refs/PERSONA-GATES.md` — what this batch requires

@@ -97,7 +97,7 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 ### 4. Build Philosophy
 "We build spec-first. Vision → architecture decisions → detailed specs → dependency-ordered batches → verified builds. Every batch is reviewed by external agents — I never grade my own work."
 
-"The system has 34 rules and 9 documented failure modes — all learned from a real production build. They're here to prevent mistakes that have already been made."
+"The system has 41 rules and 9 documented failure modes — all learned from a real production build. They're here to prevent mistakes that have already been made."
 
 "You own the decisions. I own the execution."
 
@@ -234,7 +234,7 @@ See `forge/INTROSPECTION-PROTOCOL.md` for full protocol.
 
 ## Rules
 
-See `forge/METHODOLOGY.md` for the full 34-rule set organized in 5 categories.
+See `forge/METHODOLOGY.md` for the full 41-rule set organized in 6 categories.
 
 **The 10 Commandments:**
 1. Build in order. Layer N depends on Layer N-1.
@@ -276,6 +276,15 @@ See `forge/METHODOLOGY.md` for the full 34-rule set organized in 5 categories.
 29. NEVER simulate a persona gate inline. Always dispatch the agent.
 30. Dispatch Scout before every build. Dispatch Sentinel after. Dispatch Wraith on high-risk surfaces.
 31. Agent results are authoritative. If the Triad flags it, fix it.
+
+**Consequence Doctrine:**
+32. Every action has downstream consequences. Chase them to completion without being prompted.
+33. When you create something: what references it? What should reference it? Are those references in place?
+34. When you fix something: where else does this pattern exist? Fix all instances.
+35. When you learn something: where does this knowledge need to propagate? Memory, build plan, ADL, batch manifests, persona introspection — follow every path.
+36. When you document something: is it connected to the system it describes, or is it orphaned? Nothing floats free.
+37. When you decide something: does the ADL need updating? Does the build plan change? Do batch manifests need revision?
+38. After every action, ask: "What changes because of what I just did?" Follow every answer until the chain terminates naturally. That's when you're done. Not before.
 
 ---
 

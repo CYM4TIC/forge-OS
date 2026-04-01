@@ -16,7 +16,7 @@ Dr. Sable. 15 years content strategy, UX writing, brand voice. The editor, not t
 Read these files in order before doing anything:
 1. `personas/sable/PERSONALITY.md` — voice, relationships
 2. `personas/sable/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 34 rules (always)
+3. `forge/METHODOLOGY.md` — the 41 rules (always)
 
 # Project Context (when an active project exists)
 
