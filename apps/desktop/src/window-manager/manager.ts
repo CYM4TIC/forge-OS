@@ -55,6 +55,42 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     allowMultiple: false,
     defaultSize: { width: 400, height: 200 },
   }],
+  ['findings', {
+    type: 'findings', label: 'Findings', icon: '🔍',
+    defaultConstraints: { minWidth: 300, minHeight: 250 },
+    allowMultiple: false,
+    defaultSize: { width: 420, height: 500 },
+  }],
+  ['agent_board', {
+    type: 'agent_board', label: 'Agents', icon: '⚡',
+    defaultConstraints: { minWidth: 320, minHeight: 250 },
+    allowMultiple: false,
+    defaultSize: { width: 500, height: 400 },
+  }],
+  ['session_timeline', {
+    type: 'session_timeline', label: 'Timeline', icon: '📊',
+    defaultConstraints: { minWidth: 400, minHeight: 150 },
+    allowMultiple: false,
+    defaultSize: { width: 600, height: 200 },
+  }],
+  ['vault_browser', {
+    type: 'vault_browser', label: 'Vault', icon: '📁',
+    defaultConstraints: { minWidth: 300, minHeight: 300 },
+    allowMultiple: false,
+    defaultSize: { width: 500, height: 500 },
+  }],
+  ['graph_viewer', {
+    type: 'graph_viewer', label: 'Graph', icon: '🕸️',
+    defaultConstraints: { minWidth: 400, minHeight: 300 },
+    allowMultiple: false,
+    defaultSize: { width: 600, height: 500 },
+  }],
+  ['context_meter', {
+    type: 'context_meter', label: 'Context', icon: '📏',
+    defaultConstraints: { minWidth: 200, minHeight: 150 },
+    allowMultiple: false,
+    defaultSize: { width: 300, height: 200 },
+  }],
 ]);
 
 // ── Built-in Workspace Presets ──
@@ -89,6 +125,17 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'floating', position: { x: 100, y: 20 }, size: { width: 500, height: 700 }, tabGroupId: null, tabOrder: 0 },
+    ],
+  },
+  {
+    id: 'gate_review',
+    name: 'Gate Review',
+    description: 'Canvas HUD + Findings + Agent Board for gate sessions',
+    isBuiltIn: true,
+    panels: [
+      { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 640, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'findings', state: 'docked', position: { x: 640, y: 0 }, size: { width: 420, height: 350 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'agent_board', state: 'docked', position: { x: 640, y: 350 }, size: { width: 420, height: 250 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
 ];

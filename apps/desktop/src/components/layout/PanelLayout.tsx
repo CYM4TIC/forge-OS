@@ -13,6 +13,12 @@ import CanvasPanel from '../panels/CanvasPanel';
 import PreviewPanel from '../panels/PreviewPanel';
 import ConnectivityPanel from '../panels/ConnectivityPanel';
 import TeamPanel from '../panels/TeamPanel';
+import FindingsPanel from '../panels/FindingsPanel';
+import AgentBoardPanel from '../panels/AgentBoardPanel';
+import SessionTimelinePanel from '../panels/SessionTimelinePanel';
+import VaultBrowserPanel from '../panels/VaultBrowserPanel';
+import GraphViewerPanel from '../panels/GraphViewerPanel';
+import ContextMeterPanel from '../panels/ContextMeterPanel';
 
 interface PanelLayoutProps {
   panels: PanelInstance[];
@@ -42,6 +48,18 @@ function PanelContent({ panel }: { panel: PanelInstance }): ReactNode {
       return <ConnectivityPanel />;
     case 'team':
       return <TeamPanel />;
+    case 'findings':
+      return <FindingsPanel />;
+    case 'agent_board':
+      return <AgentBoardPanel />;
+    case 'session_timeline':
+      return <SessionTimelinePanel />;
+    case 'vault_browser':
+      return <VaultBrowserPanel />;
+    case 'graph_viewer':
+      return <GraphViewerPanel />;
+    case 'context_meter':
+      return <ContextMeterPanel />;
     default:
       return null;
   }
