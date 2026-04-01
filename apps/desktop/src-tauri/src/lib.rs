@@ -13,6 +13,7 @@ use std::sync::Arc;
 use database::Database;
 use dispatch::AgentDispatcher;
 use providers::claude::ClaudeProvider;
+use providers::claude_code::ClaudeCodeProvider;
 use providers::config::ProviderConfig;
 use providers::openai::OpenAIProvider;
 use providers::registry::ProviderRegistry;
@@ -27,7 +28,16 @@ fn init_providers(db: &Database) -> ProviderRegistry {
     let mut registry = ProviderRegistry::new();
     let conn = db.conn.lock().expect("db lock for provider init");
 
-    // Check for Claude API key
+    // Always register Claude Code CLI provider — no API key needed.
+    // Uses the operator's existing Claude Max plan via the `claude` CLI.
+    // This is the default provider; API-key providers override if configured.
+    registry.add(
+        "claude-code".to_string(),
+        Arc::new(ClaudeCodeProvider::new()),
+        true,
+    );
+
+    // Check for Claude API key (overrides claude-code as default if present)
     if let Ok(Some(api_key)) = database::queries::get_setting(&conn, "provider.claude.api_key") {
         if !api_key.is_empty() {
             let config = ProviderConfig {
@@ -66,9 +76,9 @@ fn init_providers(db: &Database) -> ProviderRegistry {
         }
     }
 
-    // Also check environment variables as fallback
-    if registry.list().is_empty() {
-        if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
+    // Also check environment variables as fallback for API providers
+    if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
+        if registry.get("claude").is_none() {
             let config = ProviderConfig {
                 api_key,
                 base_url: None,
@@ -81,7 +91,9 @@ fn init_providers(db: &Database) -> ProviderRegistry {
             };
             registry.add("claude".to_string(), Arc::new(ClaudeProvider::new(config)), true);
         }
-        if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        if registry.get("openai").is_none() {
             let config = ProviderConfig {
                 api_key,
                 base_url: std::env::var("OPENAI_BASE_URL").ok(),
@@ -92,8 +104,7 @@ fn init_providers(db: &Database) -> ProviderRegistry {
                 },
                 is_default: false,
             };
-            let is_default = registry.list().is_empty();
-            registry.add("openai".to_string(), Arc::new(OpenAIProvider::new(config, None)), is_default);
+            registry.add("openai".to_string(), Arc::new(OpenAIProvider::new(config, None)), false);
         }
     }
 
