@@ -6,3 +6,4 @@ pub mod dispatch;
 pub mod build_state;
 pub mod memory;
 pub mod swarm;
+pub mod compact;

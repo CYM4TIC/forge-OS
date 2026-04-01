@@ -1,5 +1,6 @@
 mod build_state;
 mod commands;
+mod compact;
 mod database;
 mod dispatch;
 mod memory;
@@ -180,6 +181,10 @@ pub fn run() {
             commands::swarm::swarm_get_messages,
             commands::swarm::swarm_mark_read,
             commands::swarm::swarm_respond_permission,
+            commands::compact::get_context_usage,
+            commands::compact::trigger_compact,
+            commands::compact::store_compact_result,
+            commands::compact::get_last_summary,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
