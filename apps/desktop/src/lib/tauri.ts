@@ -102,10 +102,67 @@ export function listAgents(agentsDir?: string): Promise<AgentInfo[]> {
   return invoke('list_agents', { agentsDir });
 }
 
+// ── Dispatch types ──
+
+export type AgentStatus = 'queued' | 'running' | 'complete' | 'error' | 'timeout' | 'cancelled';
+
+export interface AgentSummary {
+  dispatch_id: string;
+  agent_slug: string;
+  status: AgentStatus;
+  elapsed_ms: number;
+}
+
+export interface AgentResult {
+  dispatch_id: string;
+  agent_slug: string;
+  content: string;
+  model: string | null;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  duration_ms: number;
+  status: AgentStatus;
+  error: string | null;
+}
+
+export interface DispatchRequest {
+  agent_slug: string;
+  system_prompt: string;
+  dynamic_context?: string;
+  messages?: { role: string; content: string }[];
+  tier?: string;
+  provider_id?: string;
+  timeout_ms?: number;
+}
+
+// ── Dispatch commands ──
+
+export function dispatchAgent(request: DispatchRequest): Promise<string> {
+  return invoke('dispatch_agent', { request });
+}
+
+export function getAgentStatus(dispatchId: string): Promise<AgentStatus | null> {
+  return invoke('get_agent_status', { dispatchId });
+}
+
+export function listActiveAgents(): Promise<AgentSummary[]> {
+  return invoke('list_active_agents');
+}
+
+export function cancelAgent(dispatchId: string): Promise<boolean> {
+  return invoke('cancel_agent', { dispatchId });
+}
+
 // ── Event listeners ──
 
 export function onChatStream(
   callback: (event: StreamEvent) => void,
 ): Promise<UnlistenFn> {
   return listen<StreamEvent>('chat:stream', (e) => callback(e.payload));
+}
+
+export function onAgentResult(
+  callback: (result: AgentResult) => void,
+): Promise<UnlistenFn> {
+  return listen<AgentResult>('agent:result', (e) => callback(e.payload));
 }
