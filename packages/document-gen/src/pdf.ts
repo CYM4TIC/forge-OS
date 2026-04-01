@@ -5,17 +5,15 @@
  *   1. layoutPages() — compute page breaks from content blocks + dimensions
  *   2. renderPdf() — render content blocks to jsPDF pages
  *
- * Uses @forge-os/layout-engine for text measurement (Pretext).
- * Uses jsPDF for PDF generation.
+ * Uses jsPDF for PDF generation. Pretext integration (via @forge-os/layout-engine)
+ * planned for Phase 5+ when PDFs embed canvas components.
  */
 
 import { jsPDF } from 'jspdf';
-import {
-  prepareSingleWithSegments,
-  multiColumnText,
-  flowTextAroundObstacles,
-  shrinkwrapText,
-} from '@forge-os/layout-engine';
+// NOTE: Pretext-powered editorial layout (multiColumnText, flowAroundObstacles,
+// shrinkwrapText) will be wired in when PDFs embed canvas components (Phase 5+).
+// Current renderers use jsPDF's native text wrapping which is sufficient for
+// the content block types we have today.
 import type {
   ContentBlock,
   PageDimensions,
