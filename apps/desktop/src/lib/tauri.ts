@@ -301,3 +301,64 @@ export function triggerDream(): Promise<DreamResult> {
 export function getDreamStatus(): Promise<DreamStatus> {
   return invoke('get_dream_status');
 }
+
+// ── Compact types ──
+
+export type UsageZone = 'comfortable' | 'warning' | 'critical' | 'compacting';
+
+export interface ThresholdStatus {
+  current_tokens: number;
+  context_window_size: number;
+  usage_fraction: number;
+  should_compact: boolean;
+  threshold: number;
+  zone: UsageZone;
+}
+
+export type CompactionVariant = 'base' | 'partial' | 'partial_up_to';
+
+export interface CompactionSummary {
+  id: string;
+  session_id: string;
+  variant: CompactionVariant;
+  prompt: string;
+  content: string;
+  token_count: number | null;
+}
+
+export interface TriggerCompactResponse {
+  summary_id: string;
+  summary_prompt: string;
+  conversation_tokens: number;
+}
+
+// ── Compact commands ──
+
+export function getContextUsage(request: {
+  content: string;
+  context_window_size?: number;
+}): Promise<ThresholdStatus> {
+  return invoke('get_context_usage', { request });
+}
+
+export function triggerCompact(request: {
+  session_id: string;
+  messages: { role: string; content: string }[];
+  variant?: string;
+  context_window_size?: number;
+}): Promise<TriggerCompactResponse> {
+  return invoke('trigger_compact', { request });
+}
+
+export function storeCompactResult(request: {
+  summary_id: string;
+  session_id: string;
+  content: string;
+  variant?: string;
+}): Promise<void> {
+  return invoke('store_compact_result', { request });
+}
+
+export function getLastSummary(sessionId: string): Promise<CompactionSummary | null> {
+  return invoke('get_last_summary', { sessionId });
+}

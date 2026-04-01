@@ -1,7 +1,14 @@
 import { useEffect, useRef } from 'react';
 import type { Window as TauriWindow } from '@tauri-apps/api/window';
+import type { ThresholdStatus } from '../../lib/tauri';
+import ContextMeter from '../status/ContextMeter';
 
-export default function TitleBar() {
+interface TitleBarProps {
+  contextStatus?: ThresholdStatus | null;
+  isCompacting?: boolean;
+}
+
+export default function TitleBar({ contextStatus, isCompacting }: TitleBarProps) {
   const appWindow = useRef<TauriWindow | null>(null);
 
   useEffect(() => {
@@ -16,11 +23,12 @@ export default function TitleBar() {
       data-tauri-drag-region
       className="flex items-center justify-between h-8 bg-bg-primary border-b border-border-subtle select-none"
     >
-      {/* App name */}
+      {/* App name + Context meter */}
       <div data-tauri-drag-region className="flex items-center gap-2 pl-3">
         <span className="text-text-secondary text-xs font-semibold tracking-widest uppercase">
           Forge
         </span>
+        <ContextMeter status={contextStatus ?? null} isCompacting={isCompacting ?? false} />
       </div>
 
       {/* Window controls */}
