@@ -1,3 +1,4 @@
+mod build_state;
 mod commands;
 mod database;
 mod dispatch;
@@ -143,6 +144,12 @@ pub fn run() {
             commands::dispatch::get_agent_status,
             commands::dispatch::list_active_agents,
             commands::dispatch::cancel_agent,
+            commands::build_state::get_build_state,
+            commands::build_state::create_batch,
+            commands::build_state::complete_batch,
+            commands::build_state::add_finding,
+            commands::build_state::resolve_finding,
+            commands::build_state::generate_boot_md,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
