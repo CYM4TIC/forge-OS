@@ -1,23 +1,9 @@
 import type { PersonaSlug } from '@forge-os/shared';
+import type { BezierPath } from '@forge-os/canvas-components';
 import type { FlowType } from '../../../lib/tauri';
 
-// ── Bezier Path ──
-
-/** A single cubic bezier segment: start → control1 → control2 → end. */
-export interface BezierPoint {
-  x: number;
-  y: number;
-}
-
-export interface BezierSegment {
-  start: BezierPoint;
-  cp1: BezierPoint;
-  cp2: BezierPoint;
-  end: BezierPoint;
-}
-
-/** A full path is one or more chained bezier segments. */
-export type BezierPath = BezierSegment[];
+/** A trail path is one or more chained bezier segments. */
+export type TrailPath = BezierPath[];
 
 // ── Particle Trail ──
 
@@ -30,7 +16,7 @@ export interface ParticleTrail {
   /** Persona glyphs at the target(s) — single agent or formation (triad). */
   target_glyphs: PersonaSlug[];
   /** Bezier path segments the particle follows. */
-  path: BezierPath;
+  path: TrailPath;
   /** Persona color from PERSONA_COLORS for trail glow. */
   color: string;
   /** Animation progress: 0 = start, 1 = arrived. */

@@ -3,14 +3,16 @@
 // token gauge, and context meter. All canvas-rendered via Pretext layout engine.
 // Receives dimensions from PanelContainer and distributes to child components.
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useBuildState } from '../../hooks/useBuildState';
 import { useContextUsage } from '../../hooks/useContextUsage';
 import { PipelineCanvas } from './hud/PipelineCanvas';
+import { FlowOverlay } from './hud/FlowOverlay';
 import { BatchProgressGauge } from './hud/BatchProgressGauge';
 import { TokenGaugeDisplay } from './hud/TokenGaugeDisplay';
 import { TokenGauge, CANVAS, STATUS, RADIUS } from '@forge-os/canvas-components';
 import { ContextMeterViz } from './hud/ContextMeterViz';
+import { computePipelineLayout } from './hud/pipeline-layout';
 
 // ─── Shared styles (RIVEN-HIGH-1: canvas-tokens, no Tailwind) ──────────────
 
@@ -57,6 +59,19 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
   // Context usage requires a session ID and conversation content — pass empty defaults
   // until chat integration provides real values
   const { status: contextStatus, isCompacting } = useContextUsage(null, '');
+  const [flowVisible, setFlowVisible] = useState(true);
+
+  // Layout computations — must be before early returns (React hooks rule)
+  const isNarrow = dimensions.width > 0 && dimensions.width < 400;
+  const pipelineHeight = isNarrow
+    ? Math.floor(dimensions.height * 0.5)
+    : Math.floor(dimensions.height * 0.6);
+
+  // Memoize pipeline node rects for FlowOverlay — same layout PipelineCanvas computes internally
+  const pipelineNodes = useMemo(
+    () => computePipelineLayout(dimensions.width, pipelineHeight, pipeline.length).nodes,
+    [dimensions.width, pipelineHeight, pipeline.length],
+  );
 
   // Track container dimensions for responsive layout
   useEffect(() => {
@@ -94,12 +109,6 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
     );
   }
 
-  // Layout split: pipeline top 60%, gauges bottom 40%
-  // Adjusts for narrow panels: stack vertically at < 400px width
-  const isNarrow = dimensions.width > 0 && dimensions.width < 400;
-  const pipelineHeight = isNarrow
-    ? Math.floor(dimensions.height * 0.5)
-    : Math.floor(dimensions.height * 0.6);
   const gaugesHeight = dimensions.height - pipelineHeight;
 
   const GAUGE_CELL: React.CSSProperties = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 };
@@ -117,7 +126,7 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
         Build pipeline: {pipeline.map(s => `${s.id}: ${s.status}`).join(', ')}.
         {snapshot && `Phase ${snapshot.phase}, batch ${snapshot.current_batch}, ${snapshot.batches_done} batches complete.`}
       </div>
-      {/* Pipeline Canvas — top section */}
+      {/* Pipeline Canvas + Flow Overlay — top section */}
       <div
         style={{ position: 'relative', borderBottom: `1px solid ${CANVAS.border}`, height: pipelineHeight }}
       >
@@ -126,6 +135,14 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
           width={dimensions.width}
           height={pipelineHeight}
           onStageClick={onStageClick}
+        />
+        {/* Flow Overlay: z-order pipeline → flow overlay → gauges */}
+        <FlowOverlay
+          nodes={pipelineNodes}
+          width={dimensions.width}
+          height={pipelineHeight}
+          visible={flowVisible}
+          onToggle={() => setFlowVisible((v) => !v)}
         />
       </div>
 
