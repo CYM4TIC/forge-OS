@@ -54,3 +54,6 @@
 39. **When you document something:** is it connected to the system it describes, or is it orphaned? Nothing floats free.
 40. **When you decide something:** does the ADL need updating? Does the build plan change? Do batch manifests need revision?
 41. **After every action, ask: "What changes because of what I just did?"** Follow every answer until the chain terminates naturally. That's when you're done. Not before.
+
+## The Consequence Climb (Rule 42)
+42. **Consequence recursion must climb, not spiral.** Each pass synthesizes the previous into a higher-order insight: surface gaps (what's missing) → pattern gaps (why it's missing) → structural gaps (what allowed it) → synthesis (what changes). Converge when a pass yields no new actionable output. If you're finding more instances at the same level instead of higher insights, you're spiraling — stop and report. The recursion is asymptotic: always approaching truth, never fully arriving. The practical asymptote is where insight stops producing code changes or protocol updates. See FM-10 (Consequence Blindness) for the full cognitive model.

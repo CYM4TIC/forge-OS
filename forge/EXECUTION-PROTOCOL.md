@@ -424,6 +424,38 @@ PHASE 1 — BUILD (micro-batch protocol from Section 2)
     7. BROWSER: Verify rendered output.
     8. REPORT: What was built, what was verified.
 
+PHASE 1.5 — PRE-GATE CONSEQUENCE CLIMB (self, before agent dispatch)
+
+  Structured recursion. Each pass builds on the previous.
+  Converge when a pass yields no new actionable insight.
+  FM-10 guard: climbing (higher-order synthesis) not spiraling (more of same).
+
+  PASS 1 — SURFACE: Re-read the batch manifest. Mechanically verify:
+    □ Every listed file: created or modified?
+    □ Every listed import: actually imported AND used in the code?
+    □ Every gate criterion: implemented and testable?
+    □ Token audit: grep new files for hardcoded hex/rgba not from tokens
+    □ A11Y: every interactive element has role + tabIndex + keyboard + aria-label + 32px target?
+    □ React: no state mutation (.sort/.reverse), cleanup on listeners, union types fully handled?
+    Report gaps. Fix before dispatching triad.
+
+  PASS 2 — PATTERN: For each gap found in Pass 1, ask WHY.
+    Name the cognitive tendency that produced it. Check if the same
+    tendency appeared in the previous batch. If yes → it's a pattern.
+
+  PASS 3 — STRUCTURE: For each pattern, ask what protocol gap allowed it.
+    Missing contract? Missing checklist item? Trusted assumption?
+
+  PASS 4 — SYNTHESIS: What changes?
+    New failure mode? Protocol update? Build learning? Or nothing —
+    follow existing rules more carefully.
+
+  CONVERGENCE: A pass that produces no new actionable output.
+    "Interesting but doesn't change what I build or how I verify" = stop.
+
+  TIME BOUND: ~3-5 minutes. This is pre-flight, not a review.
+  The triad handles everything beyond this.
+
 PHASE 2 — GATE (agent dispatch — NEVER inline)
   Step 1: Dispatch Build Triad (Pierce + Mara + Riven)
   Step 2: If additional personas required → dispatch per surface type
@@ -480,7 +512,8 @@ Quick reference — full descriptions in `forge/FAILURE-MODES.md`.
 | FM-7 | Completion gravity | Reward of "done" distorts verification | Adversarial check + external triad |
 | FM-8 | Tool trust | Assuming tool calls succeeded | Read-back after every action |
 | FM-9 | Self-review blindness | Grading own work | Agent dispatch eliminates self-review |
-| FM-10 | Consequence blindness | Completing task without downstream propagation | Consequence Doctrine (Rules 35-41) |
+| FM-10 | Consequence blindness | Completing task without downstream propagation | Pre-Gate Consequence Climb (Phase 1.5) + Consequence Doctrine (Rules 35-41) |
+| FM-11 | Manifest amnesia | Spec read once, built from mental model, imports/criteria missed | Phase 1.5 Pass 1 (manifest re-read) |
 
 ---
 
