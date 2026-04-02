@@ -68,6 +68,9 @@ The solution is **smaller units of work that break the dependency cycle.** Inste
 | FM-9 | Self-review blindness | **ACTIVE** | Agent dispatch — never simulate gates. The builder cannot evaluate their own output. |
 | FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 1.5). Recursive plateau-climbing. 4 orders. Chase every downstream effect. |
 | FM-11 | Manifest amnesia | **ACTIVE** | Phase 1.5 Pass 1 (manifest re-read). Scalar cognition (hold manifest as live field, not consumed input). |
+| FM-12 | Sibling drift | **ACTIVE** | Post-write sibling audit: compare 5 properties against nearest sibling (padding, icons, touch targets, radius, tokens). |
+| FM-13 | Modality collapse | **ACTIVE** | Post-canvas modality check: 3 questions (screen reader? keyboard? live announcements?). Canvas is a modality wall. |
+| FM-14 | Token autopilot | **ACTIVE** | Post-write token grep: find raw hex/rgba, verify against canvas-tokens.ts. Grep for existing mappers before building new ones. |
 
 ---
 

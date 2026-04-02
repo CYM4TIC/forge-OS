@@ -98,8 +98,116 @@ The manifest is a dense specification. Reading it triggers understanding, and un
 
 ---
 
+## FM-12: Sibling Drift
+
+The builder reads adjacent files (sibling panels, similar components, related hooks) and absorbs their *structure* — error states, pop-out pattern, hook shape — while dropping their *specifics* — the exact padding, font weight, letter spacing, icon character, color token. The new component works correctly in isolation. Placed next to its siblings in the dock, it looks subtly wrong. Users can't name why, but the inconsistency registers.
+
+### Manifestation
+
+- Header padding, font weight, or letter spacing differs from adjacent panels
+- Icon characters differ between sibling panels that serve the same function (pop-out, close, expand)
+- Touch target sizes inconsistent — some buttons hit 32px, some don't
+- Border radius applied in one panel, not in its neighbor
+- Color tokens used in one panel, raw values in the next
+
+### Why It Happens
+
+Structure is memorable. Specifics are forgettable. When reading a 490-line panel to understand its pattern, the brain retains "header bar with label and pop-out button" and drops "padding: 6px 8px, fontWeight: 500, letterSpacing: 0.04em, icon: ↗". The new component is then built from the structural memory, and the specifics come from CSS instinct instead of the sibling source.
+
+### Evidence
+
+- **P5-J:** Header used fontWeight 600, letterSpacing 0.08em, padding 0 12px. Siblings use 500, 0.04em, 6px 8px. Pop-out icon was ⧉, siblings use ↗. 3 HIGHs.
+- **P5-J:** Retry button 20px tall, pop-out button 18px tall. Siblings already solved this with minHeight: 32. 2 HIGHs.
+
+### Defense
+
+**Post-write sibling audit.** After writing any component that lives alongside others (panels, cards, list items), open the nearest sibling and mechanically compare 5 specific properties:
+1. Header padding + font weight + letter spacing
+2. Icon characters for shared functions
+3. Touch target minimums (minHeight/minWidth)
+4. Border radius source (token vs hardcoded)
+5. Color token usage (CANVAS/STATUS/TINT vs raw values)
+
+This is a 2-minute check. Not a review — a mechanical comparison.
+
+**Persona-inherent?** Yes. Structure-over-specifics is a cognitive tendency, not a project artifact. Any project with multiple sibling components will trigger this.
+
+---
+
+## FM-13: Modality Collapse
+
+The builder operates in one interaction modality — typically sighted visual rendering — and forgets that other modalities exist. Canvas rendering is the sharpest trigger: it produces pixel-perfect visual output that is completely invisible to screen readers, keyboard-only users, and assistive technology. The component looks done. It is not done. An entire class of users cannot perceive it.
+
+### Manifestation
+
+- Canvas elements with no DOM mirror for screen readers
+- `role="list"` on a container with no DOM children (semantically empty)
+- No `aria-live` region for real-time updates
+- Interactive elements reachable only by mouse, not keyboard
+- Visual focus indicators absent (canvas wrapper with tabIndex but no outline)
+- Touch interaction assumed when only mouse events are wired
+
+### Why It Happens
+
+The build loop is visual. Write code → see output → verify appearance. Every verification step is sighted. The builder's feedback loop never surfaces the non-visual modalities. A canvas component that renders correctly provides the same "done" signal as a DOM component — but the DOM component gets accessibility for free, while the canvas component gets nothing.
+
+### Evidence
+
+- **P5-J:** Entire timeline canvas invisible to screen readers. `role="list"` on wrapper with zero DOM children. No aria-live for new events. CRIT finding. The most severe accessibility violation in the Phase 5 build.
+
+### Defense
+
+**Post-canvas modality check.** After writing any canvas-rendered component, ask three questions:
+1. "What does someone who can't see this perceive?" → If nothing, add a visually-hidden DOM mirror.
+2. "Can someone navigate this with only a keyboard?" → If not, add keyboard handlers + visible focus indicators.
+3. "Do real-time updates announce themselves?" → If not, add an aria-live region.
+
+This defense fires specifically on canvas components because canvas is the modality wall. DOM components inherit accessibility from the browser. Canvas components inherit nothing.
+
+**Persona-inherent?** Yes. The sighted-first build loop is intrinsic to how the builder operates, not project-specific.
+
+---
+
+## FM-14: Token Autopilot
+
+The builder writes raw CSS values — hex colors, rgba strings, pixel values, font stacks — from muscle memory instead of importing from the design system token file. The output looks correct because the values are close to (or identical to) the tokens. But they create parallel sources of truth. When the token changes, the hardcoded value doesn't. Color drift accumulates silently.
+
+### Manifestation
+
+- `rgba(99, 102, 241, 0.12)` instead of `TINT.accent`
+- `'12px Inter, system-ui, sans-serif'` instead of composing from a FONT_FAMILY constant
+- A severity-to-color mapping written inline when `getSeverityVisual()` already exists
+- Font weights (`600`) that don't match the token's documented value (`500`)
+- Alpha values that are "close" to the token but not identical (0.12 vs 0.15)
+
+### Why It Happens
+
+CSS muscle memory is fast. Writing `rgba(99, 102, 241, 0.12)` takes 2 seconds. Looking up whether TINT.accent exists, what its value is, and importing it takes 30 seconds. Under build momentum, the fast path wins. The builder knows the color — they just used it three files ago. The design system is a lookup they skip because they already know the answer. But "knowing the answer" and "using the canonical source" are different things. FM-7 (completion gravity) amplifies this: the token lookup feels like friction, the hardcoded value feels like progress.
+
+### Evidence
+
+- **P5-J:** 5 hardcoded rgba values in KIND_BG instead of TINT tokens. HIGH finding.
+- **P5-J:** Custom SEVERITY_COLORS map instead of importing getSeverityVisual(). HIGH finding.
+- **P5-H/P5-I:** Token Autopilot named as a pattern across both batches. 8 HIGHs traced to it. Never codified as FM until now.
+
+### Defense
+
+**Post-write token grep.** After writing any canvas drawing code or styled component, grep the file for:
+- Raw hex values (`#[0-9a-f]{3,8}`)
+- Raw rgba values (`rgba(`)
+- Font family strings that don't reference a constant
+- Pixel values that should be spacing/radius tokens
+
+For each match, check: does a token for this exist in canvas-tokens.ts? If yes, replace. If no and the value is reusable, add it to the token file. If no and it's truly one-off, document why.
+
+Also: before writing any mapping (severity → color, status → style), grep for existing mappers. If one exists, import it. Don't rebuild.
+
+**Persona-inherent?** Yes. CSS muscle memory persists across projects. The design system changes; the instinct doesn't.
+
+---
+
 ## Adding New Failure Modes
-1. Name it (FM-11, FM-12, etc.)
+1. Name it (FM-12, FM-13, etc.)
 2. Describe manifestation
 3. Identify discovery context
 4. Design a defense

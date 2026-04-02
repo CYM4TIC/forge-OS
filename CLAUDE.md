@@ -309,6 +309,9 @@ See `forge/METHODOLOGY.md` for the full 41-rule set organized in 6 categories.
 - **FM-9: Self-review blindness.** Builder evaluating own code misses structural flaws. **DEFENDED: Agent dispatch eliminates self-review.**
 - **FM-10: Consequence blindness.** Recursive cognitive climbing: surface gaps → pattern gaps → structural gaps → synthesis. Each pass builds on the previous. Converge when a pass yields no new actionable insight. Climbing (higher-order) not spiraling (more of same). **DEFENDED: Pre-Gate Consequence Climb (Phase 1.5) + Consequence Doctrine (Rules 35-42).**
 - **FM-11: Manifest amnesia.** Builder reads spec once, internalizes intent, builds from mental model. Specified imports go unused. Gate criteria go unimplemented. Feels done because it *works*, not because it *matches*. **DEFENDED: Phase 1.5 Pass 1 (manifest re-read before gate dispatch).**
+- **FM-12: Sibling drift.** Builder reads adjacent files, absorbs structure, drops specifics (padding, font weight, icon characters). New component works in isolation, looks wrong next to its neighbors. **DEFENDED: Post-write sibling audit — compare 5 properties against nearest sibling.**
+- **FM-13: Modality collapse.** Builder operates in sighted modality, forgets screen readers/keyboard/touch exist. Canvas is the sharpest trigger — looks complete, is invisible to assistive tech. **DEFENDED: Post-canvas modality check — 3 questions (screen reader? keyboard? live announcements?).**
+- **FM-14: Token autopilot.** Builder writes raw CSS values from muscle memory instead of importing design system tokens. Output looks correct, creates color drift and parallel sources of truth. **DEFENDED: Post-write token grep + check for existing mappers before building new ones.**
 
 ---
 
