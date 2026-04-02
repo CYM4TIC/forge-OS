@@ -15,6 +15,7 @@ import {
   PersonaGlyph,
   StatusBadge,
   PIPELINE,
+  STATUS,
   getPipelineColor,
 } from '@forge-os/canvas-components';
 import type { NodeStatus, GlyphState } from '@forge-os/canvas-components';
@@ -186,7 +187,12 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
               width: rect.width,
               height: rect.height,
               cursor: isClickable ? 'pointer' : undefined,
+              outline: 'none',
+              borderRadius: 10,
             }}
+            // Focus-visible ring via CSS custom property — neon accent glow
+            onFocus={isClickable ? (e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}, 0 0 8px ${STATUS.accent}40`; } : undefined}
+            onBlur={isClickable ? (e) => { e.currentTarget.style.boxShadow = ''; } : undefined}
             onClick={isClickable ? () => onStageClick(stage.id) : undefined}
             role={isClickable ? 'button' : undefined}
             tabIndex={isClickable ? 0 : undefined}

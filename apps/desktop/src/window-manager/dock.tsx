@@ -20,6 +20,11 @@ interface DockBarProps {
 
 type DockPillState = 'active' | 'minimized' | 'closed';
 
+// Badge sizing constants — intentionally minimal for dock pill overlay.
+// h=14px matches the pill's py-1 (4px) vertical rhythm. 9px is the smallest
+// legible size for 1-2 digit counts at this element scale.
+const BADGE = { height: 14, minWidth: 14, paddingX: 2, fontSize: 9 } as const;
+
 interface DockPillData {
   type: PanelType;
   label: string;
@@ -109,8 +114,15 @@ function DockPill({
       <span className="truncate max-w-[60px]">{pill.label}</span>
       {pill.badgeCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 min-w-[14px] px-0.5 rounded-full text-[9px] text-white font-bold"
-          style={{ backgroundColor: pill.badgeColor ?? STATUS.danger }}
+          className="absolute -top-1 -right-1 flex items-center justify-center rounded-full text-white font-bold"
+          style={{
+            height: BADGE.height,
+            minWidth: BADGE.minWidth,
+            paddingLeft: BADGE.paddingX,
+            paddingRight: BADGE.paddingX,
+            fontSize: BADGE.fontSize,
+            backgroundColor: pill.badgeColor ?? STATUS.danger,
+          }}
         >
           {pill.badgeCount > 99 ? '99+' : pill.badgeCount}
         </span>

@@ -143,8 +143,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
     isBuiltIn: true,
     panels: [
       { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'graph_viewer', state: 'docked', position: { x: 500, y: 0 }, size: { width: 500, height: 400 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'vault_browser', state: 'docked', position: { x: 500, y: 400 }, size: { width: 500, height: 200 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'graph_viewer', state: 'docked', position: { x: 500, y: 0 }, size: { width: 500, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'vault_browser', state: 'docked', position: { x: 500, y: 300 }, size: { width: 500, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
 ];

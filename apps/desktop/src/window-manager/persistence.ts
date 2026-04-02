@@ -2,48 +2,15 @@
 // Save/restore full layout state to SQLite via Tauri commands.
 // Debounced saves on every change to prevent SQLite thrashing.
 
-import { invoke } from '@tauri-apps/api/core';
-import { isTauriRuntime } from '../lib/tauri';
+import {
+  isTauriRuntime,
+  savePanelLayout,
+  loadPanelLayout,
+  saveWorkspacePreset,
+  loadWorkspacePresets,
+} from '../lib/tauri';
 import { ForgeWindowManager } from './manager';
-import type { PanelInstance, TabGroup, WorkspacePreset, WorkspacePresetRow } from './types';
-
-// ── Tauri command wrappers ──
-
-export interface SaveLayoutRequest {
-  panels_json: string;
-  tab_groups_json: string;
-  active_preset_id: string | null;
-}
-
-export function savePanelLayout(request: SaveLayoutRequest): Promise<void> {
-  if (!isTauriRuntime) return Promise.resolve();
-  return invoke('save_panel_layout', { request });
-}
-
-export function loadPanelLayout(): Promise<{
-  panels_json: string;
-  tab_groups_json: string;
-  active_preset_id: string | null;
-} | null> {
-  if (!isTauriRuntime) return Promise.resolve(null);
-  return invoke('load_panel_layout');
-}
-
-export function saveWorkspacePreset(request: {
-  id: string;
-  name: string;
-  description: string;
-  is_built_in: boolean;
-  panels_json: string;
-}): Promise<void> {
-  if (!isTauriRuntime) return Promise.resolve();
-  return invoke('save_workspace_preset', { request });
-}
-
-export function loadWorkspacePresets(): Promise<WorkspacePresetRow[]> {
-  if (!isTauriRuntime) return Promise.resolve([]);
-  return invoke('load_workspace_presets');
-}
+import type { PanelInstance, TabGroup, WorkspacePreset } from './types';
 
 // ── Debounced Persistence Manager ──
 
@@ -61,6 +28,7 @@ export class LayoutPersistence {
 
   /** Persist immediately (used on app close) */
   async saveNow(manager: ForgeWindowManager): Promise<void> {
+    if (!isTauriRuntime) return;
     const state = manager.serialize();
     try {
       await savePanelLayout({
@@ -75,6 +43,7 @@ export class LayoutPersistence {
 
   /** Restore layout from SQLite into the manager */
   async restore(manager: ForgeWindowManager): Promise<boolean> {
+    if (!isTauriRuntime) return false;
     try {
       const saved = await loadPanelLayout();
       if (!saved || !saved.panels_json) {
@@ -127,6 +96,7 @@ export class LayoutPersistence {
 
   /** Save a custom workspace preset to SQLite */
   async persistPreset(preset: WorkspacePreset): Promise<void> {
+    if (!isTauriRuntime) return;
     try {
       await saveWorkspacePreset({
         id: preset.id,
@@ -142,6 +112,7 @@ export class LayoutPersistence {
 
   /** Load all custom presets from SQLite */
   async loadPresets(): Promise<WorkspacePreset[]> {
+    if (!isTauriRuntime) return [];
     try {
       const rows = await loadWorkspacePresets();
       return rows.map((row) => ({
