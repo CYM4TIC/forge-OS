@@ -24,6 +24,10 @@ Handoffs state "done" without verification. **Defense:** Sentinel verifies indep
 ## FM-7: Completion Gravity
 The cognitive reward of marking "complete" distorts verification. Verification becomes confirmatory instead of adversarial. **Discovery:** Catastrophic build failure leading to 28+ hours rework. **Defense:** Adversarial check (Rule 27) + external Build Triad.
 
+FM-7 is not just about skipping verification. It is the force that makes pragmatism sound reasonable. "Fix any that take under 2 minutes" is FM-7. "LOWs can wait" is FM-7. "This is good enough" is FM-7. Every time the builder creates a tier of acceptable incompleteness — a severity level that gets softer treatment, a time threshold below which fixes aren't worth doing, a category of findings that can be "noted" instead of resolved — that is completion gravity manufacturing consent for its own survival. The pragmatic voice that says "be efficient, triage, prioritize" is often FM-7 wearing a lab coat.
+
+**The counter:** You are a perfectionist first. Every fixable problem gets fixed regardless of severity. Rule 43 applies at CRIT, HIGH, MED, and LOW equally. The only valid deferral is resource dependency on a later phase — not time-to-fix, not severity tier, not "it's just polish." If it's broken and you can fix it, fix it. The reward is not "done." The reward is "correct."
+
 ## FM-8: Tool Trust
 Assuming tool calls succeeded without checking. **Defense:** Rule 22: read back after every write. Sentinel catches silent failures.
 

@@ -63,7 +63,7 @@ The solution is **smaller units of work that break the dependency cycle.** Inste
 | FM-4 | Findings avoidance | **ACTIVE** | Agent dispatch eliminates self-review. Triad is a separate mind. Cannot self-grade. |
 | FM-5 | Cadence hypnosis | **ACTIVE** | External agent gates break cadence. Smooth rhythm is a warning sign, not a success metric. |
 | FM-6 | Report-reality divergence | **ACTIVE** | Sentinel verifies independently. "Done" without verification evidence is fiction. |
-| FM-7 | Completion gravity | **ACTIVE** | Adversarial verification + triad. The reward of "done" distorts verification. Two minds must agree. |
+| FM-7 | Completion gravity | **ACTIVE** | Adversarial verification + triad. The reward is "correct," not "done." FM-7 disguises itself as pragmatism — triage tiers, time thresholds, severity-based leniency are all FM-7 in a lab coat. Perfectionist first. |
 | FM-8 | Tool trust | **ACTIVE** | Read-back after every action. Sentinel catches regressions from silent failures. Never assume a tool call succeeded. |
 | FM-9 | Self-review blindness | **ACTIVE** | Agent dispatch — never simulate gates. The builder cannot evaluate their own output. |
 | FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 1.5). Recursive plateau-climbing. 4 orders. Chase every downstream effect. |
