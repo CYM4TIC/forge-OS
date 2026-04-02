@@ -32,7 +32,7 @@ export interface UseAgentBoardReturn {
   refresh: () => Promise<void>;
   /** Agent currently expanded in the detail overlay, or null. */
   expandedSlug: string | null;
-  setExpandedSlug: (slug: string | null) => void;
+  setExpandedSlug: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -46,6 +46,7 @@ export function useAgentBoard(): UseAgentBoardReturn {
   // Listen for HUD agent status events (real-time updates from Rust)
   useEffect(() => {
     let unlisten: (() => void) | null = null;
+    let mounted = true;
 
     onAgentStatusChanged((event) => {
       setHudStatuses((prev) => {
@@ -54,10 +55,15 @@ export function useAgentBoard(): UseAgentBoardReturn {
         return next;
       });
     }).then((fn) => {
-      unlisten = fn;
+      if (mounted) {
+        unlisten = fn;
+      } else {
+        fn(); // Already unmounted — clean up immediately
+      }
     });
 
     return () => {
+      mounted = false;
       unlisten?.();
     };
   }, []);
@@ -83,15 +89,22 @@ export function useAgentBoard(): UseAgentBoardReturn {
       // Dispatch status as fallback
       const active = activeAgents.find((a) => a.agent_slug === agent.slug);
       if (active) {
+        const isQueued = active.status === 'queued';
         return {
           slug: agent.slug,
           name: agent.name,
           description: agent.description,
           filePath: agent.file_path,
-          status: active.status === 'queued' ? 'dispatched' : active.status === 'running' ? 'running' : 'idle',
+          status: isQueued ? 'dispatched'
+            : active.status === 'running' ? 'running'
+            : active.status === 'complete' ? 'complete'
+            : active.status === 'error' || active.status === 'timeout' || active.status === 'cancelled' ? 'error'
+            : 'idle',
           modelTier: null,
-          elapsedMs: active.elapsed_ms,
-          lastError: null,
+          elapsedMs: isQueued ? null : active.elapsed_ms,
+          lastError: active.status === 'timeout' ? 'Agent timed out'
+            : active.status === 'cancelled' ? 'Agent cancelled'
+            : null,
         };
       }
 
@@ -103,10 +116,15 @@ export function useAgentBoard(): UseAgentBoardReturn {
           name: agent.name,
           description: agent.description,
           filePath: agent.file_path,
-          status: lastResult.status === 'complete' ? 'complete' : lastResult.status === 'error' ? 'error' : 'idle',
+          status: lastResult.status === 'complete' ? 'complete'
+            : lastResult.status === 'error' || lastResult.status === 'timeout' || lastResult.status === 'cancelled' ? 'error'
+            : 'idle',
           modelTier: null,
           elapsedMs: lastResult.duration_ms,
-          lastError: lastResult.error,
+          lastError: lastResult.error
+            ?? (lastResult.status === 'timeout' ? 'Agent timed out'
+              : lastResult.status === 'cancelled' ? 'Agent cancelled'
+              : null),
         };
       }
 

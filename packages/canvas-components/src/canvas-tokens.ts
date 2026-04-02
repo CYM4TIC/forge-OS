@@ -50,6 +50,17 @@ export function getZoneLabel(value: number): string {
   return 'COMPACTING';
 }
 
+/** Border radii */
+export const RADIUS = {
+  card: 8,
+  pill: 4,
+} as const;
+
+/** Transition timing (for DOM-based components) */
+export const TIMING = {
+  fast: '0.2s ease',
+} as const;
+
 /** Dock pill colors (derived from base tokens) */
 export const DOCK = {
   activeBg: 'rgba(99, 102, 241, 0.2)',

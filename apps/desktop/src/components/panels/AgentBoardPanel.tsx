@@ -1,10 +1,16 @@
 // Agent Board — Phase 5.2 (P5-H)
-// Canvas-rendered agent cards with responsive grid. Click to expand.
+// Canvas-rendered agent cards with responsive grid. Click to expand. Pop-out support.
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { PersonaGlyph, StatusBadge, CANVAS, STATUS } from '@forge-os/canvas-components';
-import type { PersonaSlug, GlyphState, BadgeStatus } from '@forge-os/canvas-components';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import {
+  PersonaGlyph, NodeCard, StatusBadge,
+  CANVAS, STATUS, DOCK, RADIUS, TIMING,
+} from '@forge-os/canvas-components';
+import type { GlyphState, BadgeStatus, NodeStatus } from '@forge-os/canvas-components';
+import { PERSONA_NAMES } from '@forge-os/shared';
+import type { PersonaSlug } from '@forge-os/shared';
 import { useAgentBoard, type BoardAgent, type BoardAgentStatus } from '../../hooks/useAgentBoard';
+import { isTauriRuntime, createPanelWindow } from '../../lib/tauri';
 
 // ─── Status Mapping ─────────────────────────────────────────────────────────
 
@@ -24,6 +30,14 @@ const STATUS_TO_BADGE: Record<BoardAgentStatus, BadgeStatus> = {
   error: 'danger',
 };
 
+const STATUS_TO_NODE: Record<BoardAgentStatus, NodeStatus> = {
+  idle: 'idle',
+  dispatched: 'active',
+  running: 'active',
+  complete: 'complete',
+  error: 'error',
+};
+
 const STATUS_LABELS: Record<BoardAgentStatus, string> = {
   idle: 'Idle',
   dispatched: 'Dispatched',
@@ -32,48 +46,125 @@ const STATUS_LABELS: Record<BoardAgentStatus, string> = {
   error: 'Error',
 };
 
-// Known persona slugs for glyph rendering
-const PERSONA_SLUGS: ReadonlySet<string> = new Set([
-  'nyx', 'pierce', 'mara', 'riven', 'kehinde',
-  'tanaka', 'vane', 'voss', 'calloway', 'sable',
-]);
+// Derive persona slug set from canonical source (@forge-os/shared)
+const PERSONA_SLUG_SET: ReadonlySet<string> = new Set(Object.keys(PERSONA_NAMES));
 
 function isPersonaSlug(slug: string): slug is PersonaSlug {
-  return PERSONA_SLUGS.has(slug);
+  return PERSONA_SLUG_SET.has(slug);
 }
 
+// ─── Static Styles ──────────────────────────────────────────────────────────
+
+const CARD_HEADER_STYLE: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+};
+
+const NAME_CONTAINER_STYLE: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+};
+
+const SLUG_STYLE: React.CSSProperties = {
+  color: CANVAS.muted,
+  fontSize: 10,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  lineHeight: 1.3,
+  marginTop: 2,
+};
+
+const METADATA_ROW_STYLE: React.CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  marginTop: 6,
+  flexWrap: 'wrap',
+};
+
+const TIER_BADGE_STYLE: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 500,
+  padding: '1px 6px',
+  borderRadius: RADIUS.pill,
+  background: DOCK.activeBg,
+  color: STATUS.accent,
+  letterSpacing: '0.03em',
+};
+
+const ELAPSED_STYLE: React.CSSProperties = {
+  fontSize: 10,
+  color: CANVAS.label,
+};
+
+const EXPAND_BORDER_STYLE: React.CSSProperties = {
+  marginTop: 8,
+  paddingTop: 8,
+  borderTop: `1px solid ${CANVAS.border}`,
+};
+
+// ─── Sizing Constants ───────────────────────────────────────────────────────
+
+const COMPACT_BREAKPOINT = 160;
+const GLYPH_SIZE = { compact: 28, default: 36 } as const;
+const BADGE_SIZE = { compact: { w: 60, h: 20 }, default: { w: 80, h: 20 } } as const;
 // ─── Agent Card ─────────────────────────────────────────────────────────────
 
 interface AgentCardProps {
   agent: BoardAgent;
   isExpanded: boolean;
-  onToggle: () => void;
+  onToggle: (slug: string) => void;
   cardWidth: number;
 }
 
-function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
-  const glyphSize = cardWidth < 160 ? 28 : 36;
-  const badgeW = cardWidth < 160 ? 60 : 80;
-  const badgeH = 20;
+const AgentCard = memo(function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
+  const [hovered, setHovered] = useState(false);
+  const isCompact = cardWidth < COMPACT_BREAKPOINT;
+  const glyphSize = isCompact ? GLYPH_SIZE.compact : GLYPH_SIZE.default;
+  const badge = isCompact ? BADGE_SIZE.compact : BADGE_SIZE.default;
+  const isActive = agent.status === 'running' || agent.status === 'dispatched';
+  const isError = agent.status === 'error';
+
+  const borderColor = isExpanded
+    ? STATUS.accent
+    : isError
+      ? STATUS.danger
+      : isActive
+        ? STATUS.accent
+        : hovered
+          ? CANVAS.label
+          : CANVAS.border;
+
+  const boxShadow = isActive
+    ? `0 0 8px rgba(99, 102, 241, 0.3)`
+    : isError
+      ? `0 0 6px rgba(239, 68, 68, 0.2)`
+      : 'none';
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={onToggle}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+      aria-expanded={isExpanded}
+      aria-label={`${agent.name} — ${STATUS_LABELS[agent.status]}`}
+      onClick={() => onToggle(agent.slug)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(agent.slug); } }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        background: isExpanded ? CANVAS.bgElevated : CANVAS.bg,
-        border: `1px solid ${isExpanded ? STATUS.accent : CANVAS.border}`,
-        borderRadius: 8,
-        padding: cardWidth < 160 ? 8 : 12,
+        background: isExpanded || hovered ? CANVAS.bgElevated : CANVAS.bg,
+        border: `1px solid ${borderColor}`,
+        borderRadius: RADIUS.card,
+        padding: isCompact ? 8 : 12,
         cursor: 'pointer',
-        transition: 'border-color 0.2s, background 0.2s',
+        transition: `border-color ${TIMING.fast}, background ${TIMING.fast}, box-shadow ${TIMING.fast}`,
         overflow: 'hidden',
+        boxShadow,
       }}
     >
-      {/* Card header: glyph + name + status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* Card header: glyph + NodeCard name + status badge */}
+      <div style={CARD_HEADER_STYLE}>
         {isPersonaSlug(agent.slug) ? (
           <PersonaGlyph
             size={glyphSize}
@@ -81,28 +172,18 @@ function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
             state={STATUS_TO_GLYPH[agent.status]}
           />
         ) : (
-          <div
-            style={{
-              width: glyphSize,
-              height: glyphSize,
-              borderRadius: '50%',
-              background: CANVAS.border,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: glyphSize * 0.4,
-              color: CANVAS.label,
-              fontWeight: 600,
-            }}
-          >
-            {agent.name.charAt(0).toUpperCase()}
-          </div>
+          <NodeCard
+            width={glyphSize}
+            height={glyphSize}
+            label={agent.name.charAt(0).toUpperCase()}
+            status={STATUS_TO_NODE[agent.status]}
+          />
         )}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={NAME_CONTAINER_STYLE}>
           <div
             style={{
               color: CANVAS.text,
-              fontSize: cardWidth < 160 ? 12 : 14,
+              fontSize: isCompact ? 12 : 14,
               fontWeight: 600,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -112,53 +193,28 @@ function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
           >
             {agent.name}
           </div>
-          <div
-            style={{
-              color: CANVAS.muted,
-              fontSize: 10,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.3,
-              marginTop: 2,
-            }}
-          >
+          <div style={SLUG_STYLE}>
             {agent.slug}
           </div>
         </div>
         <StatusBadge
-          width={badgeW}
-          height={badgeH}
+          width={badge.w}
+          height={badge.h}
           status={STATUS_TO_BADGE[agent.status]}
           label={STATUS_LABELS[agent.status]}
         />
       </div>
 
       {/* Model tier + elapsed */}
-      {(agent.modelTier || agent.elapsedMs !== null) && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+      {(agent.modelTier || agent.elapsedMs != null) && (
+        <div style={METADATA_ROW_STYLE}>
           {agent.modelTier && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: '1px 6px',
-                borderRadius: 4,
-                background: 'rgba(99, 102, 241, 0.15)',
-                color: STATUS.accent,
-                letterSpacing: '0.03em',
-              }}
-            >
+            <span style={TIER_BADGE_STYLE}>
               {agent.modelTier}
             </span>
           )}
-          {agent.elapsedMs !== null && (
-            <span
-              style={{
-                fontSize: 10,
-                color: CANVAS.label,
-              }}
-            >
+          {agent.elapsedMs != null && (
+            <span style={ELAPSED_STYLE}>
               {agent.elapsedMs < 1000
                 ? `${agent.elapsedMs}ms`
                 : `${(agent.elapsedMs / 1000).toFixed(1)}s`}
@@ -169,20 +225,16 @@ function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
 
       {/* Expanded detail overlay */}
       {isExpanded && (
-        <div
-          style={{
-            marginTop: 8,
-            paddingTop: 8,
-            borderTop: `1px solid ${CANVAS.border}`,
-          }}
-        >
+        <div style={EXPAND_BORDER_STYLE}>
           <div
             style={{
               color: CANVAS.label,
               fontSize: 11,
               lineHeight: 1.5,
-              maxHeight: 80,
-              overflow: 'auto',
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {agent.description || 'No description available.'}
@@ -203,12 +255,44 @@ function AgentCard({ agent, isExpanded, onToggle, cardWidth }: AgentCardProps) {
       )}
     </div>
   );
+}, (prev, next) =>
+  prev.agent.slug === next.agent.slug &&
+  prev.agent.status === next.agent.status &&
+  prev.agent.modelTier === next.agent.modelTier &&
+  prev.agent.elapsedMs === next.agent.elapsedMs &&
+  prev.agent.lastError === next.agent.lastError &&
+  prev.isExpanded === next.isExpanded &&
+  prev.cardWidth === next.cardWidth
+);
+
+// ─── Skeleton Card (loading state) ─────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <div
+      style={{
+        background: CANVAS.bg,
+        border: `1px solid ${CANVAS.border}`,
+        borderRadius: RADIUS.card,
+        padding: 12,
+        height: 64,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: CANVAS.trackBg }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ width: '60%', height: 12, background: CANVAS.trackBg, borderRadius: RADIUS.pill, marginBottom: 6 }} />
+          <div style={{ width: '40%', height: 8, background: CANVAS.trackBg, borderRadius: RADIUS.pill }} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Agent Board Panel ──────────────────────────────────────────────────────
 
 export default function AgentBoardPanel() {
-  const { agents, loading, error, expandedSlug, setExpandedSlug } = useAgentBoard();
+  const { agents, loading, error, refresh, expandedSlug, setExpandedSlug } = useAgentBoard();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(400);
 
@@ -226,97 +310,178 @@ export default function AgentBoardPanel() {
     return () => observer.disconnect();
   }, []);
 
-  // Responsive columns: 1 at <400px, 2 at <700px, 3 at 700px+
-  const columns = containerWidth < 400 ? 1 : containerWidth < 700 ? 2 : 3;
+  // Responsive columns: 1 at <500px, 2 at <900px, 3 at 900px+
+  const columns = containerWidth < 500 ? 1 : containerWidth < 900 ? 2 : 3;
   const gap = 8;
   const cardWidth = (containerWidth - gap * (columns - 1)) / columns;
 
+  // Stable callback — no expandedSlug dependency (P-HIGH-3 fix)
   const handleToggle = useCallback(
     (slug: string) => {
-      setExpandedSlug(expandedSlug === slug ? null : slug);
+      setExpandedSlug((prev: string | null) => prev === slug ? null : slug);
     },
-    [expandedSlug, setExpandedSlug],
+    [setExpandedSlug],
   );
 
+  const handlePopOut = useCallback(() => {
+    if (!isTauriRuntime) return;
+    createPanelWindow({
+      panel_id: 'agent_board',
+      panel_type: 'AgentBoardPanel',
+      title: 'Agent Board',
+      width: 600,
+      height: 400,
+    });
+  }, []);
+
+  // ─── Error state ────────────────────────────────────────────────────────
   if (error) {
     return (
       <div
         style={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          color: STATUS.danger,
-          fontSize: 13,
+          gap: 12,
           padding: 16,
-          textAlign: 'center',
         }}
       >
-        Agent board error: {error}
+        <div style={{ fontSize: 24, color: STATUS.danger }}>!</div>
+        <div style={{ color: STATUS.danger, fontSize: 13, textAlign: 'center' }}>
+          Failed to load agent board
+        </div>
+        <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
+          {error}
+        </div>
+        <button
+          onClick={refresh}
+          style={{
+            marginTop: 4,
+            padding: '4px 12px',
+            fontSize: 11,
+            color: STATUS.accent,
+            background: DOCK.activeBg,
+            border: `1px solid ${DOCK.activeBorder}`,
+            borderRadius: RADIUS.pill,
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
+  // ─── Loading state (skeleton cards) ─────────────────────────────────────
   if (loading && agents.length === 0) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: CANVAS.muted,
-          fontSize: 13,
-        }}
-      >
-        Loading agents...
+      <div style={{ height: '100%', overflow: 'hidden', padding: 8, background: CANVAS.bg }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gap,
+          }}
+        >
+          {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
+        </div>
       </div>
     );
   }
 
+  // ─── Empty state ────────────────────────────────────────────────────────
   if (agents.length === 0) {
     return (
       <div
         style={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          color: CANVAS.muted,
-          fontSize: 13,
+          gap: 8,
+          padding: 16,
         }}
       >
-        No agents discovered.
+        <div style={{ fontSize: 20, color: CANVAS.muted }}>&#x25CB;</div>
+        <div style={{ color: CANVAS.label, fontSize: 13, textAlign: 'center' }}>
+          No agents discovered
+        </div>
+        <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 220 }}>
+          Start a build session to see your team here.
+        </div>
       </div>
     );
   }
 
+  // ─── Main grid ──────────────────────────────────────────────────────────
   return (
     <div
       ref={containerRef}
       style={{
         height: '100%',
         overflow: 'auto',
-        padding: 8,
         background: CANVAS.bg,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
+      {/* Header bar with pop-out */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns}, 1fr)`,
-          gap,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '6px 8px',
+          borderBottom: `1px solid ${CANVAS.border}`,
+          flexShrink: 0,
         }}
       >
-        {agents.map((agent) => (
-          <AgentCard
-            key={agent.slug}
-            agent={agent}
-            isExpanded={expandedSlug === agent.slug}
-            onToggle={() => handleToggle(agent.slug)}
-            cardWidth={cardWidth}
-          />
-        ))}
+        <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          Agent Board
+        </span>
+        {isTauriRuntime && (
+          <button
+            onClick={handlePopOut}
+            aria-label="Pop out agent board"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: CANVAS.muted,
+              cursor: 'pointer',
+              fontSize: 13,
+              padding: '2px 4px',
+              borderRadius: RADIUS.pill,
+              lineHeight: 1,
+            }}
+            title="Pop out"
+          >
+            &#x2197;
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gap,
+          }}
+        >
+          {agents.map((agent) => (
+            <AgentCard
+              key={agent.slug}
+              agent={agent}
+              isExpanded={expandedSlug === agent.slug}
+              onToggle={handleToggle}
+              cardWidth={cardWidth}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
