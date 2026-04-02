@@ -93,8 +93,21 @@ function buildPlaceholderData(): GraphData {
   return { nodes: [...personaNodes, ...conceptNodes], edges };
 }
 
+/* ── Hook Result ───────────────────────────────────────────────── */
+
+export interface UseGraphDataResult {
+  data: GraphData;
+  isLoading: boolean;
+  error: string | null;
+}
+
 /* ── Hook ───────────────────────────────────────────────────────── */
 
-export function useGraphData(): GraphData {
-  return useMemo(() => buildPlaceholderData(), []);
+/**
+ * Phase 5: synchronous placeholder data.
+ * Phase 8: wire to LightRAG — isLoading/error become meaningful.
+ */
+export function useGraphData(): UseGraphDataResult {
+  const data = useMemo(() => buildPlaceholderData(), []);
+  return { data, isLoading: false, error: null };
 }

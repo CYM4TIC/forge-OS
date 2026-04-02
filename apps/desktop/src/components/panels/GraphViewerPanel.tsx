@@ -49,6 +49,8 @@ const PANEL_SHELL: React.CSSProperties = {
   overflow: 'hidden',
 };
 
+const SHADOW_BLACK = 'rgba(0, 0, 0, 0.5)';
+
 const DETAIL_OVERLAY: React.CSSProperties = {
   position: 'absolute',
   background: CANVAS.bgElevated,
@@ -59,7 +61,7 @@ const DETAIL_OVERLAY: React.CSSProperties = {
   maxWidth: 260,
   zIndex: 20,
   pointerEvents: 'auto',
-  boxShadow: `0 4px 24px rgba(0, 0, 0, 0.5), 0 0 12px ${GLOW.accentSubtle}`,
+  boxShadow: `0 4px 24px ${SHADOW_BLACK}, 0 0 12px ${GLOW.accentSubtle}`,
 };
 
 const ZOOM_BADGE: React.CSSProperties = {
@@ -75,6 +77,14 @@ const ZOOM_BADGE: React.CSSProperties = {
   zIndex: 10,
   userSelect: 'none',
 };
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Compute edge label font that stays readable at any zoom. Clamps 8-10px. */
+function edgeLabelFont(scale: number): string {
+  const size = Math.max(8, Math.min(10, 10 / scale));
+  return `${size}px monospace`;
+}
 
 // ─── Drawing ────────────────────────────────────────────────────────────────
 
@@ -117,7 +127,7 @@ function drawGraph(
     if (view.scale >= EDGE_LABEL_SHOW_ZOOM) {
       const mx = (edge.source.x + edge.target.x) / 2;
       const my = (edge.source.y + edge.target.y) / 2;
-      ctx.font = `${10 / view.scale < 8 ? 8 : Math.min(10, 10 / view.scale)}px monospace`;
+      ctx.font = edgeLabelFont(view.scale);
       ctx.fillStyle = isHighlighted ? CANVAS.text : CANVAS.muted;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -233,7 +243,7 @@ function drawGraph(
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function GraphViewerPanel() {
-  const graphData = useGraphData();
+  const { data: graphData, isLoading, error } = useGraphData();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layoutRef = useRef<GraphLayout | null>(null);
@@ -286,19 +296,22 @@ export default function GraphViewerPanel() {
     setSelectedNode(null);
   }, [graphData, dimensions.width, dimensions.height]);
 
-  // Animation loop — runs force simulation + draws
+  // Setup canvas HiDPI on dimension change only (PIERCE-05)
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || dimensions.width <= 0 || dimensions.height <= 0) return;
+    ctxRef.current = setupCanvasForHiDPI(canvas, dimensions.width, dimensions.height);
+  }, [dimensions.width, dimensions.height]);
 
-    const ctx = setupCanvasForHiDPI(canvas, dimensions.width, dimensions.height);
+  // Animation loop — runs force simulation + draws
+  useEffect(() => {
+    const ctx = ctxRef.current;
+    if (!ctx || dimensions.width <= 0 || dimensions.height <= 0) return;
 
     function animate() {
       const layout = layoutRef.current;
-      if (!layout) {
-        rafRef.current = requestAnimationFrame(animate);
-        return;
-      }
+      if (!layout) return; // Don't spin rAF with no data (PIERCE-01)
 
       // Tick simulation (skip if reduced motion + already past initial stabilization)
       if (!layout.stabilized) {
@@ -332,20 +345,6 @@ export default function GraphViewerPanel() {
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
   }, [dimensions, view, selectedNode, hoveredNodeId]);
-
-  // Redraw on state changes after stabilization
-  useEffect(() => {
-    const layout = layoutRef.current;
-    if (!layout?.stabilized) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas || dimensions.width <= 0) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    drawGraph(ctx, layout, view, dimensions.width, dimensions.height, selectedNode?.id ?? null, hoveredNodeId);
-  }, [view, selectedNode, hoveredNodeId, dimensions]);
 
   // ─── Interaction handlers ───────────────────────────────────────────────
 
@@ -428,6 +427,43 @@ export default function GraphViewerPanel() {
       };
     });
   }, []);
+
+  // ─── Keyboard navigation (MARA-01) ──────────────────────────────────────
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const layout = layoutRef.current;
+    if (!layout || layout.nodes.length === 0) return;
+
+    const nodes = layout.nodes;
+
+    if (e.key === 'Escape') {
+      setSelectedNode(null);
+      return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const currentIdx = selectedNode ? nodes.findIndex((n) => n.id === selectedNode.id) : -1;
+      const nextIdx = (currentIdx + 1) % nodes.length;
+      setSelectedNode(nodes[nextIdx]);
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const currentIdx = selectedNode ? nodes.findIndex((n) => n.id === selectedNode.id) : 0;
+      const prevIdx = (currentIdx - 1 + nodes.length) % nodes.length;
+      setSelectedNode(nodes[prevIdx]);
+      return;
+    }
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!selectedNode && nodes.length > 0) {
+        setSelectedNode(nodes[0]);
+      }
+    }
+  }, [selectedNode]);
 
   // ─── Persona glyph overlays ─────────────────────────────────────────────
 
@@ -544,14 +580,18 @@ export default function GraphViewerPanel() {
           onClick={() => setSelectedNode(null)}
           style={{
             position: 'absolute',
-            top: 6,
-            right: 8,
+            top: 0,
+            right: 0,
             background: 'none',
             border: 'none',
             color: CANVAS.muted,
             fontSize: 14,
             cursor: 'pointer',
-            padding: '2px 4px',
+            minWidth: 44,
+            minHeight: 44,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             lineHeight: 1,
           }}
           aria-label="Close detail overlay"
@@ -564,8 +604,66 @@ export default function GraphViewerPanel() {
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
+  // Connection count for selected node (MARA-03)
+  const selectedConnections = selectedNode && layoutRef.current
+    ? layoutRef.current.edges.filter(
+        (e) => e.source.id === selectedNode.id || e.target.id === selectedNode.id,
+      ).length
+    : 0;
+
+  // Loading/error states (MARA-04)
+  if (isLoading) {
+    return (
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', height: '100%',
+          color: CANVAS.label, fontSize: 12, fontFamily: 'monospace',
+        }}>
+          Loading graph data...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', height: '100%',
+          color: STATUS.danger, fontSize: 12, fontFamily: 'monospace',
+        }}>
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state (PIERCE-04)
+  if (graphData.nodes.length === 0) {
+    return (
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', height: '100%',
+          color: CANVAS.muted, fontSize: 12, fontFamily: 'monospace',
+        }}>
+          No graph data available
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+    <div
+      ref={containerRef}
+      style={PANEL_SHELL}
+      role="region"
+      aria-label="Knowledge graph viewer. Use arrow keys to navigate nodes, Enter to select, Escape to deselect."
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <canvas
         ref={canvasRef}
         style={{ position: 'absolute', top: 0, left: 0, cursor: isPanning ? 'grabbing' : hoveredNodeId ? 'pointer' : 'grab' }}
@@ -589,14 +687,16 @@ export default function GraphViewerPanel() {
         {Math.round(view.scale * 100)}%
       </div>
 
-      {/* Screen reader summary */}
+      {/* Screen reader summary (MARA-03 enhanced) */}
       <div
         style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}
         role="status"
         aria-live="polite"
       >
         Knowledge graph: {graphData.nodes.length} nodes, {graphData.edges.length} edges.
-        {selectedNode ? ` Selected: ${selectedNode.data.label}, ${selectedNode.data.type}.` : ''}
+        {selectedNode
+          ? ` Selected: ${selectedNode.data.label}, ${selectedNode.data.type}. ${selectedConnections} connections.`
+          : ' No node selected. Use arrow keys to navigate.'}
       </div>
     </div>
   );
