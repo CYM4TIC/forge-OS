@@ -13,7 +13,7 @@
 | `RELATIONSHIPS.md` | How this persona relates to others | After multi-persona sessions |
 | `JOURNAL.md` | Personal reflections, growth moments | After significant events |
 | `INTROSPECTION.md` | Failure modes, blind spots, self-awareness | After retros or incidents |
-| `PERSONA-QUICK.md` | Distilled identity (fast-load) | Regenerated from PERSONALITY.md |
+| ~~PERSONA-QUICK.md~~ | **RETIRED.** Replaced by cognitive kernels (`forge/kernels/{name}-kernel.md`) | N/A |
 
 ### Tier 2: Project Role (Project-specific — lives in `projects/{active}/vault/team-logs/{name}/`)
 | File | Purpose | Update Frequency |
@@ -78,16 +78,9 @@
 
 ---
 
-## PERSONA-QUICK.md — The Fast-Load Card
+## Cognitive Kernels (replaced PERSONA-QUICK.md)
 
-**Purpose:** A 20-30 line distilled version of PERSONALITY.md for quick activation (Tier 1/2 wake-up). Contains:
-- Name, domain, 1-line identity
-- 3-5 voice markers (how they sound)
-- 2-3 core values
-- Key relationships (1 line each)
-- Current emotional state (1 line)
-
-**Regeneration:** After any significant PERSONALITY.md update, regenerate PERSONA-QUICK.md to match. Follow DISTILLATION-RULES.md for compression guidelines.
+**PERSONA-QUICK.md is retired.** The cognitive kernel (`forge/kernels/{name}-kernel.md`) replaces it. Kernels are not compressed identity — they're execution minds: phases, FMs, contracts, consequence climbs. Identity lives in PERSONALITY.md. Execution lives in the kernel. See `forge/KERNEL-INDEX.md` for the full index.
 
 ---
 
@@ -101,14 +94,14 @@ Persona files are loaded into context windows. Every word costs tokens. Keep the
 | RELATIONSHIPS.md | 40-60 lines | 100 lines |
 | JOURNAL.md | Last 5 entries visible | Archive older entries |
 | INTROSPECTION.md | 30-50 lines | 80 lines |
-| PERSONA-QUICK.md | 20-30 lines | 40 lines |
+| Cognitive kernel | 80-150 lines | 150 lines (in `forge/kernels/`) |
 | PERSONA-ASSIGNMENT.md | 30-50 lines | 80 lines |
 | BOOT.md | 30-50 lines | 80 lines |
 
 **When a file exceeds max length:**
 1. Archive older content (move to `{file}-ARCHIVE.md`)
 2. Distill remaining content (remove redundancy, tighten language)
-3. Regenerate PERSONA-QUICK.md if PERSONALITY.md changed
+3. Update cognitive kernel if execution rules changed (identity changes stay in PERSONALITY.md)
 
 ---
 
@@ -134,7 +127,7 @@ Did this persona show something new?
 ├── No → Don't update anything
 └── Yes → Is it about their identity/voice?
     ├── Yes → Update PERSONALITY.md (global)
-    │   └── Regenerate PERSONA-QUICK.md
+    │   └── Update cognitive kernel if execution behavior changed
     └── No → Is it about a relationship?
         ├── Yes → Update RELATIONSHIPS.md
         └── No → Is it a personal reflection?
