@@ -3,6 +3,7 @@
 // Debounced saves on every change to prevent SQLite thrashing.
 
 import { invoke } from '@tauri-apps/api/core';
+import { isTauriRuntime } from '../lib/tauri';
 import type { ForgeWindowManager } from './manager';
 import type { PanelInstance, TabGroup, WorkspacePreset, PanelLayoutRow, WorkspacePresetRow } from './types';
 
@@ -15,6 +16,7 @@ export interface SaveLayoutRequest {
 }
 
 export function savePanelLayout(request: SaveLayoutRequest): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('save_panel_layout', { request });
 }
 
@@ -23,6 +25,7 @@ export function loadPanelLayout(): Promise<{
   tab_groups_json: string;
   active_preset_id: string | null;
 } | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('load_panel_layout');
 }
 
@@ -33,10 +36,12 @@ export function saveWorkspacePreset(request: {
   is_built_in: boolean;
   panels_json: string;
 }): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('save_workspace_preset', { request });
 }
 
 export function loadWorkspacePresets(): Promise<WorkspacePresetRow[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('load_workspace_presets');
 }
 

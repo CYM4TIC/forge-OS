@@ -1,6 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 
+/** Whether we're running inside the Tauri runtime (vs. browser-only dev mode) */
+export const isTauriRuntime = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
+
 // ── Types matching Rust structs ──
 
 export interface SessionRow {

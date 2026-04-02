@@ -28,7 +28,7 @@ export default function ContextMeterPanel() {
     return () => observer.disconnect();
   }, []);
 
-  const value = status?.usage_percent != null ? status.usage_percent / 100 : 0;
+  const value = status?.usage_fraction ?? 0;
 
   return (
     <div

@@ -15,11 +15,20 @@
 
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
+  measureText,
   renderStyledSpans,
   setupCanvasForHiDPI,
 } from '@forge-os/layout-engine';
 import type { StyledSpan, CanvasRenderOptions } from '@forge-os/layout-engine';
 import { CANVAS, getZoneColor, getZoneLabel } from '@forge-os/canvas-components';
+
+/** Convert a hex token to rgba with dynamic alpha */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+}
 
 // ─── Sample Text ────────────────────────────────────────────────────────────
 
@@ -48,37 +57,37 @@ interface DensityParams {
   letterSpacing: number;    // px of extra letter spacing (negative = tighter)
 }
 
-/** Map a 0-1 fill value to density parameters */
+/** Map a 0-1 fill value to density parameters.
+ * lineHeight: 1.8 → 1.0 per spec. Opacity floor 0.55 for WCAG AA contrast. */
 function getDensityParams(value: number): DensityParams {
-  // Smooth interpolation across the fill range
   if (value < 0.4) {
     // Spacious — breathing room
     return {
-      lineHeightRatio: 2.0 - value * 1.0,  // 2.0 → 1.6
+      lineHeightRatio: 1.8 - value * 0.75,  // 1.8 → 1.5
       fontWeight: '300',
       fontSize: 11,
       maxWidthRatio: 0.7 + value * 0.2,     // 70% → 78%
-      opacity: 0.5 + value * 0.4,           // 0.5 → 0.66
+      opacity: 0.55 + value * 0.25,          // 0.55 → 0.65 (floor = WCAG AA)
       letterSpacing: 0.5 - value * 0.5,     // 0.5 → 0.3
     };
   }
   if (value < 0.7) {
     // Medium — readable but filling
-    const t = (value - 0.4) / 0.3; // 0→1 within this band
+    const t = (value - 0.4) / 0.3;
     return {
-      lineHeightRatio: 1.6 - t * 0.3,      // 1.6 → 1.3
+      lineHeightRatio: 1.5 - t * 0.25,      // 1.5 → 1.25
       fontWeight: '400',
       fontSize: 11 + t * 1,                 // 11 → 12
       maxWidthRatio: 0.78 + t * 0.12,       // 78% → 90%
-      opacity: 0.66 + t * 0.14,             // 0.66 → 0.80
+      opacity: 0.65 + t * 0.15,             // 0.65 → 0.80
       letterSpacing: 0.3 - t * 0.5,         // 0.3 → -0.2
     };
   }
   if (value < 0.85) {
     // Compressed — tight
-    const t = (value - 0.7) / 0.15; // 0→1 within this band
+    const t = (value - 0.7) / 0.15;
     return {
-      lineHeightRatio: 1.3 - t * 0.2,      // 1.3 → 1.1
+      lineHeightRatio: 1.25 - t * 0.15,     // 1.25 → 1.1
       fontWeight: '600',
       fontSize: 12 + t * 1,                 // 12 → 13
       maxWidthRatio: 0.90 + t * 0.08,       // 90% → 98%
@@ -87,9 +96,9 @@ function getDensityParams(value: number): DensityParams {
     };
   }
   // Critical — packed
-  const t = Math.min((value - 0.85) / 0.15, 1); // 0→1 within this band
+  const t = Math.min((value - 0.85) / 0.15, 1);
   return {
-    lineHeightRatio: 1.1 - t * 0.05,       // 1.1 → 1.05
+    lineHeightRatio: 1.1 - t * 0.1,         // 1.1 → 1.0
     fontWeight: '700',
     fontSize: 13 + t * 1,                   // 13 → 14
     maxWidthRatio: 0.98 + t * 0.02,         // 98% → 100%
@@ -130,6 +139,7 @@ export function ContextMeterViz({
   style: styleProp,
 }: ContextMeterVizProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number>(0);
   const animatedValue = useRef(0);
   const compactPhaseRef = useRef(0); // 0-1 for dissolve/re-emerge
@@ -197,32 +207,39 @@ export function ContextMeterViz({
     const textWidth = Math.floor(width * density.maxWidthRatio);
     const leftPad = Math.floor((width - textWidth) / 2);
     const lineHeight = Math.ceil(density.fontSize * density.lineHeightRatio);
+    const font = `${density.fontWeight} ${density.fontSize}px ${FONT_FAMILY}`;
+
+    // Pretext measure() — compute exact layout at this density level
+    const measurement = measureText(sampleText, textWidth - 8, { font }, { lineHeight });
+    const visibleLines = Math.min(measurement.lineCount, Math.floor((textAreaH - 8) / lineHeight));
 
     // Build styled spans — alternate color intensity to create visual rhythm
+    // Uses hexToRgba with CANVAS.text token for single-source-of-truth colors
+    const textColor = hexToRgba(CANVAS.text, textOpacity);
     const words = sampleText.split(' ');
     const spans: StyledSpan[] = words.map((word, i) => ({
       text: i > 0 ? ` ${word}` : word,
       fontWeight: density.fontWeight,
-      color: i % 3 === 0
-        ? zoneColor
-        : `rgba(232, 232, 237, ${textOpacity.toFixed(2)})`,
+      color: i % 3 === 0 ? zoneColor : textColor,
     }));
 
-    const font = `${density.fontWeight} ${density.fontSize}px ${FONT_FAMILY}`;
     const renderOpts: CanvasRenderOptions = {
       width: textWidth,
-      height: textAreaH,
+      height: Math.min(visibleLines * lineHeight + 8, textAreaH),
       font,
       lineHeight,
-      color: `rgba(232, 232, 237, ${textOpacity.toFixed(2)})`,
+      color: textColor,
       align: 'left',
       verticalAlign: 'top',
       padding: [4, 0, 4, 0],
       dpr,
     };
 
-    // Offset canvas context for text area positioning
-    const offscreen = document.createElement('canvas');
+    // Cached offscreen canvas for text rendering (avoids GC pressure in animation loop)
+    if (!offscreenRef.current) {
+      offscreenRef.current = document.createElement('canvas');
+    }
+    const offscreen = offscreenRef.current;
     offscreen.width = textWidth * dpr;
     offscreen.height = textAreaH * dpr;
     const offCtx = offscreen.getContext('2d');
@@ -230,7 +247,9 @@ export function ContextMeterViz({
 
     renderStyledSpans(offCtx, spans, renderOpts);
 
-    // Composite onto main canvas
+    // Composite onto main canvas — DPR-scaled coordinates because the main canvas
+    // backing store is in device pixels (set by setupCanvasForHiDPI) and ctx.restore()
+    // cleared the DPR scale transform above
     const mainCtx = canvas.getContext('2d');
     if (!mainCtx) return;
     mainCtx.drawImage(offscreen, leftPad * dpr, textAreaY * dpr);

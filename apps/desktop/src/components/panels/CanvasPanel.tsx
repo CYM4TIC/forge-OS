@@ -115,7 +115,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
             <ContextMeterViz
               width={Math.max(Math.min(gaugesHeight - 16, (dimensions.width - 32) / (isNarrow ? 2 : 4)), 60)}
               height={Math.max(gaugesHeight - 16, 32)}
-              value={contextStatus?.usage_percent != null ? contextStatus.usage_percent / 100 : 0}
+              value={contextStatus?.usage_fraction ?? 0}
               isCompacting={isCompacting}
               tokensUsed={contextStatus?.current_tokens}
               tokensTotal={contextStatus?.context_window_size}

@@ -28,10 +28,10 @@ export default function AgentStatusPanel() {
         )}
       </div>
 
-      {/* Error banner */}
+      {/* Error banner — show graceful message in browser-only mode */}
       {error && (
         <div className="px-3 py-2 bg-danger/10 border border-danger/30 rounded-lg text-danger text-xs flex-shrink-0">
-          {error}
+          {error.includes('invoke') ? 'Agent dispatch requires the Forge desktop app' : error}
         </div>
       )}
 

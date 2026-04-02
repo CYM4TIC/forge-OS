@@ -16,18 +16,20 @@ interface TokenGaugeDisplayProps {
 }
 
 export function TokenGaugeDisplay({ status, isCompacting, width, height }: TokenGaugeDisplayProps) {
-  const fraction = status?.usage_percent != null
-    ? status.usage_percent / 100
-    : 0;
+  const fraction = status?.usage_fraction ?? 0;
 
-  const pct = status?.usage_percent != null
-    ? `${Math.round(status.usage_percent)}%`
+  const pct = status?.usage_fraction != null
+    ? `${Math.round(status.usage_fraction * 100)}%`
     : '--';
+
+  const tokensRemaining = status
+    ? status.context_window_size - status.current_tokens
+    : null;
 
   const subLabel = isCompacting
     ? 'Compacting'
-    : status?.tokens_remaining != null
-      ? `${formatTokens(status.tokens_remaining)} left`
+    : tokensRemaining != null
+      ? `${formatTokens(tokensRemaining)} left`
       : 'Context';
 
   return (

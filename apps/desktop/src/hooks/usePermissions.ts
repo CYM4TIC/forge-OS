@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+  isTauriRuntime,
   swarmGetMessages,
   swarmRespondPermission,
   onSwarmMessage,
@@ -32,6 +33,7 @@ export function usePermissions(agentId: string): UsePermissionsReturn {
   const [loading, setLoading] = useState(true);
 
   const fetchPending = useCallback(async () => {
+    if (!isTauriRuntime) { setLoading(false); return; }
     try {
       const msgs = await swarmGetMessages({
         to_agent: agentId,
