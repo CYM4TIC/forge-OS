@@ -8,9 +8,9 @@ project: forge_os
 architecture: tauri_v2
 phase: 5_IN_PROGRESS
 current_session: 5.3_IN_PROGRESS
-current_batch: P5-O
-batches_done: 85
-last_commit: bd46294
+current_batch: P5-P
+batches_done: 86
+last_commit: 2098d1f
 session_5_1_complete: true
 session_5_2_complete: true
 phases_total: 9
@@ -30,7 +30,7 @@ phase_4_complete: true
 ---
 
 ## Current Position
-- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M + P5-N DONE. Flow visualization: FlowOverlay with persona glyph particle trails on dispatch. Vault Browser: split-pane file tree + content preview with path containment security (canonicalize + starts_with + 2MB cap + symlink defense). 51 Tauri commands. Build Triad gate caught P-1 CRIT (path traversal) — fixed with vault_root + relative path pattern. 2 batches remain (P5-O + P5-P).
+- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M + P5-N + P5-O DONE. Flow visualization: FlowOverlay with persona glyph particle trails on dispatch. Vault Browser: split-pane file tree + content preview with path containment security. Graph Viewer: canvas-rendered force-directed knowledge graph (16 nodes, 16 edges) with pan/zoom, persona glyph overlays, click-to-detail, Pretext fitToContainer label measurement, keyboard navigation, prefers-reduced-motion support. Build Triad gate: 10 findings (0 CRIT, 2 HIGH, 4 MED, 4 LOW), all resolved. 51 Tauri commands, 13 hooks. 1 batch remains (P5-P).
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
 - **Phase:** 4 — Runtime Upgrades + Window Manager + Pretext + Document Gen. **COMPLETE.**
 - **PHASE 4 COMPLETE.** All 20 batches done (P4-A through P4-T). 5 sessions (4.0-4.4). ContextEngine trait + TTL pruning + iterative compression + FTS5 + atomic checkout + floating window manager + dock bar + Pretext layout engine + 9 canvas components + persona glyphs + document generation engine (4 templates, dual PDF+markdown output). 3 new packages (@forge-os/layout-engine, @forge-os/canvas-components, @forge-os/document-gen). 46 Tauri commands. 9 React hooks.
@@ -124,7 +124,7 @@ phase_4_complete: true
 | P5-L | Dispatch Event Bus + Trails | 5.3 | ✅ DONE |
 | P5-M | Flow Overlay Particles | 5.3 | ✅ DONE |
 | P5-N | Vault Browser Panel | 5.3 | ✅ DONE |
-| P5-O | Graph Viewer Panel | 5.3 | 🔲 |
+| P5-O | Graph Viewer Panel | 5.3 | ✅ DONE |
 | P5-P | Phase 5 Integration + Ambient | 5.3 | 🔲 |
 
 ## Architecture Decisions
@@ -141,6 +141,16 @@ See `BUILD-LEARNINGS.md` (repo root) for OS-specific gotchas and patterns.
 - Segment files in `segments/` are from OLD block-based plan — superseded by BATCH-MANIFESTS.md
 
 ## Session Log
+
+**2026-04-02 — P5-O: Graph Viewer Panel**
+- **SCOPE:** Knowledge graph visualization — force-directed layout, canvas pan/zoom, persona glyph overlays, click-to-detail, Pretext label measurement.
+- **FILES (3):** useGraphData.ts (NEW — 113 lines, placeholder 16 nodes/16 edges, `{ data, isLoading, error }` shape for Phase 8 LightRAG), graph-layout.ts (NEW — 229 lines, force simulation: repulsion/attraction/gravity/damping, stabilizes ~120 ticks, nodeAtPoint hit testing), GraphViewerPanel.tsx (REPLACED placeholder — ~660 lines, canvas + React overlay hybrid).
+- **PANEL:** Canvas draws edges (straight lines, zoom-dependent labels via edgeLabelFont), concept/system/phase node circles with glow on select, persona rings. PersonaGlyph React components overlaid at screen-space positions (pointerEvents: none). ResizeObserver. Pan (drag), zoom (wheel toward cursor, 0.3x-3.0x). Click node → detail overlay (DOM dialog with connection list, 44px close button). Empty/loading/error states.
+- **PRETEXT:** Labels measured via `fitToContainer` from @forge-os/layout-engine (8-13px monospace, maxLines: 1). Edge labels via clamped inverse-scale font (8-10px).
+- **ACCESSIBILITY:** `role="region"` container with tabIndex + onKeyDown. Arrow keys cycle nodes, Enter selects, Escape deselects. Canvas `role="presentation" aria-hidden="true"`. Detail overlay `role="dialog"`. Screen reader `role="status" aria-live="polite"` with node count + selected node + connection count. Zoom badge `aria-live="polite"`. `prefers-reduced-motion`: fast-forwards simulation to stable (no animation).
+- **GATE (Build Triad):** 10 findings (0 CRIT, 2 HIGH, 4 MED, 4 LOW). All resolved. HIGHs: keyboard nav added (MARA-01), float/pop-out confirmed external (PIERCE-06). MEDs: idle rAF fixed, empty state added, close button 44px, hook shape updated. LOWs: setupCanvasForHiDPI separated, screen reader enhanced, raw rgba extracted, edge font helper extracted.
+- **SENTINEL:** PASS. No regressions. All imports, registrations, and exports verified.
+- **COMMITS:** `7cb5b47` (build), `2098d1f` (gate fixes).
 
 **2026-04-02 — P5-N: Vault Browser Panel**
 - **SCOPE:** File tree navigation + content preview for vault browsing. Rust backend + TypeScript bridge + React panel.
