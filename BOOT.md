@@ -6,11 +6,11 @@
 ```yaml
 project: forge_os
 architecture: tauri_v2
-phase: 5_COMPLETE
-current_session: 5.3_COMPLETE
-current_batch: P5-P_DONE
+phase: 6_NOT_STARTED
+current_session: 6.1_NOT_STARTED
+current_batch: P6-A
 batches_done: 87
-last_commit: f4b9650
+last_commit: 5732d2a
 session_5_1_complete: true
 session_5_2_complete: true
 session_5_3_complete: true
@@ -32,6 +32,7 @@ phase_4_complete: true
 ---
 
 ## Current Position
+- **Phase:** 6 — Dev Server Preview + Connectivity. **NOT STARTED.** 10 batches (P6-A through P6-J), 2 sessions. Batch manifests written. Next batch: P6-A (Shell Plugin + Process Manager Backend). Requires `tauri-plugin-shell` dependency.
 - **PHASE 5 COMPLETE.** Living Canvas HUD. 16 batches (P5-A through P5-P), 3 sessions (5.1-5.3). All systems verified: BOOT.md parser + HUD events, pipeline canvas (4-stage nodes with glyphs/particles + ambient idle animation), batch progress gauge, token gauge, context meter text density, findings SQLite + feed, agent board, session timeline, flow overlay (glyph trails + replay mode), vault browser (split-pane tree + preview), graph viewer (force-directed + pan/zoom), 3 workspace presets (build, gate_review, observatory). Phase 5 exit gate: Pierce 0C/1H/4M/4L (all resolved), Sentinel 19/19 PASS, Meridian 17/20 CONSISTENT (2 drift fixed). 51 Tauri commands, 14 hooks (added useReducedMotion). 87 batches done.
 - **Research session (2026-04-02):** Block engineering post analysis. 5 insights integrated into TAURI-BUILD-PLAN.md: Smart Review command (7.1), Proposal Feed/ADL-005 (7.3), Skills Marketplace granularity (8.1), trade-off pattern index (8.2), policy evolution (8.3b). No new sessions added — all fit into existing seams. Repo Mining Integration Map +5 entries.
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
