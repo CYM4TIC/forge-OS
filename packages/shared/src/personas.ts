@@ -33,6 +33,42 @@ export const PERSONA_NAMES: Record<PersonaSlug, string> = {
   sable: 'Dr. Sable',
 };
 
+/** Short name without "Dr." — for compact UI contexts (badges, metadata rows) */
+export const PERSONA_SHORT: Record<PersonaSlug, string> = {
+  nyx: 'Nyx',
+  pierce: 'Pierce',
+  mara: 'Mara',
+  riven: 'Riven',
+  kehinde: 'Kehinde',
+  tanaka: 'Tanaka',
+  vane: 'Vane',
+  voss: 'Voss',
+  calloway: 'Calloway',
+  sable: 'Sable',
+};
+
+/** Domain tag — the role each persona fills */
+export const PERSONA_DOMAINS: Record<PersonaSlug, string> = {
+  nyx: 'Build',
+  pierce: 'QA',
+  mara: 'UX',
+  riven: 'Design',
+  kehinde: 'Systems',
+  tanaka: 'Security',
+  vane: 'Finance',
+  voss: 'Legal',
+  calloway: 'Growth',
+  sable: 'Brand',
+};
+
+/** Compact label for dropdowns/filters: "Mara (UX)" */
+export const PERSONA_LABELS: Record<PersonaSlug, string> = Object.fromEntries(
+  (Object.keys(PERSONA_SHORT) as PersonaSlug[]).map((slug) => [
+    slug,
+    `${PERSONA_SHORT[slug]} (${PERSONA_DOMAINS[slug]})`,
+  ])
+) as Record<PersonaSlug, string>;
+
 export const PERSONA_GLYPHS: Record<PersonaSlug, string> = {
   nyx: 'Lightning Bolt',
   pierce: 'Crosshair',

@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { PersonaGlyph, CANVAS, STATUS, DOCK, RADIUS, TIMING } from '@forge-os/canvas-components';
 import type { PersonaSlug } from '@forge-os/shared';
-import { PERSONA_NAMES } from '@forge-os/shared';
+import { PERSONA_NAMES, PERSONA_LABELS, PERSONA_SHORT } from '@forge-os/shared';
 import {
   isTauriRuntime,
   createPanelWindow,
@@ -111,8 +111,8 @@ function FilterBar({
         aria-label="Filter by persona"
       >
         <option value="all">All personas</option>
-        {Object.entries(PERSONA_NAMES).map(([slug, name]) => (
-          <option key={slug} value={slug}>{name}</option>
+        {Object.entries(PERSONA_LABELS).map(([slug, label]) => (
+          <option key={slug} value={slug}>{label}</option>
         ))}
       </select>
     </div>
@@ -129,7 +129,7 @@ const FindingCard = memo(function FindingCard({ finding }: FindingCardProps) {
   const [hovered, setHovered] = useState(false);
   const styles = useMemo(() => buildCardStyles(finding.severity, finding.status), [finding.severity, finding.status]);
   const sv = getSeverityVisual(finding.severity);
-  const personaDisplayName = PERSONA_NAMES[finding.persona as keyof typeof PERSONA_NAMES] ?? finding.persona;
+  const personaDisplayName = PERSONA_SHORT[finding.persona as keyof typeof PERSONA_SHORT] ?? finding.persona;
 
   const containerStyle: React.CSSProperties = {
     ...styles.container,
