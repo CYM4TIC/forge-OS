@@ -10,7 +10,7 @@
 ### Builder
 | Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
 |-------|--------|------|-------------|-----------------|-------------|
-| **Nyx** | [COGNITIVE-KERNEL.md](COGNITIVE-KERNEL.md) | Builder | All scales simultaneously (scalar cognition) | Building from memory, not spec | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
+| **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Builder | All scales simultaneously (scalar cognition) | Building from memory, not spec | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
 
 ### Build Triad (Frontend Gate)
 | Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
@@ -67,7 +67,7 @@ Which kernels load for which dispatch type:
 
 | Dispatch | Kernels Loaded |
 |----------|---------------|
-| `next batch` / `start [batch]` | Nyx (COGNITIVE-KERNEL.md) |
+| `next batch` / `start [batch]` | Nyx (nyx-kernel.md) |
 | Scout dispatch | scout-kernel.md |
 | Build Triad dispatch | triad-kernel.md → pierce, mara, riven kernels |
 | Systems Triad dispatch | systems-triad-kernel.md → kehinde, tanaka, vane kernels |
