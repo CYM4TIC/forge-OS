@@ -27,7 +27,7 @@ impl std::fmt::Debug for ProviderConfig {
 }
 
 // Custom Serialize: redact api_key if this ever reaches the frontend
-// TODO: Migrate API keys to OS keychain (T-HIGH-001 ideal fix)
+// TANAKA-HIGH-1: API keys now stored in OS keychain (keychain.rs). Redaction here is defense-in-depth.
 impl Serialize for ProviderConfig {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeStruct;

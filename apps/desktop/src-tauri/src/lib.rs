@@ -30,8 +30,43 @@ use providers::types::{ModelMapping, CLAUDE_OPUS, CLAUDE_SONNET, CLAUDE_HAIKU, G
 use tauri::Manager;
 use tokio::sync::Mutex;
 
-/// Load provider configurations from SQLite settings.
-/// Keys: provider.{id}.api_key, provider.{id}.base_url, provider.default
+/// Retrieve an API key using the secure lookup chain:
+/// 1. OS keychain (preferred — Windows Credential Manager / macOS Keychain / Linux SecretService)
+/// 2. SQLite settings (legacy fallback — keys are migrated to keychain on first access)
+/// 3. Returns None if not found in either.
+///
+/// TANAKA-HIGH-1 fix: API keys are no longer read from plaintext SQLite.
+/// On first access, any key found in SQLite is migrated to the OS keychain
+/// and removed from the database.
+fn get_provider_api_key(
+    conn: &rusqlite::Connection,
+    provider_id: &str,
+) -> Option<String> {
+    // Try keychain first
+    if let Ok(Some(key)) = providers::keychain::get_api_key(provider_id) {
+        if !key.is_empty() {
+            return Some(key);
+        }
+    }
+
+    // Fallback to SQLite (legacy) — migrate to keychain if found
+    let setting_key = format!("provider.{}.api_key", provider_id);
+    if let Ok(Some(key)) = database::queries::get_setting(conn, &setting_key) {
+        if !key.is_empty() {
+            // Migrate: store in keychain, remove from SQLite
+            if providers::keychain::store_api_key(provider_id, &key).is_ok() {
+                let _ = database::queries::set_setting(conn, &setting_key, "");
+            }
+            return Some(key);
+        }
+    }
+
+    None
+}
+
+/// Load provider configurations.
+/// API keys are stored in the OS keychain (TANAKA-HIGH-1).
+/// Keys: provider.{id}.base_url, provider.default in SQLite settings.
 fn init_providers(db: &Database) -> ProviderRegistry {
     let mut registry = ProviderRegistry::new();
     let conn = db.conn.lock().unwrap_or_else(|e| e.into_inner());
@@ -46,42 +81,38 @@ fn init_providers(db: &Database) -> ProviderRegistry {
     );
 
     // Check for Claude API key (overrides claude-code as default if present)
-    if let Ok(Some(api_key)) = database::queries::get_setting(&conn, "provider.claude.api_key") {
-        if !api_key.is_empty() {
-            let config = ProviderConfig {
-                api_key,
-                base_url: database::queries::get_setting(&conn, "provider.claude.base_url")
-                    .ok()
-                    .flatten(),
-                model_mappings: ModelMapping {
-                    high: CLAUDE_OPUS.to_string(),
-                    medium: CLAUDE_SONNET.to_string(),
-                    fast: CLAUDE_HAIKU.to_string(),
-                },
-                is_default: true,
-            };
-            registry.add("claude".to_string(), Arc::new(ClaudeProvider::new(config)), true);
-        }
+    if let Some(api_key) = get_provider_api_key(&conn, "claude") {
+        let config = ProviderConfig {
+            api_key,
+            base_url: database::queries::get_setting(&conn, "provider.claude.base_url")
+                .ok()
+                .flatten(),
+            model_mappings: ModelMapping {
+                high: CLAUDE_OPUS.to_string(),
+                medium: CLAUDE_SONNET.to_string(),
+                fast: CLAUDE_HAIKU.to_string(),
+            },
+            is_default: true,
+        };
+        registry.add("claude".to_string(), Arc::new(ClaudeProvider::new(config)), true);
     }
 
     // Check for OpenAI API key
-    if let Ok(Some(api_key)) = database::queries::get_setting(&conn, "provider.openai.api_key") {
-        if !api_key.is_empty() {
-            let base_url = database::queries::get_setting(&conn, "provider.openai.base_url")
-                .ok()
-                .flatten();
-            let config = ProviderConfig {
-                api_key,
-                base_url,
-                model_mappings: ModelMapping {
-                    high: GPT4O.to_string(),
-                    medium: GPT4O_MINI.to_string(),
-                    fast: GPT4O_MINI.to_string(),
-                },
-                is_default: false,
-            };
-            registry.add("openai".to_string(), Arc::new(OpenAIProvider::new(config, None)), false);
-        }
+    if let Some(api_key) = get_provider_api_key(&conn, "openai") {
+        let base_url = database::queries::get_setting(&conn, "provider.openai.base_url")
+            .ok()
+            .flatten();
+        let config = ProviderConfig {
+            api_key,
+            base_url,
+            model_mappings: ModelMapping {
+                high: GPT4O.to_string(),
+                medium: GPT4O_MINI.to_string(),
+                fast: GPT4O_MINI.to_string(),
+            },
+            is_default: false,
+        };
+        registry.add("openai".to_string(), Arc::new(OpenAIProvider::new(config, None)), false);
     }
 
     // Environment variable fallback for development.
