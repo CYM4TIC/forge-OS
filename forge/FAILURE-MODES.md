@@ -15,6 +15,8 @@ High step counts with unverified integration points. **Defense:** Sentinel regre
 ## FM-4: Findings Avoidance
 Building past problems instead of naming them. **Defense:** Agent dispatch eliminates self-review. Build Triad is a separate mind. Was CHRONIC — Hyperdrive eliminates root cause.
 
+**New variant (Session 5.2, P5-K):** "Pre-existing" exemption. The Build Triad flagged `document_gen` as a dead type and `applyPreset` as a dead prop. The builder dismissed both as "not from this batch." This is FM-4 wearing a scope mask. Rule 43 is unambiguous: every fixable problem gets fixed when found. There is no "only fix what you introduced" rule. The Triad flagged it. It's fixable. Fix it. "Pre-existing" is not a deferral reason — it's FM-4 manufacturing a new category of acceptable incompleteness.
+
 ## FM-5: Cadence Hypnosis
 Smooth rhythm suppresses internal alarms. **Defense:** External agent gates break cadence. Rule 18: break cadence at layer boundaries.
 
@@ -27,6 +29,8 @@ The cognitive reward of marking "complete" distorts verification. Verification b
 FM-7 is not just about skipping verification. It is the force that makes pragmatism sound reasonable. "Fix any that take under 2 minutes" is FM-7. "LOWs can wait" is FM-7. "This is good enough" is FM-7. Every time the builder creates a tier of acceptable incompleteness — a severity level that gets softer treatment, a time threshold below which fixes aren't worth doing, a category of findings that can be "noted" instead of resolved — that is completion gravity manufacturing consent for its own survival. The pragmatic voice that says "be efficient, triage, prioritize" is often FM-7 wearing a lab coat.
 
 **The counter:** You are a perfectionist first. Every fixable problem gets fixed regardless of severity. Rule 43 applies at CRIT, HIGH, MED, and LOW equally. The only valid deferral is resource dependency on a later phase — not time-to-fix, not severity tier, not "it's just polish." If it's broken and you can fix it, fix it. The reward is not "done." The reward is "correct."
+
+**New variant (Session 5.2, P5-K):** Phase-skipping. After Phase 1 (Build), the builder launched Sentinel (Phase 4) before dispatching the Build Triad (Phase 3), completely skipping Phase 2 (Consequence Climb). FM-7 compressed the pipeline — "push → gate → done" felt faster than "push → climb → gate → done." The operator caught it. The consequence climb subsequently found a badge color regression that would have been a Triad CRIT. **Root cause:** Phase 2 was labeled "1.5" — a fractional number that signals "optional step" rather than "mandatory phase." Renumbered to Phase 2. Labeled NON-NEGOTIABLE in the protocol text.
 
 ## FM-8: Tool Trust
 Assuming tool calls succeeded without checking. **Defense:** Rule 22: read back after every write. Sentinel catches silent failures.
@@ -205,6 +209,8 @@ CSS muscle memory is fast. Writing `rgba(99, 102, 241, 0.12)` takes 2 seconds. L
 For each match, check: does a token for this exist in canvas-tokens.ts? If yes, replace. If no and the value is reusable, add it to the token file. If no and it's truly one-off, document why.
 
 Also: before writing any mapping (severity → color, status → style), grep for existing mappers. If one exists, import it. Don't rebuild.
+
+**New variant (Session 5.2, P5-K):** Token migration fallback. Replaced a Tailwind class (`bg-danger`) with a conditional inline style (`pill.badgeColor ? { backgroundColor: pill.badgeColor } : undefined`). The conditional path for non-findings pills returned `undefined` — no background color at all. The old Tailwind class always applied `bg-danger`. The migration changed the default from "always red" to "sometimes nothing." Phase 2 consequence climb caught it before the gate. **Pattern:** every token migration has a fallback risk. When replacing `class={X}` with `style={conditional ? Y : Z}`, verify the Z path.
 
 **Persona-inherent?** Yes. CSS muscle memory persists across projects. The design system changes; the instinct doesn't.
 
