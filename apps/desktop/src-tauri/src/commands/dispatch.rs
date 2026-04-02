@@ -8,6 +8,7 @@ use crate::dispatch::types::{AgentRequest, AgentStatus};
 use crate::dispatch::lifecycle::AgentSummary;
 use crate::dispatch::AgentDispatcher;
 use crate::providers::registry::ProviderRegistry;
+use super::agents::lookup_agent_tier;
 
 /// Request payload from frontend to dispatch an agent.
 #[derive(Debug, Deserialize)]
@@ -37,6 +38,10 @@ pub async fn dispatch_agent(
 ) -> Result<String, String> {
     let dispatch_id = Uuid::new_v4().to_string();
 
+    // OS-ADL-006: Auto-resolve tier from agent frontmatter when not explicitly provided.
+    // This ensures high-tier agents (Pierce, Nyx, Tanaka) aren't silently downgraded to medium.
+    let resolved_tier = request.tier.or_else(|| lookup_agent_tier(&request.agent_slug));
+
     let agent_request = AgentRequest {
         dispatch_id: dispatch_id.clone(),
         agent_slug: request.agent_slug,
@@ -51,7 +56,7 @@ pub async fn dispatch_agent(
                 content: m.content,
             })
             .collect(),
-        tier: request.tier,
+        tier: resolved_tier,
         provider_id: request.provider_id,
         timeout_ms: request.timeout_ms,
     };

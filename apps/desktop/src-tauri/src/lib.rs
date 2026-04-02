@@ -1,13 +1,21 @@
+// Phase 3-4 infrastructure modules: core operations wired to Tauri commands,
+// extended public API pre-built for Phase 6+ agent runtime consumption.
+#[allow(dead_code)]
 mod build_state;
 mod commands;
+#[allow(dead_code)]
 mod compact;
 mod database;
+#[allow(dead_code)]
 mod dispatch;
 pub mod hud;
+#[allow(dead_code)]
 mod memory;
+#[allow(dead_code)]
 mod providers;
+#[allow(dead_code)]
 mod swarm;
-pub mod state;
+// state.rs removed — AppState refactored away in K-HIGH-001 fix
 
 use std::sync::Arc;
 
@@ -26,7 +34,7 @@ use tokio::sync::Mutex;
 /// Keys: provider.{id}.api_key, provider.{id}.base_url, provider.default
 fn init_providers(db: &Database) -> ProviderRegistry {
     let mut registry = ProviderRegistry::new();
-    let conn = db.conn.lock().expect("db lock for provider init");
+    let conn = db.conn.lock().unwrap_or_else(|e| e.into_inner());
 
     // Always register Claude Code CLI provider — no API key needed.
     // Uses the operator's existing Claude Max plan via the `claude` CLI.

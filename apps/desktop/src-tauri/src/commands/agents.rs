@@ -55,6 +55,29 @@ fn parse_agent_frontmatter(content: &str) -> Option<AgentFrontmatter> {
 /// The frontend cannot specify arbitrary filesystem paths.
 const AGENT_SUBDIRS: &[&str] = &[".claude/agents", "agents"];
 
+/// Look up an agent's model tier from its frontmatter file.
+/// Used by dispatch_agent to auto-resolve tier when not explicitly provided (OS-ADL-006).
+/// Returns None if the agent file doesn't exist or has no model field.
+pub fn lookup_agent_tier(agent_slug: &str) -> Option<String> {
+    let cwd = std::env::current_dir().ok()?;
+    let filename = format!("{}.md", agent_slug);
+    for subdir in AGENT_SUBDIRS {
+        let path = cwd.join(subdir).join(&filename);
+        if path.exists() {
+            // Verify path is under cwd (prevent path traversal)
+            let canonical = path.canonicalize().ok()?;
+            let canonical_cwd = cwd.canonicalize().ok()?;
+            if !canonical.starts_with(&canonical_cwd) {
+                continue;
+            }
+            let content = fs::read_to_string(&canonical).ok()?;
+            let fm = parse_agent_frontmatter(&content)?;
+            return fm.model;
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub fn list_agents() -> Result<Vec<AgentInfo>, String> {
     let cwd = std::env::current_dir().unwrap_or_default();
