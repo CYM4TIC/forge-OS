@@ -1,19 +1,25 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind @theme tokens — synchronized with canvas-tokens.ts (MERIDIAN-MED-15).
+ * Canvas components use packages/canvas-components/src/canvas-tokens.ts directly.
+ * DOM components use these Tailwind classes (e.g., bg-bg-secondary, text-accent).
+ * Keep both files in sync when changing colors.
+ */
 @theme {
   --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-elevated: #1a1a25;
-  --color-text-primary: #e8e8ed;
-  --color-text-secondary: #8b8b9e;
-  --color-text-muted: #5a5a6e;
-  --color-accent: #6366f1;
+  --color-bg-secondary: #12121a;     /* = CANVAS.bg */
+  --color-bg-elevated: #1a1a25;      /* = CANVAS.bgElevated */
+  --color-text-primary: #e8e8ed;     /* = CANVAS.text */
+  --color-text-secondary: #8b8b9e;   /* = CANVAS.label */
+  --color-text-muted: #5a5a6e;       /* = CANVAS.muted */
+  --color-accent: #6366f1;           /* = STATUS.accent */
   --color-accent-hover: #818cf8;
-  --color-border: #2a2a3a;
-  --color-border-subtle: #1f1f2e;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  --color-border: #2a2a3a;           /* = CANVAS.border */
+  --color-border-subtle: #1f1f2e;    /* = CANVAS.trackBg */
+  --color-success: #22c55e;          /* = STATUS.success */
+  --color-warning: #f59e0b;          /* = STATUS.warning */
+  --color-danger: #ef4444;           /* = STATUS.danger */
 }
 
 body {

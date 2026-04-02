@@ -1,7 +1,6 @@
 // ── PanelLayout — Window Manager ──
-// Replaced react-resizable-panels with floating window manager.
 // Every panel is independently sizable, movable, minimizable, and pop-outable.
-// Preset switching moved to TitleBar (P4-I.1).
+// Preset switching in TitleBar (P4-I.1).
 
 import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';

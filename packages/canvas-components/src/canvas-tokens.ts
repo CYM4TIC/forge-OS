@@ -3,6 +3,11 @@
  * Single source of truth. Every canvas component imports from here.
  *
  * Matches the dark void + neon energy aesthetic from DESIGN-INTELLIGENCE.md.
+ *
+ * SYNC NOTE (MERIDIAN-MED-15): These tokens are manually synchronized with
+ * apps/desktop/src/styles/globals.css @theme block. Canvas components use
+ * these tokens. DOM components use the Tailwind classes derived from the
+ * CSS custom properties. Keep both in sync when changing colors.
  */
 
 /** Core surface and text colors */

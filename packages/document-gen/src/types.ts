@@ -183,7 +183,11 @@ export interface DocumentTemplate<TData> {
   generate: (data: TData) => ContentBlock[];
 }
 
-// ─── Severity Colors ────────────────────────────────────────────────────────
+// ─── Severity Colors (PDF output) ──────────────────────────────────────────
+// Values match canvas-tokens STATUS palette where applicable:
+// P-CRIT=#EF4444 (STATUS.danger), P-HIGH=#F97316 (STATUS.critical),
+// P-MED=#EAB308 (STATUS.warning), P-LOW=#3B82F6 (unique to PDF — informational blue).
+// If canvas-tokens change, update here too. (MERIDIAN-MED-16)
 
 export const SEVERITY_COLORS: Record<FindingRow['severity'], string> = {
   'P-CRIT': '#EF4444',
