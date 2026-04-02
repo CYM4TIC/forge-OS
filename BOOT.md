@@ -8,9 +8,9 @@ project: forge_os
 architecture: tauri_v2
 phase: 5_IN_PROGRESS
 current_session: 5.3_IN_PROGRESS
-current_batch: P5-N
-batches_done: 84
-last_commit: 22f9993
+current_batch: P5-O
+batches_done: 85
+last_commit: bd46294
 session_5_1_complete: true
 session_5_2_complete: true
 phases_total: 9
@@ -30,7 +30,7 @@ phase_4_complete: true
 ---
 
 ## Current Position
-- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M DONE. Flow visualization live: `FlowOverlay.tsx` renders persona glyph particle trails along bezier curves on agent dispatch. Ghost trails, severity-colored findings return, per-flow-type configs. `bezier-paths.ts` computes arc paths between pipeline nodes with concurrent trail offset. CanvasPanel layers FlowOverlay over PipelineCanvas (z-order: pipeline → flow → gauges). Mara+Riven gate: 2 HIGHs + 5 MEDs fixed (a11y, tokens, motion, perf cap). 3 batches remain (P5-N through P5-P).
+- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M + P5-N DONE. Flow visualization: FlowOverlay with persona glyph particle trails on dispatch. Vault Browser: split-pane file tree + content preview with path containment security (canonicalize + starts_with + 2MB cap + symlink defense). 51 Tauri commands. Build Triad gate caught P-1 CRIT (path traversal) — fixed with vault_root + relative path pattern. 2 batches remain (P5-O + P5-P).
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
 - **Phase:** 4 — Runtime Upgrades + Window Manager + Pretext + Document Gen. **COMPLETE.**
 - **PHASE 4 COMPLETE.** All 20 batches done (P4-A through P4-T). 5 sessions (4.0-4.4). ContextEngine trait + TTL pruning + iterative compression + FTS5 + atomic checkout + floating window manager + dock bar + Pretext layout engine + 9 canvas components + persona glyphs + document generation engine (4 templates, dual PDF+markdown output). 3 new packages (@forge-os/layout-engine, @forge-os/canvas-components, @forge-os/document-gen). 46 Tauri commands. 9 React hooks.
@@ -123,7 +123,7 @@ phase_4_complete: true
 | P5-K | Session 5.2 Integration | 5.2 | ✅ DONE |
 | P5-L | Dispatch Event Bus + Trails | 5.3 | ✅ DONE |
 | P5-M | Flow Overlay Particles | 5.3 | ✅ DONE |
-| P5-N | Vault Browser Panel | 5.3 | 🔲 |
+| P5-N | Vault Browser Panel | 5.3 | ✅ DONE |
 | P5-O | Graph Viewer Panel | 5.3 | 🔲 |
 | P5-P | Phase 5 Integration + Ambient | 5.3 | 🔲 |
 
@@ -141,6 +141,14 @@ See `BUILD-LEARNINGS.md` (repo root) for OS-specific gotchas and patterns.
 - Segment files in `segments/` are from OLD block-based plan — superseded by BATCH-MANIFESTS.md
 
 ## Session Log
+
+**2026-04-02 — P5-N: Vault Browser Panel**
+- **SCOPE:** File tree navigation + content preview for vault browsing. Rust backend + TypeScript bridge + React panel.
+- **FILES (5):** vault.rs (NEW — 95 lines, 2 commands), mod.rs (registered vault module), lib.rs (2 new command registrations → 51 total), tauri.ts (VaultTreeNode type + listVaultTree + readVaultFile bridge), VaultBrowserPanel.tsx (REPLACED placeholder — ~300 lines).
+- **SECURITY:** P-1 CRIT path traversal fixed: `read_vault_file` now takes `vault_root` + relative `file_path`, canonicalizes both, verifies containment via `starts_with`. P-2 symlink defense: `read_dir_recursive` canonicalizes each entry, skips escapes. P-3: 2MB file size cap.
+- **PANEL:** Split layout — DOM tree pane (collapsible, file icons, `type="search"` filter, `role="tree"` + `role="group"` ARIA, keyboard nav, focus ring) + text preview pane (monospace, loading/error states). ResizeObserver, NARROW_THRESHOLD breakpoint. All styles via canvas-tokens.
+- **GATE (Build Triad):** 13 findings (1 CRIT, 3 HIGH, 5 MED, 4 LOW). CRIT + 2 HIGHs + 5 MEDs fixed. M-1 HIGH (roving tabIndex) deferred to P5-P integration.
+- **COMMIT:** `bd46294`.
 
 **2026-04-02 — P5-M: Flow Overlay — Particle Trails**
 - **SCOPE:** Animated persona glyph trails on agent dispatch. Bezier path computation. CanvasPanel integration.
