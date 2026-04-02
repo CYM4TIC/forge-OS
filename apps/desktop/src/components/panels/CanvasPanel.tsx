@@ -10,6 +10,7 @@ import { PipelineCanvas } from './hud/PipelineCanvas';
 import { BatchProgressGauge } from './hud/BatchProgressGauge';
 import { TokenGaugeDisplay } from './hud/TokenGaugeDisplay';
 import { TokenGauge } from '@forge-os/canvas-components';
+import { ContextMeterViz } from './hud/ContextMeterViz';
 
 interface CanvasPanelProps {
   bootPath?: string;
@@ -106,6 +107,18 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
               isCompacting={isCompacting}
               width={Math.max(Math.min(gaugesHeight - 16, (dimensions.width - 32) / (isNarrow ? 2 : 4)), 32)}
               height={Math.max(gaugesHeight - 16, 32)}
+            />
+          </div>
+
+          {/* Context density — text density visualization */}
+          <div className="flex-1 flex items-center justify-center min-w-0">
+            <ContextMeterViz
+              width={Math.max(Math.min(gaugesHeight - 16, (dimensions.width - 32) / (isNarrow ? 2 : 4)), 60)}
+              height={Math.max(gaugesHeight - 16, 32)}
+              value={contextStatus?.usage_percent != null ? contextStatus.usage_percent / 100 : 0}
+              isCompacting={isCompacting}
+              tokensUsed={contextStatus?.current_tokens}
+              tokensTotal={contextStatus?.context_window_size}
             />
           </div>
 
