@@ -80,6 +80,20 @@ export const TINT = {
   neutral: 'rgba(90, 90, 110, 0.15)',
 } as const;
 
+/** Pipeline stage colors (Hyperdrive build loop) */
+export const PIPELINE = {
+  scout: STATUS.accent,    // indigo — Nyx dispatches
+  build: STATUS.success,   // green — active construction
+  triad: '#ec4899',        // pink — review (unique, not in STATUS)
+  sentinel: STATUS.warning, // amber — regression watch
+  inactive: CANVAS.border,  // dim track for inactive connections
+} as const;
+
+/** Get pipeline stage color by stage key */
+export function getPipelineColor(key: string): string {
+  return (PIPELINE as Record<string, string>)[key] ?? PIPELINE.scout;
+}
+
 /** Dock pill colors (derived from base tokens) */
 export const DOCK = {
   activeBg: 'rgba(99, 102, 241, 0.2)',

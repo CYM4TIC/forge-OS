@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import {
   PersonaGlyph, NodeCard, StatusBadge,
-  CANVAS, STATUS, DOCK, RADIUS, TIMING,
+  CANVAS, STATUS, DOCK, RADIUS, TIMING, GLOW,
 } from '@forge-os/canvas-components';
 import type { GlyphState, BadgeStatus, NodeStatus } from '@forge-os/canvas-components';
 import { PERSONA_NAMES } from '@forge-os/shared';
@@ -137,9 +137,9 @@ const AgentCard = memo(function AgentCard({ agent, isExpanded, onToggle, cardWid
           : CANVAS.border;
 
   const boxShadow = isActive
-    ? `0 0 8px rgba(99, 102, 241, 0.3)`
+    ? `0 0 8px ${GLOW.accent}`
     : isError
-      ? `0 0 6px rgba(239, 68, 68, 0.2)`
+      ? `0 0 6px ${GLOW.dangerSubtle}`
       : 'none';
 
   return (
@@ -453,6 +453,11 @@ export default function AgentBoardPanel() {
               cursor: 'pointer',
               fontSize: 13,
               padding: '2px 4px',
+              minWidth: 32,
+              minHeight: 32,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               borderRadius: RADIUS.pill,
               lineHeight: 1,
             }}

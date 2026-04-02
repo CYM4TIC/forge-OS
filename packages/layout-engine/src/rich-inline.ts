@@ -10,12 +10,9 @@
  */
 
 import {
-  prepare as pretextPrepare,
-  layout as pretextLayout,
   prepareWithSegments,
   layoutWithLines,
 } from '@chenglou/pretext';
-import type { PreparedText } from '@chenglou/pretext';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -106,11 +103,8 @@ export function layoutRichInline(
       const cf = chipFont ?? font;
       const padX = el.paddingX ?? 8;
       // Measure the chip label text
-      const prepared = pretextPrepare(el.label, cf);
-      const result = pretextLayout(prepared, maxWidth, lineHeight);
-      // Chip width = text width + padding. For single-line chips, approximate
-      // text width from the fact that it's 1 line at maxWidth.
-      // More precise: use canvas measureText via prepare
+      // Chip width = text width + padding. Measure via layoutWithLines
+      // for precise per-line width data.
       const labelPrepared = prepareWithSegments(el.label, cf);
       const labelLayout = layoutWithLines(labelPrepared, maxWidth, lineHeight);
       const textWidth = labelLayout.lines.length > 0 ? labelLayout.lines[0].width : 0;
@@ -185,10 +179,7 @@ export function layoutRichInline(
         const substr = range.element.content.slice(relStart, relEnd);
         if (substr.length === 0) continue;
 
-        // Measure substring width
-        const subPrepared = pretextPrepare(substr, font);
-        const subLayout = pretextLayout(subPrepared, maxWidth, lineHeight);
-        // Approximate width from single-line assumption
+        // Measure substring width via layoutWithLines for line-width data
         const subWithLines = layoutWithLines(prepareWithSegments(substr, font), maxWidth, lineHeight);
         const subWidth = subWithLines.lines.length > 0 ? subWithLines.lines[0].width : 0;
 
