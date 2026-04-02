@@ -17,8 +17,8 @@ import {
   PIPELINE,
   getPipelineColor,
 } from '@forge-os/canvas-components';
-import type { NodeStatus } from '@forge-os/canvas-components';
-import type { PersonaSlug, GlyphState } from '@forge-os/canvas-components';
+import type { NodeStatus, GlyphState } from '@forge-os/canvas-components';
+import type { PersonaSlug } from '@forge-os/shared';
 import type { PipelineStage, StageStatus } from '../../../lib/tauri';
 import { computePipelineLayout } from './pipeline-layout';
 

@@ -4,8 +4,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { PersonaGlyph, CANVAS, STATUS, DOCK, RADIUS } from '@forge-os/canvas-components';
-import type { PersonaSlug } from '@forge-os/shared';
-import { PERSONA_NAMES, PERSONA_LABELS, PERSONA_SHORT } from '@forge-os/shared';
+import { PERSONA_LABELS, PERSONA_SHORT, isPersonaSlug } from '@forge-os/shared';
 import {
   isTauriRuntime,
   createPanelWindow,
@@ -24,11 +23,6 @@ import {
 } from './hud/finding-card-renderer';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-
-const PERSONA_SLUG_SET: ReadonlySet<string> = new Set(Object.keys(PERSONA_NAMES));
-function isPersonaSlug(slug: string): slug is PersonaSlug {
-  return PERSONA_SLUG_SET.has(slug);
-}
 
 const SEVERITY_OPTIONS = ['all', 'critical', 'high', 'medium', 'low', 'info'] as const;
 // Backend currently supports 'open' and 'resolved'. Add 'acknowledged'/'deferred' when backend supports them.

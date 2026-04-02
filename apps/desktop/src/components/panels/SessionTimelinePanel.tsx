@@ -5,8 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { CANVAS, STATUS, TINT, RADIUS } from '@forge-os/canvas-components';
-import type { PersonaSlug } from '@forge-os/shared';
-import { PERSONA_NAMES } from '@forge-os/shared';
+import { isPersonaSlug } from '@forge-os/shared';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 import { getSeverityVisual } from './hud/finding-card-renderer';
 import { useSessionTimeline, type TimelineEvent, type TimelineEventKind } from '../../hooks/useSessionTimeline';
@@ -22,11 +21,6 @@ const PADDING_X = 12;
 const PADDING_Y = 8;
 const FONT_FAMILY = 'Inter, system-ui, sans-serif';
 const FONT = `12px ${FONT_FAMILY}`;
-
-const PERSONA_SLUG_SET: ReadonlySet<string> = new Set(Object.keys(PERSONA_NAMES));
-function isPersonaSlug(slug: string): slug is PersonaSlug {
-  return PERSONA_SLUG_SET.has(slug);
-}
 
 // ─── Visually Hidden Style (MARA-CRIT-1: screen reader access) ─────────────
 

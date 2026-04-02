@@ -7,8 +7,7 @@ import {
   CANVAS, STATUS, DOCK, RADIUS, TIMING, GLOW,
 } from '@forge-os/canvas-components';
 import type { GlyphState, BadgeStatus, NodeStatus } from '@forge-os/canvas-components';
-import { PERSONA_NAMES } from '@forge-os/shared';
-import type { PersonaSlug } from '@forge-os/shared';
+import { isPersonaSlug } from '@forge-os/shared';
 import { useAgentBoard, type BoardAgent, type BoardAgentStatus } from '../../hooks/useAgentBoard';
 import { isTauriRuntime, createPanelWindow } from '../../lib/tauri';
 
@@ -45,13 +44,6 @@ const STATUS_LABELS: Record<BoardAgentStatus, string> = {
   complete: 'Complete',
   error: 'Error',
 };
-
-// Derive persona slug set from canonical source (@forge-os/shared)
-const PERSONA_SLUG_SET: ReadonlySet<string> = new Set(Object.keys(PERSONA_NAMES));
-
-function isPersonaSlug(slug: string): slug is PersonaSlug {
-  return PERSONA_SLUG_SET.has(slug);
-}
 
 // ─── Static Styles ──────────────────────────────────────────────────────────
 

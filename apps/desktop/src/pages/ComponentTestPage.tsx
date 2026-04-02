@@ -16,7 +16,8 @@ import {
   DockPill,
   PersonaGlyph,
 } from '@forge-os/canvas-components';
-import type { PersonaSlug, GlyphState } from '@forge-os/canvas-components';
+import type { GlyphState } from '@forge-os/canvas-components';
+import type { PersonaSlug } from '@forge-os/shared';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
