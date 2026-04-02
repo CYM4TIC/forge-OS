@@ -8,7 +8,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
-import { CANVAS, STATUS } from './canvas-tokens.js';
+import { CANVAS, STATUS, HIGHLIGHT } from './canvas-tokens.js';
 
 export interface BezierPath {
   /** Start point */
@@ -129,7 +129,7 @@ export function FlowParticle({
     // Bright center
     ctx.beginPath();
     ctx.arc(head.x, head.y, radius * 0.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = HIGHLIGHT.medium;
     ctx.globalAlpha = 0.7;
     ctx.fill();
 
