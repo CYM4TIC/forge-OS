@@ -12,8 +12,7 @@ export type PanelType =
   | 'vault_browser'
   | 'graph_viewer'
   | 'session_timeline'
-  | 'context_meter'
-  | 'document_gen';
+  | 'context_meter';
 
 export type PanelState = 'docked' | 'floating' | 'minimized' | 'popped_out';
 

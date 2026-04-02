@@ -31,7 +31,6 @@ interface PanelLayoutProps {
   focusPanel: (id: string) => void;
   handleDragStart: (panelId: string, e: MouseEvent) => void;
   handleResizeStart: (panelId: string, handle: ResizeHandle, e: MouseEvent) => void;
-  applyPreset: (presetId: string) => void;
   setFrameSize: (width: number, height: number) => void;
 }
 

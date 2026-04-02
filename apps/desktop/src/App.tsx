@@ -24,7 +24,6 @@ function App() {
           focusPanel={wm.focusPanel}
           handleDragStart={wm.handleDragStart}
           handleResizeStart={wm.handleResizeStart}
-          applyPreset={wm.applyPreset}
           setFrameSize={wm.setFrameSize}
         />
       </div>

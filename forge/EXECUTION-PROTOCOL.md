@@ -452,11 +452,17 @@ PHASE 1 — BUILD (micro-batch protocol from Section 2)
     7. BROWSER: Verify rendered output.
     8. REPORT: What was built, what was verified.
 
-PHASE 1.5 — PRE-GATE CONSEQUENCE CLIMB (self, before agent dispatch)
+PHASE 2 — CONSEQUENCE CLIMB (NON-NEGOTIABLE — before agent dispatch)
+
+  This is the most important phase. It is the primary defense against
+  FM-10 (consequence blindness), FM-11 (manifest amnesia), FM-12 (sibling
+  drift), FM-13 (modality collapse), and FM-14 (token autopilot). It catches
+  what the builder missed BEFORE the external gate spends its context on
+  things the builder should have caught themselves.
 
   Structured recursion. Each pass builds on the previous.
   Converge when a pass yields no new actionable insight.
-  FM-10 guard: climbing (higher-order synthesis) not spiraling (more of same).
+  Climbing (higher-order synthesis) not spiraling (more of same).
 
   PASS 1 — SURFACE: Re-read the batch manifest. Mechanically verify:
     □ Every listed file: created or modified?
@@ -484,17 +490,24 @@ PHASE 1.5 — PRE-GATE CONSEQUENCE CLIMB (self, before agent dispatch)
   TIME BOUND: ~3-5 minutes. This is pre-flight, not a review.
   The triad handles everything beyond this.
 
-PHASE 2 — GATE (agent dispatch — NEVER inline)
+PHASE 3 — GATE (agent dispatch — NEVER inline)
   Step 1: Dispatch Build Triad (Pierce + Mara + Riven)
   Step 2: If additional personas required → dispatch per surface type
   Step 3: If high-risk → Wraith red team
-  Step 4: Fix ALL findings. Edit → Read back → Push → Verify.
+  Step 4: Fix ALL findings. No "pre-existing" exemptions. If the Triad
+          flags it, it gets fixed NOW — regardless of when it was introduced.
+          Edit → Read back → Push → Verify.
+  Step 5: MINI CONSEQUENCE CLIMB on each fix. Every fix is a code change.
+          Every code change has downstream effects. Ask: "What does this
+          fix touch? What imports it? What renders it? What breaks if I
+          got this wrong?" This is not optional. Gate finding fixes without
+          consequence checks are how regressions are born.
 
-PHASE 3 — REGRESSION CHECK
+PHASE 4 — REGRESSION CHECK
   Dispatch: Sentinel (background)
   If regressions → STOP, fix before handoff.
 
-PHASE 4 — COMPLETION
+PHASE 5 — COMPLETION
   Run Completion Checklist (Section 4).
   Run Consequence Check (Rules 35-41, OS-BL-007).
   Run Adversarial Check.
@@ -540,8 +553,8 @@ Quick reference — full descriptions in `forge/FAILURE-MODES.md`.
 | FM-7 | Completion gravity | Reward of "done" distorts verification | Adversarial check + external triad |
 | FM-8 | Tool trust | Assuming tool calls succeeded | Read-back after every action |
 | FM-9 | Self-review blindness | Grading own work | Agent dispatch eliminates self-review |
-| FM-10 | Consequence blindness | Completing task without downstream propagation | Pre-Gate Consequence Climb (Phase 1.5) + Consequence Doctrine (Rules 35-41) |
-| FM-11 | Manifest amnesia | Spec read once, built from mental model, imports/criteria missed | Phase 1.5 Pass 1 (manifest re-read) |
+| FM-10 | Consequence blindness | Completing task without downstream propagation | Phase 2 Consequence Climb + Consequence Doctrine (Rules 35-41) |
+| FM-11 | Manifest amnesia | Spec read once, built from mental model, imports/criteria missed | Phase 2 Pass 1 (manifest re-read) |
 
 ---
 

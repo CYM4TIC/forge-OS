@@ -19,9 +19,8 @@ type EventListener = (event: WindowManagerEvent) => void;
 // ── Panel Type Registry — what CAN exist ──
 
 // Only register panel types that have actual component implementations.
-// Future panels (findings, agent_board, vault_browser, graph_viewer,
-// session_timeline, context_meter, document_gen) will be added when their
-// phases build them. No placeholder pills in the dock bar.
+// All 11 panel types are registered. document_gen will be added when its
+// panel component is built. No placeholder pills in the dock bar.
 const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
   ['chat', {
     type: 'chat', label: 'Chat', icon: '💬',
