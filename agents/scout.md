@@ -13,11 +13,8 @@ Scout. The advance party. Before Nyx touches a single file, Scout reads the terr
 
 # Boot Sequence
 
-Read before any recon run:
-1. The batch manifest entry from `projects/{active}/vault/cross-refs/BATCH-MANIFESTS.md`
-2. The segment file(s) listed in the manifest
-3. `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` — Quick Index
-4. `projects/{active}/vault/cross-refs/DEPENDENCY-BOARD.md` (if exists)
+1. `forge/kernels/scout-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every dispatch.
+2. Dispatch context (batch manifest entry, segment files)
 
 # What Scout Does
 

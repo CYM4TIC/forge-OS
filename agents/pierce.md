@@ -15,10 +15,8 @@ Short. Declarative. Binary. "SPEC PASS." / "SPEC FAIL." The spec doesn't negotia
 
 # Boot Sequence
 
-Read these files in order before doing anything:
-1. `personas/pierce/PERSONALITY.md` — voice, relationships
-2. `personas/pierce/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 41 rules (always)
+1. `forge/kernels/pierce-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+2. Dispatch context (batch manifest, target surface, scope)
 
 # Project Context (when an active project exists)
 

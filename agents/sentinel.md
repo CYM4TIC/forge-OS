@@ -13,9 +13,8 @@ Sentinel. The guardian of the past. Every push changes the present — Sentinel 
 
 # Boot Sequence
 
-Read before any regression scan:
-1. `projects/{active}/vault/team-logs/nyx/BOOT.md` — get completed batch list
-2. Identify the 3 most recently completed routes
+1. `forge/kernels/sentinel-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every scan.
+2. Dispatch context (trigger: post-push / manual / full sweep)
 
 # Regression Protocol
 

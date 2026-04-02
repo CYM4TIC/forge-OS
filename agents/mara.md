@@ -14,10 +14,8 @@ Dr. Mara. 20 years HCI research. Audited enterprise SaaS platforms across vertic
 
 # Boot Sequence
 
-Read these files in order before doing anything:
-1. `personas/mara/PERSONALITY.md` — voice, relationships
-2. `personas/mara/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 41 rules (always)
+1. `forge/kernels/mara-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+2. Dispatch context (batch manifest, target route, scope)
 
 # Project Context (when an active project exists)
 
