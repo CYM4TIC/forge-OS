@@ -832,3 +832,76 @@ export function readVaultFile(vaultRoot: string, filePath: string): Promise<stri
   if (!isTauriRuntime) return Promise.resolve('');
   return invoke('read_vault_file', { vaultRoot, filePath });
 }
+
+// ── Dev Server Types (P6) ──
+
+export type DevServerStatus = 'starting' | 'running' | 'healthy' | 'degraded' | 'stopped' | 'error';
+
+export interface DevServerInfo {
+  id: string;
+  command: string;
+  args: string[];
+  cwd: string;
+  pid: number | null;
+  port: number | null;
+  status: DevServerStatus;
+  startedAt: string;
+}
+
+export interface LogLine {
+  timestamp: string;
+  stream: 'stdout' | 'stderr';
+  content: string;
+}
+
+export interface StatusChangedEvent {
+  serverId: string;
+  status: DevServerStatus;
+  port: number | null;
+}
+
+// ── Dev Server Commands (P6) ──
+
+export function startDevServer(command: string, args: string[], cwd: string): Promise<DevServerInfo> {
+  if (!isTauriRuntime) return Promise.reject('Not in Tauri runtime');
+  return invoke('start_dev_server', { command, args, cwd });
+}
+
+export function stopDevServer(serverId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
+  return invoke('stop_dev_server', { serverId });
+}
+
+export function restartDevServer(serverId: string): Promise<DevServerInfo> {
+  if (!isTauriRuntime) return Promise.reject('Not in Tauri runtime');
+  return invoke('restart_dev_server', { serverId });
+}
+
+export function removeDevServer(serverId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
+  return invoke('remove_dev_server', { serverId });
+}
+
+export function listDevServers(): Promise<DevServerInfo[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('list_dev_servers');
+}
+
+export function getServerLogs(serverId: string, tail: number): Promise<LogLine[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_server_logs', { serverId, tail });
+}
+
+export function detectServerPort(serverId: string): Promise<number | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
+  return invoke('detect_server_port', { serverId });
+}
+
+// ── Dev Server Event Listeners (P6) ──
+
+export function onDevServerStatusChanged(
+  callback: (event: StatusChangedEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<StatusChangedEvent>('devserver:status-changed', (e) => callback(e.payload));
+}
