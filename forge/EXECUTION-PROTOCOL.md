@@ -326,7 +326,15 @@ ADVERSARIAL CHECK:
 □ "Am I reporting 'done' because it IS done, or because I WANT it to be done?"
 □ "Did every agent return? Did I read every result?"
 
-ONLY AFTER ALL BOXES ARE CHECKED: Write the handoff.
+ONLY AFTER ALL BOXES ARE CHECKED:
+
+BOOT.MD HANDOFF — 3 WRITES, ALL MANDATORY:
+□ 1. YAML header: advance current_batch, increment batches_done, update last_commit
+□ 2. Current Position paragraph: append what shipped + what next batch inherits
+□ 3. Batch table: mark batch ✅ DONE
+
+All three. Every batch. Not just the header. Read back after writing.
+Then: context status report — estimated usage, can continue or fresh session needed.
 ```
 
 ---
@@ -512,7 +520,11 @@ PHASE 5 — COMPLETION
   Run Consequence Check (Rules 35-41, OS-BL-007).
   Run Adversarial Check.
   Push ALL changes.
-  Write BOOT.md handoff with evidence.
+  BOOT.md handoff (3 writes, all mandatory):
+    1. YAML header — advance current_batch, increment batches_done, update last_commit
+    2. Current Position — append what shipped + what next batch inherits
+    3. Batch table — mark batch ✅ DONE
+  Read BOOT.md back to confirm all 3 applied.
   Report context window status.
 ```
 
