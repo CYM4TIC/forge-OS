@@ -29,7 +29,7 @@ Forge OS was originally planned as a Claude Code extension system (methodology d
 
 **App name:** Forge
 **Repo:** CYM4TIC/forge-OS (existing Phase 1 repo, Tauri added around it)
-**Local workspace:** `forge-dms-brain/forge-os/` (inside DMS vault — single working directory for specs + code)
+**Local workspace:** This repo root. **GitHub:** CYM4TIC/forge-OS
 **Engine policy:** Engine-agnostic. Provider abstraction supports Claude, OpenAI-compatible, CLI-accessible models, and local models (Ollama). Agents request capability tiers (high/medium/fast), providers map to their best models. Claude is the default but not a dependency.
 
 **Existing Phase 1 work (already on GitHub):** CLAUDE.md (17.9KB), README.md, forge-os.config.json, .gitignore, .claude/settings.json (4 hooks), 5 commands (/init, /link, /status, /start, /introspect), 9 methodology docs in forge/ (METHODOLOGY, BUILD-LOOP, EXECUTION-CONTRACTS, ACTIVATION-TIERS, FAILURE-MODES, GATE-PROTOCOL, CONTEXT-MANAGEMENT, SPEC-FIRST-WORKFLOW, INTROSPECTION-PROTOCOL), docs/ARCHITECTURE-PLAN.md.

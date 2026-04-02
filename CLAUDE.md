@@ -397,7 +397,7 @@ Full catalog: `forge/ENTITY-CATALOG.md`
 **Architecture:** Tauri v2 desktop app (Rust backend + React frontend).
 **Phase:** 2 COMPLETE — Content Layer. All 105 entities genericized + protocols + references.
 **Phase 3 next:** Agent Runtime — KAIROS memory, Swarm dispatch, SQLite state, auto-compact.
-**Build state tracked at:** `forge-dms-brain/forge-os/BOOT.md` (DMS vault hosts OS state until OS is self-managing).
-**Batch manifests:** `forge-dms-brain/forge-os/BATCH-MANIFESTS.md`
+**Build state tracked at:** `BOOT.md` (repo root)
+**Batch manifests:** `BATCH-MANIFESTS.md` (repo root)
 **Full build plan:** `docs/TAURI-BUILD-PLAN.md` (9 phases, 29 sessions)
 **Phase 3 architecture:** `docs/PHASE-3-ARCHITECTURE.md` (synthesized from Claude Code source + ecosystem research)
