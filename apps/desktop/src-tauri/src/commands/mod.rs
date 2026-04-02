@@ -14,3 +14,4 @@ pub mod windows;
 pub mod hud;
 pub mod vault;
 pub mod devserver;
+pub mod devserver_patterns;

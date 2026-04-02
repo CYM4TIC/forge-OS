@@ -282,6 +282,7 @@ pub fn run() {
             commands::devserver::remove_dev_server,
             commands::devserver::list_dev_servers,
             commands::devserver::get_server_logs,
+            commands::devserver::detect_server_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
