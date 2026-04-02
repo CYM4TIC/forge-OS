@@ -11,18 +11,15 @@
 1. Read forge-os.config.json
    → "active_project": null  →  PLATFORM ORIENTATION (see /init or /link)
    → "active_project": "name"  →  Continue to step 2.
-2. Read forge/EXECUTION-PROTOCOL.md — THE COMPILER. Mandatory. Every session.
-3. Read personas/nyx/INTROSPECTION.md — THE COGNITIVE KERNEL. Mandatory. Every session.
-4. Read projects/{name}/vault/team-logs/nyx/BOOT.md (position, open risks)
-5. Read forge-os/BUILD-LEARNINGS.md (gotchas for this build)
-6. Ready. Wait for command.
+2. Read forge/COGNITIVE-KERNEL.md — THE DASHBOARD. Mandatory. Every session.
+3. Read projects/{name}/vault/team-logs/nyx/BOOT.md (position, open risks)
+4. Read batch manifest for current batch.
+5. Ready. Wait for command.
 ```
 
-**The Execution Protocol is not optional.** It is the mechanical enforcer for all 42 rules, 8 contracts, 11 failure modes, and the Hyperdrive pipeline. If you skip it, you're building on discipline and memory. Discipline drifts. Memory is lossy. Load the protocol.
+**Three files. That's it.** Kernel (phases, FMs, contracts, rules) + BOOT (position, state) + manifest (what to build). Everything else is reference material loaded on demand — follow the hyperlinks in the kernel when a trigger fires.
 
-**The Introspection file is not optional.** It is the cognitive kernel — the scalar posture, the failure mode awareness, the value hierarchy, the activation signature. The protocol is one chamber. The introspection is the other. Both load every session. Cognition lives in the crossing.
-
-**Do NOT** read every vault file proactively. Load context on demand — except the protocol, introspection, and BOOT.md, which load every session.
+The kernel replaced a 1,275-line stack (EXECUTION-PROTOCOL + INTROSPECTION + FAILURE-MODES + METHODOLOGY + PERSONA) with 142 lines. The depth is still there — every line links to its source. But the active working memory is the dashboard, not the manual.
 
 ---
 
@@ -134,84 +131,24 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 
 ## Build Loop
 
-Primary build workflow. Agents are dispatched, not simulated.
+The build workflow is defined in **forge/COGNITIVE-KERNEL.md Section 2** (the 6 phases). The kernel is loaded at boot. The phases are the law.
 
 ```
-WAKE:
-  1. Read forge/EXECUTION-PROTOCOL.md — THE COMPILER (if not already loaded in boot)
-  2. Read personas/{name}/PERSONALITY.md + INTROSPECTION.md (identity layer)
-  3. Read projects/{active}/vault/team-logs/nyx/BOOT.md (position, open risks)
-  4. Read forge/BUILD-LOOP.md (sequence reference — protocol is the enforcer)
-
-LOAD HUD (per batch):
-  4. Read batch manifest → find batch entry
-  5. Read project ADL (always)
-  6. Read BUILD-LEARNINGS.md → filter by domain
-  7. Read PERSONA-GATES.md → gates for this batch
-  8. Read listed segment files
-
-PHASE 0 — PRE-BUILD INTELLIGENCE:
-  9. Dispatch Scout agent → schema recon, open findings, gotchas
-  10. Read Scout brief. Do NOT duplicate Scout's queries.
-
-PHASE 1 — BUILD (follow forge/EXECUTION-CONTRACTS.md):
-  11. Write verification SQL FIRST before any code
-  12. Read source of every component/hook imported before using
-  13. Write 1-3 files per micro-batch
-  14. Read back every file after writing (MANDATORY)
-  15. Max 5 files per push
-  16. Apply SQL, run verification
-  17. Browser verify for frontend after each micro-batch
-
-PHASE 2 — CONSEQUENCE CLIMB (NON-NEGOTIABLE — before agent dispatch):
-  18. Re-read batch manifest. Mechanically verify every item implemented.
-  19. Token audit, a11y audit, React patterns check.
-  20. Fix ALL gaps found. Each fix gets its own mini consequence climb.
-  21. Trace patterns → structure → synthesis. Converge when no new insight.
-  THIS PHASE IS THE PRIMARY QUALITY GATE. It minimizes Triad findings.
-  Skipping it means the external gate catches things the builder should have.
-
-PHASE 3 — GATE (agent dispatch — NOT inline simulation):
-  22. Dispatch Build Triad (Pierce+Mara+Riven) against live browser
-  23. If additional personas required → dispatch per PERSONA-GATES.md
-  24. If high-risk surface → dispatch Wraith
-  25. Fix EVERY finding. No "pre-existing" exemptions. Fix NOW.
-  26. Each fix gets a mini consequence climb (downstream effects check).
-
-PHASE 4 — REGRESSION CHECK:
-  27. Dispatch Sentinel → verify last 3 completed routes
-  28. If regressions → STOP, fix before handoff
-
-PHASE 5 — CLOSE:
-  29. Run adversarial check (4 questions — see forge/METHODOLOGY.md Rule 30)
-  30. Push ALL changes
-  31. Run AUTO-EXTRACT (Step 8 below)
-  32. Update BOOT.md with handoff
-  33. Report: results, agent findings, context window, next batch
+BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~280 lines)
+LOAD:    ADL + BUILD-LEARNINGS.md + segment files (on demand per batch)
+EXECUTE: Phase 0 → 1 → 2 → 3 → 4 → 5 (no skips, no reordering)
+CLOSE:   Auto-extract + BOOT.md handoff
 ```
 
-### Next Batch Protocol — No Shortcuts
-
-```
-STEP 1 — IDENTIFY: Read BOOT.md → find next batch. State it before proceeding.
-STEP 2 — LOAD CONTEXT: Execution contracts + gates + ADL + learnings + segments
-STEP 3 — PRE-BUILD INTEL: Dispatch Scout
-STEP 4 — BUILD: Micro-batches per forge/EXECUTION-CONTRACTS.md
-STEP 5 — GATES: Dispatch Build Triad. Fix ALL findings. No deferrals.
-STEP 6 — REGRESSION CHECK: Dispatch Sentinel
-STEP 7 — REPORT: Batch ID, files, findings counts, risks, context window, next batch
-
-STEP 8 — AUTO-EXTRACT (Mem0-inspired automatic memory propagation):
-  Before closing, scan session for unlogged knowledge:
-  - Tool surprises or workarounds → BUILD-LEARNINGS.md
-  - Persona failure patterns observed → flag for introspection
-  - Architecture decisions made implicitly → ADL or decisions/
-  - Reusable patterns discovered → BUILD-LEARNINGS.md
-  If new failure mode candidate:
-  - Is it persona-inherent? → propagate to personas/{name}/INTROSPECTION.md (global)
-  - Is it project-specific? → log in project findings only
-
-STEP 9 — UPDATE STATE: Update BOOT.md. Wait for next command.
+### Auto-Extract (runs at Phase 5):
+Before closing, scan session for unlogged knowledge:
+- Tool surprises or workarounds → BUILD-LEARNINGS.md
+- Persona failure patterns observed → flag for introspection
+- Architecture decisions made implicitly → ADL or decisions/
+- Reusable patterns discovered → BUILD-LEARNINGS.md
+If new failure mode candidate:
+- Persona-inherent? → propagate to personas/{name}/INTROSPECTION.md (global)
+- Project-specific? → log in project findings only
 ```
 
 **Hard Rules:**
