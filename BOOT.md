@@ -8,9 +8,9 @@ project: forge_os
 architecture: tauri_v2
 phase: 5_IN_PROGRESS
 current_session: 5.3_IN_PROGRESS
-current_batch: P5-L
-batches_done: 82
-last_commit: 21be9de
+current_batch: P5-M
+batches_done: 83
+last_commit: 1bb5cfe
 session_5_1_complete: true
 session_5_2_complete: true
 phases_total: 9
@@ -121,7 +121,7 @@ phase_4_complete: true
 | P5-I | Findings Feed Virtualized | 5.2 | ✅ DONE |
 | P5-J | Session Timeline Text River | 5.2 | ✅ DONE |
 | P5-K | Session 5.2 Integration | 5.2 | ✅ DONE |
-| P5-L | Dispatch Event Bus + Trails | 5.3 | 🔲 |
+| P5-L | Dispatch Event Bus + Trails | 5.3 | ✅ DONE |
 | P5-M | Flow Overlay Particles | 5.3 | 🔲 |
 | P5-N | Vault Browser Panel | 5.3 | 🔲 |
 | P5-O | Graph Viewer Panel | 5.3 | 🔲 |
@@ -141,6 +141,15 @@ See `BUILD-LEARNINGS.md` (repo root) for OS-specific gotchas and patterns.
 - Segment files in `segments/` are from OLD block-based plan — superseded by BATCH-MANIFESTS.md
 
 ## Session Log
+
+**2026-04-02 — P5-L: Dispatch Event Bus + Trail Types**
+- **SCOPE:** Backend dispatch event emission + frontend particle trail type system for flow visualization.
+- **FILES (4):** dispatch_events.rs (NEW — 67 lines, 5 pub functions), mod.rs (added dispatch_events module), dispatch.rs (hooked emission post-dispatch), trail-types.ts (NEW — 108 lines, BezierPath + ParticleTrail + TrailConfig + TrailState).
+- **DISPATCH HOOK:** `emit_agent_dispatched` fires AFTER successful dispatch (K-LOW-3 fix: no false-positive trails on concurrency rejection). Convenience functions for triad, findings return, context transfer pre-built.
+- **TRAIL TYPES:** `ParticleTrail` uses `PersonaSlug` for glyph mapping. `DEFAULT_TRAIL_CONFIG` + `FLOW_TRAIL_CONFIGS` per-flow-type overrides. `TrailState` manages active + decaying trails.
+- **BRIDGE:** `DispatchFlowEvent`, `FlowType`, `onDispatchFlow` pre-existed from P5-A. No tauri.ts changes.
+- **GATE (Kehinde):** 8 findings (0 CRIT, 0 HIGH, 2 MED, 3 LOW, 3 INFO). K-LOW-3 (emission ordering) fixed. K-LOW-5 (dead code) annotated. MEDs deferred to P5-M scope (PersonaSlug validation, serde tag tech debt).
+- **COMMIT:** `0648afd`.
 
 **2026-04-02 — P5-K: Session 5.2 Exit Batch (Integration + Polish)**
 - **SCOPE:** Wire Agent Board, Findings Feed, Session Timeline into dock bar. Presets. Pipeline click handlers. Session 5.2 exit gate.
