@@ -32,7 +32,7 @@ export default function MessageList({ messages, isStreaming }: MessageListProps)
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto px-4 py-3 scrollbar-thin"
+      className="flex-1 overflow-y-auto px-4 py-3"
     >
       {messages.map((msg) => (
         <MessageBubble key={msg.id} message={msg} />

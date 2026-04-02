@@ -74,7 +74,7 @@ export default function SessionSidebar({
                 <p className="text-text-primary text-xs truncate">
                   {session.title}
                 </p>
-                <p className="text-text-muted text-[10px] mt-0.5">
+                <p className="text-text-muted text-[11px] mt-0.5">
                   {formatDate(session.updated_at)}
                 </p>
               </div>

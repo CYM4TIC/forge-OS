@@ -23,7 +23,7 @@ export default function PersonaSelector({
     <select
       value={selectedSlug ?? ''}
       onChange={(e) => onSelect(e.target.value || null)}
-      className="bg-bg-elevated border border-border rounded px-2 py-1 text-text-primary text-xs focus:outline-none focus:border-accent min-w-[120px]"
+      className="bg-bg-elevated border border-border rounded px-2 py-1 text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent min-w-[120px]"
       title="Select persona"
     >
       <option value="">No persona</option>

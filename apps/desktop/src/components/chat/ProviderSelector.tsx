@@ -31,7 +31,7 @@ export default function ProviderSelector({
     <select
       value={selectedId ?? ''}
       onChange={(e) => onSelect(e.target.value)}
-      className="bg-bg-elevated border border-border rounded px-2 py-1 text-text-primary text-xs focus:outline-none focus:border-accent min-w-[100px]"
+      className="bg-bg-elevated border border-border rounded px-2 py-1 text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent min-w-[100px]"
       title="Select AI provider"
     >
       {providers.map((p) => (
