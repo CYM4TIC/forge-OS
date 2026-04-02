@@ -11,7 +11,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { CANVAS, getZoneColor, getZoneLabel } from './canvas-tokens';
+import { CANVAS, HIGHLIGHT, getZoneColor, getZoneLabel } from './canvas-tokens';
 
 const COLORS = {
   bg: CANVAS.bg,
@@ -108,7 +108,7 @@ export function ContextMeterCanvas({
       if (isCompacting) {
         const pulseAlpha = 0.15 + 0.15 * Math.sin(pulsePhase * Math.PI * 2);
         ctx.globalAlpha = pulseAlpha;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = HIGHLIGHT.medium;
         ctx.beginPath();
         ctx.roundRect(trackX, fillY, fillW, fillH, trackR);
         ctx.fill();

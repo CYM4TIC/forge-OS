@@ -8,7 +8,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
-import { STATUS, CANVAS } from './canvas-tokens.js';
+import { STATUS, CANVAS, HIGHLIGHT } from './canvas-tokens.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -327,7 +327,7 @@ function drawEye(ctx: CanvasRenderingContext2D, s: number, color: string, phase:
   // Inner highlight
   ctx.beginPath();
   ctx.arc(cx + driftX - pupilR * 0.3, cy + driftY - pupilR * 0.3, pupilR * 0.3, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillStyle = HIGHLIGHT.strong;
   ctx.fill();
 }
 

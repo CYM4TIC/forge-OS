@@ -111,3 +111,10 @@ export const DOCK = {
   badgeText: '#ffffff',
   glow: 'rgba(99, 102, 241, 0.3)',
 } as const;
+
+/** White overlay highlights for canvas shine/pulse effects (dark-mode-only) */
+export const HIGHLIGHT = {
+  subtle: 'rgba(255, 255, 255, 0.15)',
+  medium: 'rgba(255, 255, 255, 0.25)',
+  strong: 'rgba(255, 255, 255, 0.4)',
+} as const;

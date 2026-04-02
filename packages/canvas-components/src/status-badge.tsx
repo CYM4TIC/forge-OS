@@ -7,6 +7,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
+import { HIGHLIGHT } from './canvas-tokens.js';
 
 import { CANVAS, STATUS } from './canvas-tokens';
 
@@ -98,7 +99,7 @@ export function StatusBadge({
     // Inner highlight
     ctx.beginPath();
     ctx.arc(dotX - dotRadius * 0.25, dotY - dotRadius * 0.25, dotRadius * 0.3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillStyle = HIGHLIGHT.medium;
     ctx.fill();
 
     // Label text
