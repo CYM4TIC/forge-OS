@@ -15,7 +15,7 @@ export default function TeamPanel() {
   const { pending, approve, deny } = usePermissions('nyx');
 
   return (
-    <div className="h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden flex flex-col">
+    <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden flex flex-col">
       {/* Presence bar */}
       <div className="px-3 pt-2 pb-1 flex-shrink-0">
         <AgentPresence />
@@ -35,9 +35,13 @@ export default function TeamPanel() {
         </div>
       )}
 
-      {/* Tab bar */}
-      <div className="flex border-b border-border-subtle flex-shrink-0">
+      {/* Tab bar — ARIA tab pattern (MARA-CRIT-4) */}
+      <div role="tablist" aria-label="Team panel tabs" className="flex border-b border-border-subtle flex-shrink-0">
         <button
+          role="tab"
+          aria-selected={activeTab === 'dispatch'}
+          aria-controls="panel-dispatch"
+          id="tab-dispatch"
           onClick={() => setActiveTab('dispatch')}
           className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
             activeTab === 'dispatch'
@@ -48,6 +52,10 @@ export default function TeamPanel() {
           Dispatch
         </button>
         <button
+          role="tab"
+          aria-selected={activeTab === 'messages'}
+          aria-controls="panel-messages"
+          id="tab-messages"
           onClick={() => setActiveTab('messages')}
           className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
             activeTab === 'messages'
@@ -61,7 +69,12 @@ export default function TeamPanel() {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div
+        role="tabpanel"
+        id={activeTab === 'dispatch' ? 'panel-dispatch' : 'panel-messages'}
+        aria-labelledby={activeTab === 'dispatch' ? 'tab-dispatch' : 'tab-messages'}
+        className="flex-1 min-h-0 overflow-y-auto"
+      >
         {activeTab === 'dispatch' ? (
           <AgentStatusPanel />
         ) : (

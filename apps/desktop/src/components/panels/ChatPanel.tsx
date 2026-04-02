@@ -53,7 +53,7 @@ export default function ChatPanel() {
   }
 
   return (
-    <div className="flex h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden">
+    <div role="region" aria-label="Chat" className="flex h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden">
       {/* Sidebar */}
       {sidebarOpen && (
         <div className="w-52 flex-shrink-0 border-r border-border-subtle bg-bg-primary">
@@ -75,6 +75,8 @@ export default function ChatPanel() {
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-text-muted hover:text-text-primary text-sm transition-colors px-1"
+            aria-label={sidebarOpen ? 'Hide sessions sidebar' : 'Show sessions sidebar'}
+            aria-expanded={sidebarOpen}
             title={sidebarOpen ? 'Hide sessions' : 'Show sessions'}
           >
             {sidebarOpen ? '◀' : '▶'}

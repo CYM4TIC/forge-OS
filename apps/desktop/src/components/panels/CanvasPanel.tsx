@@ -71,8 +71,16 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
   return (
     <div
       ref={containerRef}
+      role="region"
+      aria-label="Build pipeline and gauges"
+      tabIndex={0}
       className="flex flex-col h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden"
     >
+      {/* Visually-hidden summary for screen readers (MARA-CRIT-1/2/5) */}
+      <div className="sr-only" aria-live="polite">
+        Build pipeline: {pipeline.map(s => `${s.id}: ${s.status}`).join(', ')}.
+        {snapshot && `Phase ${snapshot.phase}, batch ${snapshot.current_batch}, ${snapshot.batches_done} batches complete.`}
+      </div>
       {/* Pipeline Canvas — top section */}
       <div
         className="relative border-b border-border-subtle"

@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use tauri::State;
+use tauri::Emitter;
 use uuid::Uuid;
 
 use crate::build_state::{batches, findings, risks, generator};
@@ -35,11 +36,12 @@ pub struct CreateBatchRequest {
 }
 
 #[tauri::command]
-pub fn create_batch(db: State<'_, Database>, request: CreateBatchRequest) -> Result<String, String> {
+pub fn create_batch(app: tauri::AppHandle, db: State<'_, Database>, request: CreateBatchRequest) -> Result<String, String> {
     let id = Uuid::new_v4().to_string();
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     batches::create_batch(&conn, &id, &request.batch_id, request.session_id.as_deref())
         .map_err(|e| e.to_string())?;
+    let _ = app.emit("build-state-changed", "batch-updated");
     Ok(id)
 }
 
@@ -51,10 +53,12 @@ pub struct CompleteBatchRequest {
 }
 
 #[tauri::command]
-pub fn complete_batch(db: State<'_, Database>, request: CompleteBatchRequest) -> Result<(), String> {
+pub fn complete_batch(app: tauri::AppHandle, db: State<'_, Database>, request: CompleteBatchRequest) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     batches::complete_batch(&conn, &request.id, &request.files_modified, request.handoff.as_deref())
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    let _ = app.emit("build-state-changed", "batch-updated");
+    Ok(())
 }
 
 // ── Finding commands ──
@@ -71,7 +75,7 @@ pub struct AddFindingRequest {
 }
 
 #[tauri::command]
-pub fn add_finding(db: State<'_, Database>, request: AddFindingRequest) -> Result<String, String> {
+pub fn add_finding(app: tauri::AppHandle, db: State<'_, Database>, request: AddFindingRequest) -> Result<String, String> {
     let id = Uuid::new_v4().to_string();
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     findings::add_finding(
@@ -86,13 +90,16 @@ pub fn add_finding(db: State<'_, Database>, request: AddFindingRequest) -> Resul
         request.batch_ref.as_deref(),
     )
     .map_err(|e| e.to_string())?;
+    let _ = app.emit("build-state-changed", "batch-updated");
     Ok(id)
 }
 
 #[tauri::command]
-pub fn resolve_finding(db: State<'_, Database>, id: String, status: findings::FindingStatus) -> Result<(), String> {
+pub fn resolve_finding(app: tauri::AppHandle, db: State<'_, Database>, id: String, status: findings::FindingStatus) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    findings::resolve_finding(&conn, &id, status.as_str()).map_err(|e| e.to_string())
+    findings::resolve_finding(&conn, &id, status.as_str()).map_err(|e| e.to_string())?;
+    let _ = app.emit("build-state-changed", "batch-updated");
+    Ok(())
 }
 
 // ── Finding checkout (atomic task checkout for parallel agents) ──
