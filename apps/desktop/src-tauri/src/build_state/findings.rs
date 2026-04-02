@@ -178,16 +178,15 @@ pub fn checkout_finding(
 ) -> Result<(), rusqlite::Error> {
     let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
 
-    // First, release any stale checkouts (older than CHECKOUT_TTL_MINUTES)
+    // First, release any stale checkouts (older than CHECKOUT_TTL_MINUTES).
+    // Uses parameterized query even for the constant to prevent format! in SQL (TANAKA-MED-2).
+    let ttl_threshold = format!("-{} minutes", CHECKOUT_TTL_MINUTES);
     conn.execute(
-        &format!(
-            "UPDATE findings SET checked_out_by = NULL, checked_out_at = NULL
-             WHERE checked_out_by IS NOT NULL
-               AND checked_out_at < datetime('now', '-{} minutes')
-               AND resolved_at IS NULL",
-            CHECKOUT_TTL_MINUTES
-        ),
-        [],
+        "UPDATE findings SET checked_out_by = NULL, checked_out_at = NULL
+         WHERE checked_out_by IS NOT NULL
+           AND checked_out_at < datetime('now', ?1)
+           AND resolved_at IS NULL",
+        params![ttl_threshold],
     )?;
 
     let rows = conn.execute(

@@ -1,9 +1,38 @@
 use std::sync::Mutex;
+use std::path::Path;
 
 use crate::database::Database;
 use crate::hud::boot_parser::{self, BuildStateSnapshot, PipelineStage};
 use crate::hud::events::{self, HudEvent, HudFinding};
 use crate::hud::findings::{self, FindingsFilter, HudSeverityCounts};
+
+/// Validate that a boot_path is safe to read — must end with BOOT.md
+/// and must not contain path traversal sequences.
+/// TANAKA-CRIT-1: Prevents arbitrary file read via compromised webview.
+fn validate_boot_path(boot_path: &str) -> Result<(), String> {
+    let path = Path::new(boot_path);
+
+    // Must end with BOOT.md
+    let file_name = path.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+    if file_name != "BOOT.md" {
+        return Err("Invalid boot path: must point to a BOOT.md file".to_string());
+    }
+
+    // Reject path traversal patterns
+    let normalized = boot_path.replace('\\', "/");
+    if normalized.contains("/../") || normalized.contains("/./") || normalized.starts_with("../") {
+        return Err("Invalid boot path: path traversal detected".to_string());
+    }
+
+    // Must be an absolute path
+    if !path.is_absolute() {
+        return Err("Invalid boot path: must be absolute".to_string());
+    }
+
+    Ok(())
+}
 
 /// In-memory pipeline stage state. Initialized with default_pipeline(),
 /// mutated by update_pipeline_stage, read by get_pipeline_stages.
@@ -13,8 +42,10 @@ static PIPELINE_STATE: std::sync::LazyLock<Mutex<Vec<PipelineStage>>> =
 
 /// Get the current build state snapshot by parsing BOOT.md.
 /// The boot_path is the absolute path to BOOT.md on disk.
+/// Path is validated to prevent arbitrary file read (TANAKA-CRIT-1).
 #[tauri::command]
 pub fn get_build_state_snapshot(boot_path: String) -> Result<BuildStateSnapshot, String> {
+    validate_boot_path(&boot_path)?;
     let content = std::fs::read_to_string(&boot_path)
         .map_err(|e| format!("Failed to read BOOT.md at {}: {}", boot_path, e))?;
     boot_parser::parse_boot_md(&content)
@@ -29,11 +60,13 @@ pub fn get_pipeline_stages() -> Vec<PipelineStage> {
 
 /// Re-read BOOT.md and emit a BuildStateChanged event to the frontend.
 /// Call this after any build operation that changes state.
+/// Path is validated to prevent arbitrary file read (TANAKA-CRIT-1).
 #[tauri::command]
 pub fn refresh_build_state(
     app: tauri::AppHandle,
     boot_path: String,
 ) -> Result<BuildStateSnapshot, String> {
+    validate_boot_path(&boot_path)?;
     let content = std::fs::read_to_string(&boot_path)
         .map_err(|e| format!("Failed to read BOOT.md at {}: {}", boot_path, e))?;
     let snapshot = boot_parser::parse_boot_md(&content)

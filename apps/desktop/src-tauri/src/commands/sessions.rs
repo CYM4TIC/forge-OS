@@ -1,4 +1,5 @@
 use tauri::State;
+use tauri::Emitter;
 use uuid::Uuid;
 
 use crate::database::Database;
@@ -17,18 +18,22 @@ pub fn get_session(db: State<'_, Database>, id: String) -> Result<Option<Session
 }
 
 #[tauri::command]
-pub fn create_session(db: State<'_, Database>, title: Option<String>) -> Result<SessionRow, String> {
+pub fn create_session(app: tauri::AppHandle, db: State<'_, Database>, title: Option<String>) -> Result<SessionRow, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     let id = Uuid::new_v4().to_string();
     let title = title.unwrap_or_else(|| "New Session".to_string());
     queries::create_session(&conn, &id, &title).map_err(|e| e.to_string())?;
-    queries::get_session(&conn, &id)
+    let session = queries::get_session(&conn, &id)
         .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Session created but not found".to_string())
+        .ok_or_else(|| "Session created but not found".to_string())?;
+    let _ = app.emit("session:created", &session);
+    Ok(session)
 }
 
 #[tauri::command]
-pub fn delete_session(db: State<'_, Database>, id: String) -> Result<(), String> {
+pub fn delete_session(app: tauri::AppHandle, db: State<'_, Database>, id: String) -> Result<(), String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    queries::delete_session(&conn, &id).map_err(|e| e.to_string())
+    queries::delete_session(&conn, &id).map_err(|e| e.to_string())?;
+    let _ = app.emit("session:deleted", &id);
+    Ok(())
 }

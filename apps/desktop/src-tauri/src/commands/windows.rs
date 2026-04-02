@@ -38,7 +38,15 @@ pub fn create_panel_window(
         });
     }
 
-    let url = WebviewUrl::App(format!("index.html?panel={}&type={}", request.panel_id, request.panel_type).into());
+    // Sanitize panel_id and panel_type to prevent URL parameter injection (TANAKA-MED-5).
+    // Only allow alphanumeric, underscore, and hyphen in query params.
+    let safe_panel_id: String = request.panel_id.chars()
+        .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+        .collect();
+    let safe_panel_type: String = request.panel_type.chars()
+        .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+        .collect();
+    let url = WebviewUrl::App(format!("index.html?panel={}&type={}", safe_panel_id, safe_panel_type).into());
 
     let mut builder = WebviewWindowBuilder::new(&app, &label, url)
         .title(&request.title)

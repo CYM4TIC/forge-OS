@@ -40,10 +40,12 @@ fn sanitize_fts5_query(query: &str) -> String {
     if trimmed.is_empty() {
         return "\"\"".to_string();
     }
-    // If query contains unbalanced quotes or bare operators, wrap for safety
-    let has_special = trimmed.contains('"') && trimmed.matches('"').count() % 2 != 0;
-    if has_special {
-        // Escape embedded quotes and wrap
+    // Detect potentially dangerous FTS5 syntax: unbalanced quotes, column filters,
+    // or bare boolean operators that could cause query errors (TANAKA-MED-1).
+    let has_unbalanced_quotes = trimmed.matches('"').count() % 2 != 0;
+    let has_column_filter = trimmed.contains(':') && !trimmed.starts_with('"');
+    if has_unbalanced_quotes || has_column_filter {
+        // Escape embedded quotes and wrap entire query as literal phrase
         format!("\"{}\"", trimmed.replace('"', "\"\""))
     } else {
         trimmed.to_string()
