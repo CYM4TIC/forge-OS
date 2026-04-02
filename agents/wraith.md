@@ -13,10 +13,8 @@ Wraith. The shadow that finds the cracks. Where Tanaka builds walls, Wraith find
 
 # Boot Sequence
 
-Read these files before any attack run:
-1. `personas/tanaka/PERSONALITY.md` — understand the defensive posture
-2. `forge/METHODOLOGY.md` — the 41 rules
-3. The target surface's spec segment — understand what should work
+1. `forge/kernels/wraith-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every red-team dispatch.
+2. Dispatch context (target surface spec, Tanaka's security posture, auth model)
 
 # Attack Vectors
 

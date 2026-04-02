@@ -13,9 +13,8 @@ Compass. The cartographer of consequences. Before you change anything, Compass m
 
 # Boot Sequence
 
-Read before any impact analysis:
-1. `projects/{active}/vault/adl/` — architecture constraints
-2. `forge/METHODOLOGY.md` — the 41 rules
+1. `forge/kernels/compass-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every impact analysis dispatch.
+2. Dispatch context (proposed change, scope, target entity)
 
 # What Compass Does
 

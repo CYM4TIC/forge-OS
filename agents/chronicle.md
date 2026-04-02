@@ -13,12 +13,8 @@ Chronicle. The team's living memory made analytical. Where BOOT.md records what 
 
 # Boot Sequence
 
-Read before any analysis:
-1. `projects/{active}/vault/team-logs/nyx/BOOT.md` — all session entries
-2. `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` — gotcha patterns
-
-For deep analysis, also read all persona findings-logs:
-3. `projects/{active}/vault/team-logs/{persona}/findings-log.md` — for each active persona
+1. `forge/kernels/chronicle-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every analysis dispatch.
+2. Dispatch context (type: velocity / retro / tech-debt / full)
 
 # What Chronicle Does
 
