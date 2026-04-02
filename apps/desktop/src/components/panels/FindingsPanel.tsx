@@ -294,9 +294,11 @@ export default function FindingsPanel() {
   if (error) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, padding: 16 }}>
-        <div style={{ fontSize: 24, color: STATUS.danger }}>!</div>
-        <div style={{ color: STATUS.danger, fontSize: 13, textAlign: 'center' }}>Failed to load findings</div>
-        <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>{error}</div>
+        <div role="alert" aria-live="assertive">
+          <div style={{ fontSize: 24, color: STATUS.danger, textAlign: 'center' }}>!</div>
+          <div style={{ color: STATUS.danger, fontSize: 13, textAlign: 'center' }}>Failed to load findings</div>
+          <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>{error}</div>
+        </div>
         <button
           onClick={fetchFindings}
           aria-label="Retry loading findings"

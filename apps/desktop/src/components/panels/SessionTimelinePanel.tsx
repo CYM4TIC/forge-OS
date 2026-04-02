@@ -505,11 +505,13 @@ function SessionTimelinePanel() {
       >
         <canvas
           ref={canvasRef}
+          aria-label="Session timeline — horizontal scrollable event stream"
+          aria-describedby="timeline-sr-list"
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
         />
 
         {/* MARA-CRIT-1: Visually-hidden list for screen readers */}
-        <div style={SR_ONLY}>
+        <div id="timeline-sr-list" style={SR_ONLY}>
           {events.map((evt, i) => (
             <div key={evt.id} role="listitem" aria-current={i === focusedIndex ? 'true' : undefined}>
               {KIND_LABELS[evt.kind]}: {evt.title}.

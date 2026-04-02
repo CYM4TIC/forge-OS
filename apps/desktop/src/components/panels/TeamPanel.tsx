@@ -62,7 +62,7 @@ export default function TeamPanel() {
           aria-controls="panel-dispatch"
           id="tab-dispatch"
           onClick={() => setActiveTab('dispatch')}
-          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex-1 px-3 py-1.5 min-h-[32px] text-xs font-medium transition-colors ${
             activeTab === 'dispatch'
               ? 'text-accent border-b-2 border-accent'
               : 'text-text-muted hover:text-text-secondary'
@@ -76,7 +76,7 @@ export default function TeamPanel() {
           aria-controls="panel-messages"
           id="tab-messages"
           onClick={() => setActiveTab('messages')}
-          className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
+          className={`flex-1 px-3 py-1.5 min-h-[32px] text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
             activeTab === 'messages'
               ? 'text-accent border-b-2 border-accent'
               : 'text-text-muted hover:text-text-secondary'

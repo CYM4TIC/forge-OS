@@ -340,15 +340,18 @@ export default function AgentBoardPanel() {
           padding: 16,
         }}
       >
-        <div style={{ fontSize: 24, color: STATUS.danger }}>!</div>
-        <div style={{ color: STATUS.danger, fontSize: 13, textAlign: 'center' }}>
-          Failed to load agent board
-        </div>
-        <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
-          {error}
+        <div role="alert" aria-live="assertive">
+          <div style={{ fontSize: 24, color: STATUS.danger }}>!</div>
+          <div style={{ color: STATUS.danger, fontSize: 13, textAlign: 'center' }}>
+            Failed to load agent board
+          </div>
+          <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
+            {error}
+          </div>
         </div>
         <button
           onClick={refresh}
+          aria-label="Retry loading agents"
           style={{
             marginTop: 4,
             padding: '4px 12px',
@@ -358,6 +361,7 @@ export default function AgentBoardPanel() {
             border: `1px solid ${DOCK.activeBorder}`,
             borderRadius: RADIUS.pill,
             cursor: 'pointer',
+            minHeight: 32,
           }}
         >
           Retry

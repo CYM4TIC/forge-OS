@@ -41,8 +41,9 @@ export default function SessionSidebar({
         </span>
         <button
           onClick={onCreate}
-          className="text-accent hover:text-accent-hover text-xs font-medium transition-colors"
+          className="text-accent hover:text-accent-hover text-xs font-medium transition-colors min-h-[32px] min-w-[32px]"
           title="New session"
+          aria-label="Create new session"
         >
           + New
         </button>
@@ -55,7 +56,7 @@ export default function SessionSidebar({
             Loading...
           </div>
         ) : sessions.length === 0 ? (
-          <div className="text-text-muted text-xs px-3 py-4 text-center">
+          <div role="status" className="text-text-muted text-xs px-3 py-4 text-center">
             No sessions
           </div>
         ) : (
@@ -82,8 +83,9 @@ export default function SessionSidebar({
                   e.stopPropagation();
                   onDelete(session.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-danger text-xs ml-2 transition-opacity"
+                className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-danger text-xs ml-2 transition-opacity min-w-[32px] min-h-[32px] flex items-center justify-center"
                 title="Delete session"
+                aria-label={`Delete session ${session.title}`}
               >
                 ×
               </button>
