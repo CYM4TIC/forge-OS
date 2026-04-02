@@ -7,6 +7,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
+import { CANVAS } from './canvas-tokens.js';
 
 export interface ConnectionLineProps {
   /** Container width in px */
@@ -42,7 +43,7 @@ export function ConnectionLine({
   height,
   from,
   to,
-  color = '#2a2a3a',
+  color = CANVAS.border,
   lineWidth = 1.5,
   animated = true,
   dashPattern = [6, 4],

@@ -3,11 +3,13 @@ import { useChat } from '../../hooks/useChat';
 import { useSessions } from '../../hooks/useSessions';
 import { useProviders } from '../../hooks/useProviders';
 import { useAgents } from '../../hooks/useAgents';
+import { useContextUsage } from '../../hooks/useContextUsage';
 import MessageList from '../chat/MessageList';
 import MessageInput from '../chat/MessageInput';
 import PersonaSelector from '../chat/PersonaSelector';
 import ProviderSelector from '../chat/ProviderSelector';
 import SessionSidebar from '../chat/SessionSidebar';
+import SessionContinuity from '../status/SessionContinuity';
 
 export default function ChatPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,6 +34,7 @@ export default function ChatPanel() {
   const { agents, loading: agentsLoading } = useAgents();
 
   const { messages, isStreaming, error, send } = useChat(activeId);
+  const { lastSummary } = useContextUsage(activeId, '');
 
   const handleSend = useCallback(
     (content: string) => {
@@ -105,6 +108,12 @@ export default function ChatPanel() {
             {error}
           </div>
         )}
+
+        {/* Session continuity indicator (restored from compaction) */}
+        <SessionContinuity
+          lastSummary={lastSummary}
+          isRestored={lastSummary != null}
+        />
 
         {/* Messages */}
         <MessageList messages={messages} isStreaming={isStreaming} />

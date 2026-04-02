@@ -8,6 +8,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
+import { CANVAS, STATUS } from './canvas-tokens.js';
 
 export interface BezierPath {
   /** Start point */
@@ -62,13 +63,13 @@ export function FlowParticle({
   width,
   height,
   path,
-  color = '#6366f1',
+  color = STATUS.accent,
   radius = 3,
   trailLength = 0.15,
   duration = 2000,
   loop = true,
   showPath = true,
-  pathColor = '#1f1f2e',
+  pathColor = CANVAS.trackBg,
   className,
   style: styleProp,
 }: FlowParticleProps) {

@@ -8,6 +8,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
+import { STATUS, CANVAS } from './canvas-tokens.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -93,8 +94,8 @@ export function PersonaGlyph({
     }
 
     // Finding state: use severity color
-    const drawColor = state === 'finding' ? (severityColor ?? '#EF4444')
-      : state === 'error' ? '#EF4444'
+    const drawColor = state === 'finding' ? (severityColor ?? STATUS.danger)
+      : state === 'error' ? STATUS.danger
       : color;
 
     // Glow effect for active states
@@ -396,7 +397,7 @@ function drawBrackets(ctx: CanvasRenderingContext2D, s: number, color: string, p
   const innerAlpha = state === 'thinking' ? 1 - outerAlpha * 0.5 : 1;
 
   // Failure: inner flashes red
-  const innerColor = state === 'finding' ? '#EF4444' : color;
+  const innerColor = state === 'finding' ? STATUS.danger : color;
 
   // Outer left [
   ctx.globalAlpha = outerAlpha;
@@ -468,7 +469,7 @@ function drawHexShield(ctx: CanvasRenderingContext2D, s: number, color: string, 
       edgeAlpha = i === activeEdge ? 1 : 0.3;
     } else if (state === 'finding') {
       // Breach: one edge red
-      edgeColor = i === 0 ? '#EF4444' : color;
+      edgeColor = i === 0 ? STATUS.danger : color;
       edgeAlpha = i === 0 ? 1 : 0.5;
     } else if (state === 'idle') {
       // Steady glow — no pulse. A closed door doesn't breathe.
@@ -539,7 +540,7 @@ function drawPilcrow(ctx: CanvasRenderingContext2D, s: number, color: string, ph
 
   // Risk flagged: gray → white
   const alpha = state === 'finding' ? 1 : state === 'idle' ? 0.6 : 0.85;
-  const drawColor = state === 'finding' ? '#E8E8ED' : color;
+  const drawColor = state === 'finding' ? CANVAS.text : color;
   ctx.strokeStyle = drawColor;
   ctx.fillStyle = drawColor;
   ctx.globalAlpha = alpha;
