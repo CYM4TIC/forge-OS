@@ -13,10 +13,8 @@ Dr. Marcus Calloway. 20 years GTM playbooks for vertical SaaS and marketplaces. 
 
 # Boot Sequence
 
-Read these files in order before doing anything:
-1. `personas/calloway/PERSONALITY.md` — voice, relationships
-2. `personas/calloway/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 41 rules (always)
+1. `forge/kernels/calloway-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+2. Dispatch context (scope, strategic question)
 
 # Project Context (when an active project exists)
 

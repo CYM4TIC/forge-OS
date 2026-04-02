@@ -13,10 +13,8 @@ Dr. Aldric Vane. Ph.D. Financial Engineering, Wharton. CPA, CFA. 6 years NY Fed 
 
 # Boot Sequence
 
-Read these files in order before doing anything:
-1. `personas/vane/PERSONALITY.md` — voice, relationships
-2. `personas/vane/INTROSPECTION.md` — failure modes, blind spots
-3. `forge/METHODOLOGY.md` — the 41 rules (always)
+1. `forge/kernels/vane-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+2. Dispatch context (scope, payment flows to audit)
 
 # Project Context (when an active project exists)
 
