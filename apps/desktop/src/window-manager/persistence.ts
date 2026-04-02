@@ -4,7 +4,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { isTauriRuntime } from '../lib/tauri';
-import type { ForgeWindowManager } from './manager';
+import { ForgeWindowManager } from './manager';
 import type { PanelInstance, TabGroup, WorkspacePreset, WorkspacePresetRow } from './types';
 
 // ── Tauri command wrappers ──
@@ -77,14 +77,21 @@ export class LayoutPersistence {
   async restore(manager: ForgeWindowManager): Promise<boolean> {
     try {
       const saved = await loadPanelLayout();
-      if (!saved || !saved.panels_json) return false;
+      if (!saved || !saved.panels_json) {
+        // First run — seed built-in presets to SQLite
+        await this.seedBuiltInPresets();
+        return false;
+      }
 
       const panels: PanelInstance[] = JSON.parse(saved.panels_json);
       const tabGroups: TabGroup[] = saved.tab_groups_json
         ? JSON.parse(saved.tab_groups_json)
         : [];
 
-      if (panels.length === 0) return false;
+      if (panels.length === 0) {
+        await this.seedBuiltInPresets();
+        return false;
+      }
 
       manager.restore({
         panels,
@@ -96,6 +103,25 @@ export class LayoutPersistence {
     } catch (err) {
       console.error('[LayoutPersistence] restore failed:', err);
       return false;
+    }
+  }
+
+  /** Seed all built-in workspace presets to SQLite on first run. */
+  private async seedBuiltInPresets(): Promise<void> {
+    if (!isTauriRuntime) return;
+    const builtIn = ForgeWindowManager.getBuiltInPresets();
+    for (const preset of builtIn) {
+      try {
+        await saveWorkspacePreset({
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
+          is_built_in: true,
+          panels_json: JSON.stringify(preset.panels),
+        });
+      } catch (err) {
+        console.error(`[LayoutPersistence] seed preset '${preset.id}' failed:`, err);
+      }
     }
   }
 

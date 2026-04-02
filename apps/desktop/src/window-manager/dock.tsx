@@ -3,10 +3,13 @@
 // Active = lit with neon glow, minimized = dim with restore click, closed = dim.
 // Scales to 20+ panel types. Rave aesthetic: pulsing jewels, not corporate tabs.
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { PanelInstance, PanelType } from './types';
 import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
+import { getFindingCounts } from '../lib/tauri';
+import type { HudSeverityCounts } from '../lib/tauri';
+import { STATUS } from '@forge-os/canvas-components';
 
 interface DockBarProps {
   panels: PanelInstance[];
@@ -24,24 +27,39 @@ interface DockPillData {
   state: DockPillState;
   panelId: string | null;
   badgeCount: number;
+  badgeColor: string | null;
   isActive: boolean;
 }
 
-function buildDockPills(panels: PanelInstance[]): DockPillData[] {
+/** Determine badge color from severity counts. CRIT = danger, HIGH = critical, else warning. */
+function findingsBadgeColor(counts: HudSeverityCounts | null): string | null {
+  if (!counts || counts.total === 0) return null;
+  if (counts.critical > 0) return STATUS.danger;
+  if (counts.high > 0) return STATUS.critical;
+  return STATUS.warning;
+}
+
+function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCounts | null): DockPillData[] {
   const allTypes = ForgeWindowManager.getAllPanelTypes();
   const pills: DockPillData[] = [];
 
   for (const typeInfo of allTypes) {
     const instances = panels.filter((p) => p.type === typeInfo.type);
+
+    // For findings pills: override badge with severity counts
+    const isFindings = typeInfo.type === 'findings';
+    const fBadgeCount = isFindings && findingsCounts ? findingsCounts.total : 0;
+    const fBadgeColor = isFindings ? findingsBadgeColor(findingsCounts) : null;
+
     if (instances.length === 0) {
-      // No instance — show as closed
       pills.push({
         type: typeInfo.type,
         label: typeInfo.label,
         icon: typeInfo.icon,
         state: 'closed',
         panelId: null,
-        badgeCount: 0,
+        badgeCount: isFindings ? fBadgeCount : 0,
+        badgeColor: fBadgeColor,
         isActive: false,
       });
     } else {
@@ -52,7 +70,8 @@ function buildDockPills(panels: PanelInstance[]): DockPillData[] {
           icon: typeInfo.icon,
           state: inst.state === 'minimized' ? 'minimized' : 'active',
           panelId: inst.id,
-          badgeCount: inst.badgeCount,
+          badgeCount: isFindings ? fBadgeCount : inst.badgeCount,
+          badgeColor: isFindings ? fBadgeColor : null,
           isActive: inst.isActive,
         });
       }
@@ -89,7 +108,10 @@ function DockPill({
       <span className="text-sm">{pill.icon}</span>
       <span className="truncate max-w-[60px]">{pill.label}</span>
       {pill.badgeCount > 0 && (
-        <span className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 min-w-[14px] px-0.5 rounded-full bg-danger text-[9px] text-white font-bold">
+        <span
+          className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 min-w-[14px] px-0.5 rounded-full text-[9px] text-white font-bold"
+          style={pill.badgeColor ? { backgroundColor: pill.badgeColor } : undefined}
+        >
           {pill.badgeCount > 99 ? '99+' : pill.badgeCount}
         </span>
       )}
@@ -103,7 +125,21 @@ export function DockBar({
   onOpen,
   onFocus,
 }: DockBarProps) {
-  const pills = buildDockPills(panels);
+  // Poll finding counts for severity-aware badge on Findings pill
+  const [findingsCounts, setFindingsCounts] = useState<HudSeverityCounts | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      getFindingCounts().then((counts) => {
+        if (!cancelled) setFindingsCounts(counts);
+      }).catch(() => { /* silent — non-Tauri or DB unavailable */ });
+    };
+    poll();
+    const interval = setInterval(poll, 5000); // refresh every 5s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  const pills = buildDockPills(panels, findingsCounts);
 
   const handlePillClick = useCallback(
     (pill: DockPillData) => {

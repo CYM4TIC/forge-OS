@@ -28,6 +28,7 @@ interface PipelineCanvasProps {
   stages: PipelineStage[];
   width: number;
   height: number;
+  onStageClick?: (stageId: string) => void;
 }
 
 // ─── Stage → Visual Mapping ─────────────────────────────────────────────────
@@ -86,7 +87,7 @@ function stageColor(stageId: string): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function PipelineCanvas({ stages, width, height }: PipelineCanvasProps) {
+export function PipelineCanvas({ stages, width, height, onStageClick }: PipelineCanvasProps) {
   // Compute layout from dimensions and stage count
   const layout = useMemo(
     () => computePipelineLayout(width, height, stages.length),
@@ -173,6 +174,7 @@ export function PipelineCanvas({ stages, width, height }: PipelineCanvasProps) {
 
         const persona = agentToPersona(stage.agent);
         const isActive = stage.status === 'active';
+        const isClickable = onStageClick && (isActive || stage.status === 'complete');
 
         return (
           <div
@@ -183,7 +185,13 @@ export function PipelineCanvas({ stages, width, height }: PipelineCanvasProps) {
               top: rect.y,
               width: rect.width,
               height: rect.height,
+              cursor: isClickable ? 'pointer' : undefined,
             }}
+            onClick={isClickable ? () => onStageClick(stage.id) : undefined}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-label={isClickable ? `Open ${stage.label} panels` : undefined}
+            onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStageClick(stage.id); } } : undefined}
           >
             {/* Node card background */}
             <NodeCard

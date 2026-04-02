@@ -2,7 +2,7 @@
 // Every panel is independently sizable, movable, minimizable, and pop-outable.
 // Preset switching in TitleBar (P4-I.1).
 
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PanelContainer } from '../../window-manager/panel';
 import { DockBar } from '../../window-manager/dock';
@@ -36,12 +36,12 @@ interface PanelLayoutProps {
 }
 
 /** Map panel type to its content component */
-function PanelContent({ panel }: { panel: PanelInstance }): ReactNode {
+function PanelContent({ panel, onStageClick }: { panel: PanelInstance; onStageClick?: (stageId: string) => void }): ReactNode {
   switch (panel.type) {
     case 'chat':
       return <ChatPanel />;
     case 'canvas_hud':
-      return <CanvasPanel />;
+      return <CanvasPanel onStageClick={onStageClick} />;
     case 'preview':
       return <PreviewPanel />;
     case 'connectivity':
@@ -94,6 +94,26 @@ export default function PanelLayout({
     return () => observer.disconnect();
   }, [setFrameSize]);
 
+  // Pipeline stage click → open relevant panels
+  // build stage → Canvas HUD (already visible in canvas, but ensure it's focused)
+  // triad stage → Agent Board + Findings
+  // scout/sentinel → Canvas HUD (info is in the HUD)
+  const handleStageClick = useCallback((stageId: string) => {
+    const stageMap: Record<string, PanelType[]> = {
+      build: ['canvas_hud'],
+      triad: ['agent_board', 'findings'],
+      scout: ['canvas_hud'],
+      sentinel: ['canvas_hud'],
+    };
+    const panelTypes = stageMap[stageId];
+    if (!panelTypes) return;
+
+    for (const type of panelTypes) {
+      // addPanel handles single-instance enforcement — restores if minimized, focuses if visible
+      addPanel(type);
+    }
+  }, [addPanel]);
+
   if (!isReady) {
     return (
       <div className="h-full w-full bg-bg-primary flex items-center justify-center">
@@ -126,7 +146,7 @@ export default function PanelLayout({
             onResizeStart={handleResizeStart}
           >
             <ErrorBoundary panelType={panel.type}>
-              <PanelContent panel={panel} />
+              <PanelContent panel={panel} onStageClick={handleStageClick} />
             </ErrorBoundary>
           </PanelContainer>
         ))}

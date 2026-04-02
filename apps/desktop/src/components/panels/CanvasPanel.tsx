@@ -46,9 +46,11 @@ const CENTER_STATE: React.CSSProperties = {
 
 interface CanvasPanelProps {
   bootPath?: string;
+  /** Called when user clicks an active pipeline stage. Payload is stage ID (scout/build/triad/sentinel). */
+  onStageClick?: (stageId: string) => void;
 }
 
-export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
+export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const { snapshot, pipeline, loading, error } = useBuildState(bootPath ?? null);
@@ -123,6 +125,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
           stages={pipeline}
           width={dimensions.width}
           height={pipelineHeight}
+          onStageClick={onStageClick}
         />
       </div>
 

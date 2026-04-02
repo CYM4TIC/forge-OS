@@ -136,6 +136,17 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
       { type: 'agent_board', state: 'docked', position: { x: 640, y: 350 }, size: { width: 420, height: 250 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
+  {
+    id: 'observatory',
+    name: 'Observatory',
+    description: 'Canvas HUD + Graph Viewer + Vault Browser for exploration',
+    isBuiltIn: true,
+    panels: [
+      { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'graph_viewer', state: 'docked', position: { x: 500, y: 0 }, size: { width: 500, height: 400 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'vault_browser', state: 'docked', position: { x: 500, y: 400 }, size: { width: 500, height: 200 }, tabGroupId: null, tabOrder: 0 },
+    ],
+  },
 ];
 
 let instanceCounter = 0;
@@ -614,5 +625,10 @@ export class ForgeWindowManager {
 
   static getAllPanelTypes(): PanelTypeInfo[] {
     return Array.from(PANEL_TYPE_REGISTRY.values());
+  }
+
+  /** Get all built-in workspace presets (for SQLite seeding on first run). */
+  static getBuiltInPresets(): WorkspacePreset[] {
+    return [...BUILT_IN_PRESETS];
   }
 }
