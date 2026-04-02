@@ -11,7 +11,6 @@
  */
 
 import {
-  prepareWithSegments,
   layoutNextLine,
 } from '@chenglou/pretext';
 import type {

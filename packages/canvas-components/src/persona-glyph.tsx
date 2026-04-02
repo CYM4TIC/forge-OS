@@ -97,7 +97,6 @@ export function PersonaGlyph({
 
     // Glow effect for active states
     if (state !== 'idle' || glowIntensity > 0.5) {
-      const glowAlpha = state === 'idle' ? 0.15 : state === 'complete' ? 0.5 : 0.3;
       ctx.shadowColor = drawColor;
       ctx.shadowBlur = (state === 'complete' ? 16 : 10) * glowIntensity;
     }

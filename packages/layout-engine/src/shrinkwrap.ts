@@ -10,7 +10,6 @@
  */
 
 import {
-  prepareWithSegments,
   layout as pretextLayout,
   walkLineRanges,
 } from '@chenglou/pretext';

@@ -76,7 +76,6 @@ export function TokenGauge({
 
     const labelFontSize = Math.min(Math.floor(fontSize * 0.55), 12);
     const valueZoneHeight = label ? height * 0.65 : height;
-    const labelZoneHeight = label ? height * 0.35 : 0;
 
     // Value — rendered within reserved width
     ctx.font = font;
