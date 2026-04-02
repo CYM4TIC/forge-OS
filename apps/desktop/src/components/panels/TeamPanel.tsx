@@ -6,8 +6,71 @@ import MailboxBadge from '../team/MailboxBadge';
 import PermissionModal from '../team/PermissionModal';
 import { useSwarmMessages } from '../../hooks/useSwarmMessages';
 import { usePermissions } from '../../hooks/usePermissions';
+import { CANVAS, STATUS, RADIUS, TIMING } from '@forge-os/canvas-components';
 
 type Tab = 'dispatch' | 'messages';
+
+// ─── Static styles (RIVEN-HIGH-3: canvas-tokens, no Tailwind) ──────────────
+
+const PANEL_SHELL: React.CSSProperties = {
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const CENTER_STATE: React.CSSProperties = {
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+function TabButton({ active, onClick, children, id, controls }: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  id?: string;
+  controls?: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      role="tab"
+      aria-selected={active}
+      aria-controls={controls}
+      id={id}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1,
+        padding: '6px 12px',
+        minHeight: 32,
+        fontSize: 11,
+        fontWeight: 500,
+        background: 'transparent',
+        border: 'none',
+        borderBottom: active ? `2px solid ${STATUS.accent}` : '2px solid transparent',
+        color: active ? STATUS.accent : hovered ? CANVAS.label : CANVAS.muted,
+        cursor: 'pointer',
+        transition: `color ${TIMING.fast}, border-color ${TIMING.fast}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function TeamPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('dispatch');
@@ -17,8 +80,8 @@ export default function TeamPanel() {
   // Loading state (MARA-HIGH-3)
   if (loading) {
     return (
-      <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle flex items-center justify-center">
-        <span className="text-text-muted text-sm">Loading team...</span>
+      <div role="region" aria-label="Team" style={CENTER_STATE}>
+        <span style={{ color: CANVAS.muted, fontSize: 13 }}>Loading team...</span>
       </div>
     );
   }
@@ -26,23 +89,23 @@ export default function TeamPanel() {
   // Error state (MARA-HIGH-4)
   if (error) {
     return (
-      <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle flex flex-col items-center justify-center gap-2 p-4">
-        <span className="text-danger text-sm">{error}</span>
-        <span className="text-text-muted text-xs">Check your connection and try again.</span>
+      <div role="region" aria-label="Team" style={{ ...CENTER_STATE, flexDirection: 'column', gap: 8, padding: 16 }}>
+        <span style={{ color: STATUS.danger, fontSize: 13 }}>{error}</span>
+        <span style={{ color: CANVAS.muted, fontSize: 11 }}>Check your connection and try again.</span>
       </div>
     );
   }
 
   return (
-    <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden flex flex-col">
+    <div role="region" aria-label="Team" style={PANEL_SHELL}>
       {/* Presence bar */}
-      <div className="px-3 pt-2 pb-1 flex-shrink-0">
+      <div style={{ padding: '8px 12px 4px', flexShrink: 0 }}>
         <AgentPresence />
       </div>
 
       {/* Permission requests (always visible when pending) */}
       {pending.length > 0 && (
-        <div className="px-3 py-1 flex-shrink-0 space-y-1.5">
+        <div style={{ padding: '4px 12px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {pending.map((p) => (
             <PermissionModal
               key={p.message.id}
@@ -55,36 +118,24 @@ export default function TeamPanel() {
       )}
 
       {/* Tab bar — ARIA tab pattern (MARA-CRIT-4) */}
-      <div role="tablist" aria-label="Team panel tabs" className="flex border-b border-border-subtle flex-shrink-0">
-        <button
-          role="tab"
-          aria-selected={activeTab === 'dispatch'}
-          aria-controls="panel-dispatch"
-          id="tab-dispatch"
+      <div role="tablist" aria-label="Team panel tabs" style={{ display: 'flex', borderBottom: `1px solid ${CANVAS.border}`, flexShrink: 0 }}>
+        <TabButton
+          active={activeTab === 'dispatch'}
           onClick={() => setActiveTab('dispatch')}
-          className={`flex-1 px-3 py-1.5 min-h-[32px] text-xs font-medium transition-colors ${
-            activeTab === 'dispatch'
-              ? 'text-accent border-b-2 border-accent'
-              : 'text-text-muted hover:text-text-secondary'
-          }`}
+          id="tab-dispatch"
+          controls="panel-dispatch"
         >
           Dispatch
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'messages'}
-          aria-controls="panel-messages"
-          id="tab-messages"
+        </TabButton>
+        <TabButton
+          active={activeTab === 'messages'}
           onClick={() => setActiveTab('messages')}
-          className={`flex-1 px-3 py-1.5 min-h-[32px] text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
-            activeTab === 'messages'
-              ? 'text-accent border-b-2 border-accent'
-              : 'text-text-muted hover:text-text-secondary'
-          }`}
+          id="tab-messages"
+          controls="panel-messages"
         >
           Messages
           <MailboxBadge count={unreadCount} />
-        </button>
+        </TabButton>
       </div>
 
       {/* Tab content */}
@@ -92,12 +143,12 @@ export default function TeamPanel() {
         role="tabpanel"
         id={activeTab === 'dispatch' ? 'panel-dispatch' : 'panel-messages'}
         aria-labelledby={activeTab === 'dispatch' ? 'tab-dispatch' : 'tab-messages'}
-        className="flex-1 min-h-0 overflow-y-auto"
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}
       >
         {activeTab === 'dispatch' ? (
           <AgentStatusPanel />
         ) : (
-          <div className="p-2">
+          <div style={{ padding: 8 }}>
             <MessageFeed messages={messages} onMarkRead={markRead} />
           </div>
         )}

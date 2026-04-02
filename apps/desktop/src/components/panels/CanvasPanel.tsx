@@ -9,8 +9,40 @@ import { useContextUsage } from '../../hooks/useContextUsage';
 import { PipelineCanvas } from './hud/PipelineCanvas';
 import { BatchProgressGauge } from './hud/BatchProgressGauge';
 import { TokenGaugeDisplay } from './hud/TokenGaugeDisplay';
-import { TokenGauge } from '@forge-os/canvas-components';
+import { TokenGauge, CANVAS, STATUS, RADIUS } from '@forge-os/canvas-components';
 import { ContextMeterViz } from './hud/ContextMeterViz';
+
+// ─── Shared styles (RIVEN-HIGH-1: canvas-tokens, no Tailwind) ──────────────
+
+const SR_ONLY: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
+const PANEL_SHELL: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+  overflow: 'hidden',
+};
+
+const CENTER_STATE: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+};
 
 interface CanvasPanelProps {
   bootPath?: string;
@@ -43,18 +75,18 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-bg-secondary rounded-lg border border-border-subtle">
-        <span className="text-text-muted text-sm animate-pulse">Loading build state...</span>
+      <div style={CENTER_STATE}>
+        <span style={{ color: CANVAS.muted, fontSize: 13 }}>Loading build state...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full bg-bg-secondary rounded-lg border border-border-subtle">
-        <div className="text-center px-4">
-          <span className="text-red-400 text-sm font-medium block mb-1">HUD Error</span>
-          <span className="text-text-muted text-xs">{error}</span>
+      <div style={CENTER_STATE}>
+        <div style={{ textAlign: 'center', padding: '0 16px' }}>
+          <span style={{ color: STATUS.danger, fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 4 }}>HUD Error</span>
+          <span style={{ color: CANVAS.muted, fontSize: 11 }}>{error}</span>
         </div>
       </div>
     );
@@ -68,23 +100,24 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
     : Math.floor(dimensions.height * 0.6);
   const gaugesHeight = dimensions.height - pipelineHeight;
 
+  const GAUGE_CELL: React.CSSProperties = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 };
+
   return (
     <div
       ref={containerRef}
       role="region"
       aria-label="Build pipeline and gauges"
       tabIndex={0}
-      className="flex flex-col h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden"
+      style={PANEL_SHELL}
     >
       {/* Visually-hidden summary for screen readers (MARA-CRIT-1/2/5) */}
-      <div className="sr-only" aria-live="polite">
+      <div style={SR_ONLY} aria-live="polite">
         Build pipeline: {pipeline.map(s => `${s.id}: ${s.status}`).join(', ')}.
         {snapshot && `Phase ${snapshot.phase}, batch ${snapshot.current_batch}, ${snapshot.batches_done} batches complete.`}
       </div>
       {/* Pipeline Canvas — top section */}
       <div
-        className="relative border-b border-border-subtle"
-        style={{ height: pipelineHeight }}
+        style={{ position: 'relative', borderBottom: `1px solid ${CANVAS.border}`, height: pipelineHeight }}
       >
         <PipelineCanvas
           stages={pipeline}
@@ -96,11 +129,18 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
       {/* Gauges Row — bottom section */}
       {dimensions.width > 0 && gaugesHeight > 16 && (
         <div
-          className="flex items-center justify-center gap-2 p-2 overflow-hidden"
-          style={{ height: gaugesHeight }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: 8,
+            overflow: 'hidden',
+            height: gaugesHeight,
+          }}
         >
           {/* Batch progress arc */}
-          <div className="flex-1 flex items-center justify-center min-w-0">
+          <div style={GAUGE_CELL}>
             <BatchProgressGauge
               snapshot={snapshot}
               width={Math.max(Math.min(gaugesHeight - 16, (dimensions.width - 32) / (isNarrow ? 2 : 4)), 32)}
@@ -109,7 +149,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
           </div>
 
           {/* Context window usage arc */}
-          <div className="flex-1 flex items-center justify-center min-w-0">
+          <div style={GAUGE_CELL}>
             <TokenGaugeDisplay
               status={contextStatus}
               isCompacting={isCompacting}
@@ -119,7 +159,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
           </div>
 
           {/* Context density — text density visualization */}
-          <div className="flex-1 flex items-center justify-center min-w-0">
+          <div style={GAUGE_CELL}>
             <ContextMeterViz
               width={Math.max(Math.min(gaugesHeight - 16, (dimensions.width - 32) / (isNarrow ? 2 : 4)), 60)}
               height={Math.max(gaugesHeight - 16, 32)}
@@ -132,7 +172,7 @@ export default function CanvasPanel({ bootPath }: CanvasPanelProps = {}) {
 
           {/* Session + Commit counters — hidden on narrow panels */}
           {!isNarrow && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-1 min-w-0">
+            <div style={{ ...GAUGE_CELL, flexDirection: 'column', gap: 4 }}>
               <TokenGauge
                 width={Math.max((dimensions.width - 32) / 4, 60)}
                 height={Math.max(Math.floor((gaugesHeight - 24) / 2), 24)}

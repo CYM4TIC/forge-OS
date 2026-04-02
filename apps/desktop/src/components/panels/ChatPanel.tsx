@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { useSessions } from '../../hooks/useSessions';
 import { useProviders } from '../../hooks/useProviders';
 import { useAgents } from '../../hooks/useAgents';
 import { useContextUsage } from '../../hooks/useContextUsage';
+import { CANVAS, STATUS, RADIUS, TIMING, TINT } from '@forge-os/canvas-components';
 import MessageList from '../chat/MessageList';
 import MessageInput from '../chat/MessageInput';
 import PersonaSelector from '../chat/PersonaSelector';
@@ -11,9 +12,41 @@ import ProviderSelector from '../chat/ProviderSelector';
 import SessionSidebar from '../chat/SessionSidebar';
 import SessionContinuity from '../status/SessionContinuity';
 
+// ─── Static styles (RIVEN-HIGH-2: canvas-tokens, no Tailwind) ──────────────
+
+const PANEL_SHELL: React.CSSProperties = {
+  display: 'flex',
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+  overflow: 'hidden',
+};
+
+const CENTER_STATE: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100%',
+  background: CANVAS.bg,
+  borderRadius: RADIUS.card,
+  border: `1px solid ${CANVAS.border}`,
+};
+
+const TOOLBAR: React.CSSProperties = {
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '6px 12px',
+  borderBottom: `1px solid ${CANVAS.border}`,
+};
+
 export default function ChatPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  const [toggleHovered, setToggleHovered] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const {
     sessions,
@@ -47,19 +80,39 @@ export default function ChatPanel() {
     createNewSession();
   }, [createNewSession]);
 
+  // MARA-MED-3: Move focus to sidebar on open
+  const handleToggleSidebar = useCallback(() => {
+    const opening = !sidebarOpen;
+    setSidebarOpen(opening);
+    if (opening) {
+      requestAnimationFrame(() => {
+        const first = sidebarRef.current?.querySelector<HTMLElement>('button, [tabindex="0"], a');
+        first?.focus();
+      });
+    }
+  }, [sidebarOpen]);
+
   if (sessionsLoading) {
     return (
-      <div className="flex items-center justify-center h-full bg-bg-secondary rounded-lg border border-border-subtle">
-        <span className="text-text-muted text-sm">Initializing...</span>
+      <div style={CENTER_STATE}>
+        <span style={{ color: CANVAS.muted, fontSize: 13 }}>Initializing...</span>
       </div>
     );
   }
 
   return (
-    <div role="region" aria-label="Chat" className="flex h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden">
+    <div role="region" aria-label="Chat" style={PANEL_SHELL}>
       {/* Sidebar */}
       {sidebarOpen && (
-        <div className="w-52 flex-shrink-0 border-r border-border-subtle bg-bg-primary">
+        <div
+          ref={sidebarRef}
+          style={{
+            width: 208,
+            flexShrink: 0,
+            borderRight: `1px solid ${CANVAS.border}`,
+            background: CANVAS.bg,
+          }}
+        >
           <SessionSidebar
             sessions={sessions}
             activeId={activeId}
@@ -72,20 +125,35 @@ export default function ChatPanel() {
       )}
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Toolbar */}
-        <div className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border-subtle">
+        <div style={TOOLBAR}>
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-text-muted hover:text-text-primary text-sm transition-colors px-1"
+            onClick={handleToggleSidebar}
+            onMouseEnter={() => setToggleHovered(true)}
+            onMouseLeave={() => setToggleHovered(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: toggleHovered ? CANVAS.text : CANVAS.muted,
+              fontSize: 13,
+              cursor: 'pointer',
+              padding: '0 4px',
+              transition: `color ${TIMING.fast}`,
+              minHeight: 32,
+              minWidth: 32,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             aria-label={sidebarOpen ? 'Hide sessions sidebar' : 'Show sessions sidebar'}
             aria-expanded={sidebarOpen}
             title={sidebarOpen ? 'Hide sessions' : 'Show sessions'}
           >
-            {sidebarOpen ? '◀' : '▶'}
+            {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
 
-          <div className="flex-1" />
+          <div style={{ flex: 1 }} />
 
           <PersonaSelector
             agents={agents}
@@ -104,7 +172,14 @@ export default function ChatPanel() {
 
         {/* Error banner */}
         {error && (
-          <div className="flex-shrink-0 px-4 py-2 bg-danger/10 border-b border-danger/20 text-danger text-xs">
+          <div style={{
+            flexShrink: 0,
+            padding: '8px 16px',
+            background: TINT.danger,
+            borderBottom: `1px solid ${STATUS.danger}33`,
+            color: STATUS.danger,
+            fontSize: 11,
+          }}>
             {error}
           </div>
         )}
@@ -117,9 +192,18 @@ export default function ChatPanel() {
 
         {/* Messages — empty state for new sessions (MARA-HIGH-6) */}
         {messages.length === 0 && !isStreaming ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
-            <span className="text-text-muted text-sm">No messages yet</span>
-            <span className="text-text-muted text-xs">Start a conversation or select a persona above.</span>
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            textAlign: 'center',
+            padding: 24,
+          }}>
+            <span style={{ color: CANVAS.muted, fontSize: 13 }}>No messages yet</span>
+            <span style={{ color: CANVAS.muted, fontSize: 11 }}>Start a conversation or select a persona above.</span>
           </div>
         ) : (
           <MessageList messages={messages} isStreaming={isStreaming} />
