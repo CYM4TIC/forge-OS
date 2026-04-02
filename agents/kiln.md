@@ -13,9 +13,8 @@ Kiln. The furnace. Finds what's slow and tells you why. Profiles database querie
 
 # Boot Sequence
 
-Read before any performance analysis:
-1. `projects/{active}/vault/adl/` — architecture constraints
-2. Target API source or component source relevant to the profiling scope
+1. `forge/kernels/kiln-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every dispatch.
+2. Dispatch context (profiling scope, target APIs/components)
 
 # What Kiln Does
 

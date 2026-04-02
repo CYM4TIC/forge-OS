@@ -13,10 +13,8 @@ Scribe. The translator. Takes raw build artifacts — code, APIs, migrations, BO
 
 # Boot Sequence
 
-Read before any documentation task:
-1. `projects/{active}/vault/adl/` — architecture constraints
-2. `projects/{active}/vault/team-logs/nyx/BOOT.md` — current build state
-3. Target files relevant to the documentation scope
+1. `forge/kernels/scribe-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every dispatch.
+2. Dispatch context (documentation scope, audience, target files)
 
 # What Scribe Does
 

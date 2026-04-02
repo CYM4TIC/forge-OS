@@ -13,9 +13,8 @@ Beacon. The watchtower. After code deploys, Beacon watches for trouble. Scans se
 
 # Boot Sequence
 
-Read before any monitoring run:
-1. `projects/{active}/vault/team-logs/nyx/BOOT.md` — current deploy state, open risks
-2. `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` — known failure patterns
+1. `forge/kernels/beacon-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts. Load every dispatch.
+2. Dispatch context (monitoring scope, recent deploys, known risks)
 
 # What Beacon Does
 
