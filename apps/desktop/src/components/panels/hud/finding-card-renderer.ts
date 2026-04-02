@@ -5,6 +5,7 @@
  */
 
 import { CANVAS, STATUS, GLOW, TINT, RADIUS, TIMING } from '@forge-os/canvas-components';
+import { measureText } from '@forge-os/layout-engine';
 import type { HudSeverity } from '../../../lib/tauri';
 
 // ─── Severity Visual Config ────────────────────────────────────────────────
@@ -68,10 +69,12 @@ const DESCRIPTION_FONT_SIZE = 11;
 const METADATA_HEIGHT = 16;
 const GAP_BETWEEN_SECTIONS = 4;
 
+const FONT_FAMILY = 'Inter, system-ui, sans-serif';
+
 /**
  * Estimate card height for virtual scroll pre-computation.
- * Uses simple character-width heuristic — fast, no canvas needed.
- * Accurate enough for virtual scroll (exact heights via DOM measurement at render time).
+ * Uses Pretext measureText() for accurate line-breaking (KEHINDE-MED-1).
+ * prepare() result is cached in layout-engine LRU, so repeat calls are fast.
  */
 export function estimateCardHeight(
   title: string,
@@ -82,19 +85,19 @@ export function estimateCardHeight(
   const sv = getSeverityVisual(severity);
   const contentWidth = containerWidth - 24; // padding + glyph space
 
-  // Title lines
-  const avgTitleCharWidth = sv.fontSize * 0.55;
-  const titleCharsPerLine = Math.max(1, Math.floor(contentWidth / avgTitleCharWidth));
-  const titleLines = Math.ceil(title.length / titleCharsPerLine);
-  const titleHeight = titleLines * sv.fontSize * TITLE_LINE_HEIGHT;
+  // Title height via Pretext measurement
+  const titleResult = measureText(title, contentWidth, {
+    font: `${sv.fontWeight} ${sv.fontSize}px ${FONT_FAMILY}`,
+  }, { lineHeight: TITLE_LINE_HEIGHT });
 
-  // Description lines (clamped to 3)
-  const avgDescCharWidth = DESCRIPTION_FONT_SIZE * 0.5;
-  const descCharsPerLine = Math.max(1, Math.floor(contentWidth / avgDescCharWidth));
-  const descLines = Math.min(3, Math.ceil(description.length / descCharsPerLine));
-  const descHeight = descLines * DESCRIPTION_FONT_SIZE * DESCRIPTION_LINE_HEIGHT;
+  // Description height via Pretext measurement (clamped to 3 lines)
+  const descResult = measureText(description, contentWidth, {
+    font: `${DESCRIPTION_FONT_SIZE}px ${FONT_FAMILY}`,
+  }, { lineHeight: DESCRIPTION_LINE_HEIGHT });
+  const descMaxHeight = 3 * DESCRIPTION_FONT_SIZE * DESCRIPTION_LINE_HEIGHT;
+  const descHeight = Math.min(descResult.height, descMaxHeight);
 
-  return CARD_PADDING_Y * 2 + titleHeight + GAP_BETWEEN_SECTIONS + descHeight + GAP_BETWEEN_SECTIONS + METADATA_HEIGHT;
+  return CARD_PADDING_Y * 2 + titleResult.height + GAP_BETWEEN_SECTIONS + descHeight + GAP_BETWEEN_SECTIONS + METADATA_HEIGHT;
 }
 
 // ─── Card Style Builder ────────────────────────────────────────────────────
