@@ -360,3 +360,14 @@ CREATE INDEX IF NOT EXISTS idx_hud_findings_status ON hud_findings(status);
 CREATE INDEX IF NOT EXISTS idx_hud_findings_session_status ON hud_findings(session_id, status);
 COMMIT;
 "#;
+
+/// V11: Drop orphaned V1 tables that were superseded.
+/// - panel_layout: replaced by layout_state (V9 panel_layouts_v2).
+/// - agent_state: never used in application code — dispatch state is tracked in-memory.
+pub const SCHEMA_V11: &str = r#"
+BEGIN IMMEDIATE;
+DROP TABLE IF EXISTS panel_layout;
+DROP TABLE IF EXISTS agent_state;
+DROP INDEX IF EXISTS idx_agent_state_slug;
+COMMIT;
+"#;

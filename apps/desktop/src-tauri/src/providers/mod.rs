@@ -5,3 +5,4 @@ pub mod registry;
 pub mod claude;
 pub mod claude_code;
 pub mod openai;
+pub mod keychain;

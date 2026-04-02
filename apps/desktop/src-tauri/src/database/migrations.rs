@@ -69,5 +69,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 10;")?;
     }
 
+    // Cleanup: drop orphaned V1 tables (panel_layout, agent_state)
+    if current_version < 11 {
+        conn.execute_batch(schema::SCHEMA_V11)?;
+        conn.execute_batch("PRAGMA user_version = 11;")?;
+    }
+
     Ok(())
 }
