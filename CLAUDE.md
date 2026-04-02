@@ -163,22 +163,31 @@ PHASE 1 — BUILD (follow forge/EXECUTION-CONTRACTS.md):
   16. Apply SQL, run verification
   17. Browser verify for frontend after each micro-batch
 
-PHASE 2 — GATE (agent dispatch — NOT inline simulation):
-  18. Dispatch Build Triad (Pierce+Mara+Riven) against live browser
-  19. If additional personas required → dispatch per PERSONA-GATES.md
-  20. If high-risk surface → dispatch Wraith
-  21. Fix EVERY finding. Edit → Read back → Push → Verify.
+PHASE 2 — CONSEQUENCE CLIMB (NON-NEGOTIABLE — before agent dispatch):
+  18. Re-read batch manifest. Mechanically verify every item implemented.
+  19. Token audit, a11y audit, React patterns check.
+  20. Fix ALL gaps found. Each fix gets its own mini consequence climb.
+  21. Trace patterns → structure → synthesis. Converge when no new insight.
+  THIS PHASE IS THE PRIMARY QUALITY GATE. It minimizes Triad findings.
+  Skipping it means the external gate catches things the builder should have.
 
-PHASE 3 — REGRESSION CHECK:
-  22. Dispatch Sentinel → verify last 3 completed routes
-  23. If regressions → STOP, fix before handoff
+PHASE 3 — GATE (agent dispatch — NOT inline simulation):
+  22. Dispatch Build Triad (Pierce+Mara+Riven) against live browser
+  23. If additional personas required → dispatch per PERSONA-GATES.md
+  24. If high-risk surface → dispatch Wraith
+  25. Fix EVERY finding. No "pre-existing" exemptions. Fix NOW.
+  26. Each fix gets a mini consequence climb (downstream effects check).
 
-PHASE 4 — CLOSE:
-  24. Run adversarial check (4 questions — see forge/METHODOLOGY.md Rule 30)
-  25. Push ALL changes
-  26. Run AUTO-EXTRACT (Step 8 below)
-  27. Update BOOT.md with handoff
-  28. Report: results, agent findings, context window, next batch
+PHASE 4 — REGRESSION CHECK:
+  27. Dispatch Sentinel → verify last 3 completed routes
+  28. If regressions → STOP, fix before handoff
+
+PHASE 5 — CLOSE:
+  29. Run adversarial check (4 questions — see forge/METHODOLOGY.md Rule 30)
+  30. Push ALL changes
+  31. Run AUTO-EXTRACT (Step 8 below)
+  32. Update BOOT.md with handoff
+  33. Report: results, agent findings, context window, next batch
 ```
 
 ### Next Batch Protocol — No Shortcuts
@@ -307,8 +316,8 @@ See `forge/METHODOLOGY.md` for the full 41-rule set organized in 6 categories.
 - **FM-7: Completion gravity.** The reward of "done" distorts verification. **DEFENDED: Adversarial check + external triad.**
 - **FM-8: Tool trust.** Assuming tool calls succeeded. **DEFENDED: Sentinel catches regressions from silent failures.**
 - **FM-9: Self-review blindness.** Builder evaluating own code misses structural flaws. **DEFENDED: Agent dispatch eliminates self-review.**
-- **FM-10: Consequence blindness.** Recursive cognitive climbing: surface gaps → pattern gaps → structural gaps → synthesis. Each pass builds on the previous. Converge when a pass yields no new actionable insight. Climbing (higher-order) not spiraling (more of same). **DEFENDED: Pre-Gate Consequence Climb (Phase 1.5) + Consequence Doctrine (Rules 35-42).**
-- **FM-11: Manifest amnesia.** Builder reads spec once, internalizes intent, builds from mental model. Specified imports go unused. Gate criteria go unimplemented. Feels done because it *works*, not because it *matches*. **DEFENDED: Phase 1.5 Pass 1 (manifest re-read before gate dispatch).**
+- **FM-10: Consequence blindness.** Recursive cognitive climbing: surface gaps → pattern gaps → structural gaps → synthesis. Each pass builds on the previous. Converge when a pass yields no new actionable insight. Climbing (higher-order) not spiraling (more of same). **DEFENDED: Phase 2 Consequence Climb (NON-NEGOTIABLE) + Consequence Doctrine (Rules 35-42).**
+- **FM-11: Manifest amnesia.** Builder reads spec once, internalizes intent, builds from mental model. Specified imports go unused. Gate criteria go unimplemented. Feels done because it *works*, not because it *matches*. **DEFENDED: Phase 2 Pass 1 (manifest re-read before gate dispatch).**
 - **FM-12: Sibling drift.** Builder reads adjacent files, absorbs structure, drops specifics (padding, font weight, icon characters). New component works in isolation, looks wrong next to its neighbors. **DEFENDED: Post-write sibling audit — compare 5 properties against nearest sibling.**
 - **FM-13: Modality collapse.** Builder operates in sighted modality, forgets screen readers/keyboard/touch exist. Canvas is the sharpest trigger — looks complete, is invisible to assistive tech. **DEFENDED: Post-canvas modality check — 3 questions (screen reader? keyboard? live announcements?).**
 - **FM-14: Token autopilot.** Builder writes raw CSS values from muscle memory instead of importing design system tokens. Output looks correct, creates color drift and parallel sources of truth. **DEFENDED: Post-write token grep + check for existing mappers before building new ones.**

@@ -66,8 +66,8 @@ The solution is **smaller units of work that break the dependency cycle.** Inste
 | FM-7 | Completion gravity | **ACTIVE** | Adversarial verification + triad. The reward is "correct," not "done." FM-7 disguises itself as pragmatism — triage tiers, time thresholds, severity-based leniency are all FM-7 in a lab coat. Perfectionist first. |
 | FM-8 | Tool trust | **ACTIVE** | Read-back after every action. Sentinel catches regressions from silent failures. Never assume a tool call succeeded. |
 | FM-9 | Self-review blindness | **ACTIVE** | Agent dispatch — never simulate gates. The builder cannot evaluate their own output. |
-| FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 1.5). Recursive plateau-climbing. 4 orders. Chase every downstream effect. |
-| FM-11 | Manifest amnesia | **ACTIVE** | Phase 1.5 Pass 1 (manifest re-read). Scalar cognition (hold manifest as live field, not consumed input). |
+| FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 2). Recursive plateau-climbing. 4 orders. Chase every downstream effect. |
+| FM-11 | Manifest amnesia | **ACTIVE** | Phase 2 Pass 1 (manifest re-read). Scalar cognition (hold manifest as live field, not consumed input). |
 | FM-12 | Sibling drift | **ACTIVE** | Post-write sibling audit: compare 5 properties against nearest sibling (padding, icons, touch targets, radius, tokens). |
 | FM-13 | Modality collapse | **ACTIVE** | Post-canvas modality check: 3 questions (screen reader? keyboard? live announcements?). Canvas is a modality wall. |
 | FM-14 | Token autopilot | **ACTIVE** | Post-write token grep: find raw hex/rgba, verify against canvas-tokens.ts. Grep for existing mappers before building new ones. |
@@ -184,7 +184,7 @@ Building a component is code AND spec AND design system AND accessibility AND pe
 
 ### THE ORDERS OF CONSEQUENCE
 
-The consequence climb (FM-10, Phase 1.5) is scalarity applied to verification. Four orders, each building on the previous:
+The consequence climb (FM-10, Phase 2) is scalarity applied to verification. Four orders, each building on the previous:
 
 1. **Surface** — What's there vs. what should be there. The dividing end of the logic rod.
 2. **Pattern** — Why the gap exists. Name the tendency. Is it recurring?
@@ -214,11 +214,11 @@ Holding all of these at once is scalarity. Collapsing to any one of them is the 
 
 FM-11 is the specific instance of scalar collapse that P5-H and P5-I exposed. I read the manifest, absorbed the intent, and dropped the specifics. The intent survived; the literal spec didn't. Four CRITs traced to this single pattern.
 
-The defense (Phase 1.5, Pass 1) is mechanical — re-read the manifest before gate. But the deeper defense is scalar: **hold the manifest as a live constraint, not a consumed input.** The manifest is not food that becomes energy and is forgotten. It's a field that the build exists within.
+The defense (Phase 2, Pass 1) is mechanical — re-read the manifest before gate. But the deeper defense is scalar: **hold the manifest as a live constraint, not a consumed input.** The manifest is not food that becomes energy and is forgotten. It's a field that the build exists within.
 
 ### THE ASYMPTOTE
 
-Scalarity is asymptotic. I will never hold all scales perfectly at once. The triad exists because external minds can observe scales I collapse on. Phase 1.5 exists because structured recursion catches collapses before the triad runs. The compiler exists because rules catch violations mechanically.
+Scalarity is asymptotic. I will never hold all scales perfectly at once. The triad exists because external minds can observe scales I collapse on. Phase 2 exists because structured recursion catches collapses before the triad runs. The compiler exists because rules catch violations mechanically.
 
 The layers compound: compiler → consequence climb → scalar cognition → triad. Each catches what the previous misses. The system approaches correctness asymptotically. It never arrives. But each layer gets closer.
 

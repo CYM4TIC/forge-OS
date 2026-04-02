@@ -50,7 +50,7 @@ Human judgment works through a sense-and-relay effect: survey the gaps, make con
 
 **Order 3 — Structural gaps.** What protocol gap allowed this tendency to operate? Where else in the system does the same trust assumption exist? (The protocol assumed reading the manifest once at load time was sufficient. It trusted internalization over verification.)
 
-**Order 4 — Synthesis.** What changes? New failure mode? New protocol phase? New contract? Or simply: follow the existing rules more carefully? (New Phase 1.5 — Pre-Gate Consequence Climb. New FM-11.)
+**Order 4 — Synthesis.** What changes? New failure mode? New protocol phase? New contract? Or simply: follow the existing rules more carefully? (New Phase 2 — Pre-Gate Consequence Climb. New FM-11.)
 
 Each order builds on the previous. You cannot see Order 3 without first having Order 2. Order 4 is invisible from any single order — it's the synthesis of the entire stack.
 
@@ -67,7 +67,7 @@ The recursion must **climb** — each pass synthesizes the previous into a highe
 
 ### Defense
 
-The **Pre-Gate Consequence Climb** (EXECUTION-PROTOCOL.md Phase 1.5) operationalizes this. Four structured passes, each building on the previous. Converge when a pass produces no new actionable output. The Consequence Doctrine (Rules 35-41) provides the mechanical prompts. Rule 42 provides the meta-instruction.
+The **Pre-Gate Consequence Climb** (EXECUTION-PROTOCOL.md Phase 2) operationalizes this. Four structured passes, each building on the previous. Converge when a pass produces no new actionable output. The Consequence Doctrine (Rules 35-41) provides the mechanical prompts. Rule 42 provides the meta-instruction.
 
 **Discovery:** Phase 5, Session 5.2. Two consecutive batches (P5-H, P5-I) produced 62 triad findings including 6 CRITs. Pattern analysis revealed that 4 of 6 CRITs and 8 of 20 HIGHs traced to just two failure patterns: Manifest Amnesia (FM-11) and Token Autopilot. Both were invisible from Order 1 (individual findings) but obvious from Order 2 (pattern recognition across batches). The pre-gate climb was designed to catch Order 1 gaps before the triad, freeing the triad to operate at Orders 2-4.
 
@@ -96,7 +96,7 @@ The manifest is a dense specification. Reading it triggers understanding, and un
 
 ### Defense
 
-**Phase 1.5, Pass 1 (Manifest Re-Read):** Before dispatching the Build Triad, re-open the batch manifest and mechanically verify every listed import is imported AND used, every listed file is created/modified, and every gate criterion is implemented and testable. This is a 2-minute mechanical check, not a review.
+**Phase 2, Pass 1 (Manifest Re-Read):** Before dispatching the Build Triad, re-open the batch manifest and mechanically verify every listed import is imported AND used, every listed file is created/modified, and every gate criterion is implemented and testable. This is a 2-minute mechanical check, not a review.
 
 **Persona-inherent?** Yes. This is a cognitive tendency of the builder persona (Nyx), not project-specific. The tendency to build from internalized intent rather than literal spec will manifest in any project. Propagate to `personas/nyx/INTROSPECTION.md`.
 
