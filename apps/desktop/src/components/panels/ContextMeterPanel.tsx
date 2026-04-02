@@ -34,6 +34,25 @@ export default function ContextMeterPanel() {
 
   const value = status?.usage_fraction ?? 0;
 
+  // MARA-MED-6: Loading fallback when status hasn't arrived yet
+  if (!status && dimensions.width === 0) {
+    return (
+      <div
+        ref={containerRef}
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: CANVAS.bg,
+          borderRadius: 8,
+        }}
+      >
+        <span style={{ color: CANVAS.muted, fontSize: 12 }}>Loading context meter...</span>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}

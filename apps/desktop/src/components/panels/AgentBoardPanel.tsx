@@ -56,6 +56,7 @@ const CARD_HEADER_STYLE: React.CSSProperties = {
 const NAME_CONTAINER_STYLE: React.CSSProperties = {
   flex: 1,
   minWidth: 0,
+  maxWidth: '100%', // MARA-MED-1: explicit truncation safeguard
 };
 
 const SLUG_STYLE: React.CSSProperties = {
@@ -195,6 +196,20 @@ const AgentCard = memo(function AgentCard({ agent, isExpanded, onToggle, cardWid
           status={STATUS_TO_BADGE[agent.status]}
           label={STATUS_LABELS[agent.status]}
         />
+        {/* MARA-MED-7: Disclosure indicator */}
+        <span
+          style={{
+            color: CANVAS.muted,
+            fontSize: 10,
+            marginLeft: 2,
+            transition: `transform ${TIMING.fast}`,
+            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            display: 'inline-block',
+          }}
+          aria-hidden="true"
+        >
+          &#x25B6;
+        </span>
       </div>
 
       {/* Model tier + elapsed */}

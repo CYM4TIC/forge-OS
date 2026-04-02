@@ -22,7 +22,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-invert prose-sm max-w-none [&_pre]:bg-bg-secondary [&_pre]:rounded [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:text-accent-hover [&_code]:text-xs [&_a]:text-accent-hover [&_a]:underline">
+          <div aria-label="Assistant message" className="prose prose-invert prose-sm max-w-none [&_pre]:bg-bg-secondary [&_pre]:rounded [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:text-accent-hover [&_code]:text-xs [&_a]:text-accent-hover [&_a]:underline">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content}
             </ReactMarkdown>

@@ -69,14 +69,14 @@ export default function PermissionModal({ permission, onApprove, onDeny }: Permi
         <button
           onClick={handleApprove}
           disabled={responding}
-          className="flex-1 px-3 py-1.5 bg-accent text-white text-xs font-medium rounded hover:bg-accent/90 disabled:opacity-50 transition-colors"
+          className="flex-1 px-3 py-1.5 min-h-[32px] bg-accent text-white text-xs font-medium rounded hover:bg-accent/90 disabled:opacity-50 transition-colors"
         >
           {responding ? '...' : 'Approve'}
         </button>
         <button
           onClick={handleDeny}
           disabled={responding}
-          className={`flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors disabled:opacity-50 ${
+          className={`flex-1 px-3 py-1.5 min-h-[32px] text-xs font-medium rounded transition-colors disabled:opacity-50 ${
             payload.is_destructive
               ? 'bg-bg-tertiary text-text-primary hover:bg-bg-tertiary/80'
               : 'bg-bg-tertiary text-text-secondary hover:bg-bg-tertiary/80'
