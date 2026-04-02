@@ -4,9 +4,10 @@
 
 ```
 WAKE
-  1. Load persona identity + project assignment
-  2. Read BOOT.md (position, open risks)
-  3. Read forge/METHODOLOGY.md (rules)
+  1. Read forge/EXECUTION-PROTOCOL.md — THE COMPILER (mandatory, every session)
+  2. Load persona identity + project assignment
+  3. Read BOOT.md (position, open risks)
+  4. Read forge/METHODOLOGY.md (rules — summarized in protocol §9)
 
 LOAD HUD (per batch)
   4. Read batch manifest entry

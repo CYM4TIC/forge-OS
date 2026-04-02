@@ -1,6 +1,7 @@
 # Execution Contracts
 
 > 7 contracts governing tool usage. Each exists because violating it caused a real defect.
+> **Full enforcement detail:** `forge/EXECUTION-PROTOCOL.md` §1 expands each contract with preconditions, postconditions, and error recovery.
 
 ## Contract 1: SCHEMA_QUERY
 Before any data mutation, query the live schema. Column names from source, not memory.

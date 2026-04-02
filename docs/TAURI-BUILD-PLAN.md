@@ -1,5 +1,28 @@
 # Forge — Tauri Desktop App Build Plan
 
+## Execution Protocol
+
+**Every build session loads `forge/EXECUTION-PROTOCOL.md` — The Compiler.** This is not optional. The protocol mechanically enforces all 41 rules, 7 contracts, 10 failure modes, and the Hyperdrive pipeline. Without it, builds run on discipline and memory. Discipline drifts. Memory is lossy.
+
+The protocol is referenced in:
+- `CLAUDE.md` Boot Sequence (step 2) and Build Loop WAKE (step 1)
+- `forge/BUILD-LOOP.md` WAKE sequence
+- 8 Protocol Enforcement Points throughout this build plan (see Phases 5, 7, 8)
+
+**All 8 enforcement points in this plan map to specific protocol sections:**
+| Point | What It Enforces | Protocol Section | Phase |
+|---|---|---|---|
+| #1 | Gate dispatch is a pipeline stage, not optional | §8 (Hyperdrive Pipeline) | 7.3, 8.2 |
+| #2 | Findings get IDs + severity + status in SQLite | §3 (Persona Gate Protocol) | 5.2 |
+| #3 | Batch decomposition validated before phase start | §2 (Micro-Batch Protocol) | 8.2 |
+| #4 | Diff-aware gate routing from file changes | §8 (Dispatch Reference) | 8.2 |
+| #5 | Read-back verification in audit trail | §1 Contract 3/4 (FILE_WRITE/EDIT) | 8.2 |
+| #6 | Context window hard stop at 70% | §6 (Context Window Management) | 8.1 |
+| #7 | Handoff integrity (BOOT.md after last push) | §1 Contract 8 (STATE_UPDATE) | 8.1 |
+| #8 | Ambient accountability via HUD visualization | §4 (Completion Checklist) | 5.1 |
+
+---
+
 ## Context
 
 Forge OS was originally planned as a Claude Code extension system (methodology docs + genericized agents + a React dashboard). Today's design conversation fundamentally changed the vision: **Forge is a standalone Tauri desktop application** — a native program you load up and build with. It features a chat interface for directing AI agents, a Pretext-powered living canvas HUD, an embedded dev server preview, connectivity monitoring, and agent presence visualization. This is not a dashboard bolted onto a terminal — it's a spatial, animated, living workspace where the entire build process is visible and directed from one window.
@@ -413,8 +436,22 @@ Prevents two dispatched agents from working on the same finding during parallel 
 - Toggleable visibility, replayable from session history
 - `VaultBrowser` — **separate panel type.** Tree view (DOM for interaction) with content panel (canvas-rendered for consistent typography), pre-computed document heights for virtual scroll. Registers with window manager — can float or pop out.
 - `GraphViewer` — **separate panel type.** Knowledge graph with Pretext-measured labels on every node and edge, canvas pan/zoom, entity highlighting. Registers with window manager.
+- **Intelligence glyphs — DEFERRED TO PHASE 8.** 10 intelligences get visual identities alongside the 10 persona glyphs. IntelligenceGlyph component + IntelligenceNetwork panel require Phase 8's event bus and intelligence chains to have real data. Building visualization before data source exists would mean placeholder data that needs rewiring. Glyph designs (colors/shapes) are preserved below for Phase 8 implementation:
 
-**New panel types registered in this phase:** Canvas HUD, Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer (6 new, bringing total to ~12)
+  | Intelligence | Glyph | Color | Hex |
+  |---|---|---|---|
+  | Scout | `⊙` | electric green | `#39FF14` |
+  | Sentinel | `◈` | ice cyan | `#00E5FF` |
+  | Wraith | `ψ` | crimson | `#DC143C` |
+  | Meridian | `⊕` | silver/white | `#C0C0C0` |
+  | Chronicle | `⧖` | deep violet | `#8A2BE2` |
+  | Arbiter | `⚖` | gold | `#FFD700` |
+  | Compass | `✦` | emerald | `#50C878` |
+  | Scribe | `℘` | soft teal | `#20B2AA` |
+  | Kiln | `🜂` | flame orange | `#FF6B35` |
+  | Beacon | `✧` | signal white | `#F5F5F5` |
+
+**New panel types registered in this phase:** Canvas HUD, Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer, Intelligence Network (7 new, bringing total to ~13)
 
 **Protocol enforcement foundation:** P5-G (findings SQLite) is enforcement point #2 from the Protocol Enforcement Vision — every gate finding gets an ID, severity, and status in SQLite. A batch cannot close with `status = 'open'` rows. The database is the proof, not commit messages. See `memory/project_os_protocol_enforcement.md` for the full 8-point enforcement plan.
 
@@ -589,9 +626,9 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 
 ---
 
-## Phase 8: Orchestration Engine + LightRAG + Persona Evolution (6 sessions) — WAS PHASE 7
+## Phase 8: Orchestration Engine + LightRAG + Predictive Intelligence + Persona Evolution (8 sessions) — WAS PHASE 7
 
-**Goal:** The Rust backend intelligence that makes autonomous agent dispatch work, knowledge graph, self-improving skills, and the persona evolution engine that makes the 10 personas genuinely learn and grow through use.
+**Goal:** The Rust backend intelligence that makes autonomous agent dispatch work, knowledge graph, self-improving skills, the persona evolution engine, AND the self-directing intelligence layer — context graph, TimesFM forecasting, reasoning engine, intelligence interaction chains, self-modification architecture. This phase transforms the OS from a reactive tool to an anticipatory organizational substrate.
 
 ### Session 8.1 — Vault Watcher + State Engine + Skills Crystallization
 
@@ -611,6 +648,33 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
     - Implicit architecture decisions → document in ADL
     - Reusable patterns → BUILD-LEARNINGS.md
   - Failure mode evaluation: persona-inherent (propagate globally) vs. project-specific (stay local)
+- **Context Graph: Decision Trace Store (v2 addition)**
+  - Every meaningful action produces a structured decision trace: `observation → reasoning → action → outcome`. This is the atomic unit of organizational judgment.
+  - `src-tauri/src/context_graph/` — Rust module:
+    - `store.rs` — append-only JSONL + SQLite FTS5 index. Trace schema: id (ULID), source (domain adapter), type, timestamp, observation (what/where/evidence), reasoning (why/references/confidence), action (what/who/artifacts), outcome (result/validated/learned), graph edges (caused_by/leads_to/related_to), tags, signals_emitted.
+    - `query.rs` — query by time range, source, type, tags. Edge traversal: given a trace, walk the causal chain recursively. Full-text search on observation + reasoning.
+    - `backfill.rs` — parse BOOT.md handoffs into DecisionTrace objects. Run once during `/link` to seed graph from project history.
+  - Domain-agnostic schema. Development traces ("3 P-CRITs in auth surface") and future business traces ("deal velocity dropped 30%") use the same structure.
+  - SQLite migration: `traces` table + FTS5 virtual table + triggers.
+  - Tauri commands: `file_trace`, `query_traces`, `get_trace`, `walk_causal_chain`.
+
+- **Context Graph: Signal Store + Collector (v2 addition)**
+  - Signals are numeric time-series extracted from decision traces. Domain-agnostic: just a metric name, value, timestamp, and scope.
+  - `src-tauri/src/signals/` — Rust module:
+    - `store.rs` — SQLite table: `signals(id, source, metric, value, timestamp, scope, trace_id, tags)`. Time-indexed. Retention: raw 90 days, daily aggregates kept indefinitely.
+    - `aggregator.rs` — running windows per metric (last 10/30/90 values). Daily aggregation (min/max/avg/p50/p90). Used by TimesFM client and dashboard charts.
+    - `collector.rs` — subscribes to trace-filed events. For each trace, extracts signals based on the active domain adapter's signal definitions. Development adapter: batch-completion → `finding_count`, `finding_density`, `files_changed`, `batch_duration_ms`, `token_usage`, `gate_pass`, `risk_delta`.
+  - SQLite migration: `signals` table + `signal_daily_agg` table.
+  - Tauri commands: `get_signal_window`, `get_signal_daily`, `list_signal_metrics`.
+
+- **Domain Adapter Architecture (v2 addition)**
+  - The development pipeline is the first domain adapter. The core doesn't know about "batches" — it knows about events, signals, traces, and forecasts. Domain adapters translate.
+  - `src-tauri/src/adapters/` — Rust module:
+    - `adapter.rs` — `DomainAdapter` trait: event types, signal definitions, trace types, agent mapping, forecast thresholds.
+    - `development.rs` — built-in adapter. Events: `action.completed`, `gate.blocked`, `timer.fired`. Signals: 11 build metrics. Traces: `batch-completion`, `gate-review`, `finding-resolution`, `architecture-decision`, `build-learning`.
+  - Future adapters (operations, support, sales) implement the same trait. Same event bus, same signal store, same forecast engine.
+  - **Why domain-agnostic:** TimesFM isn't sized for build metrics — it's sized for running companies at scale. Revenue forecasting, churn prediction, support volume projection, sales pipeline velocity. Build metrics are the training wheels. The sidecar stays the same. The signals multiply.
+
 - **Self-Improving Skills System (from Hermes pattern)**
   - Skills are markdown files in `skills/` with YAML frontmatter:
     ```yaml
@@ -656,6 +720,31 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
     - ADL constraints (filtered by domain relevance)
   - Agents always know WHY they're doing something. Scout's recon is shaped by the goal. Pierce's conformance checks are scoped to the goal's constraints. No agent operates in a vacuum.
   - Constructed automatically by the dispatch pipeline — operator doesn't assemble this manually
+- **Intelligence Interaction Chains (v2 addition)**
+  - The 10 intelligences are nodes in a network, connected through registries (shared state), event bus (reactive triggers), and the context graph (accumulated judgment).
+  - Each intelligence has a formal spec: what it READS, WRITES, EMITS, SUBSCRIBES TO, and TRIGGERS. Wired during dispatch pipeline setup.
+  - **Event subscriptions wired here:**
+    - Sentinel subscribes to `action.completed` (git-push) → auto-dispatched baseline comparison
+    - Sentinel subscribes to `gate.completed` → captures verified-green baseline
+    - Meridian subscribes to `gate.completed` → cross-surface consistency scan
+    - Beacon subscribes to `trace.filed` → signal extraction + anomaly check
+    - Beacon subscribes to `signal.threshold` → reasoning engine activation
+    - Compass subscribes to `action.completed` (migration) → dependency graph update
+  - **Chain orchestration:** cascading triggers (push → Sentinel → regression → Beacon → recommendation) with max depth (5), cycle detection, and chain_id tracing for dashboard visualization.
+  - **Five canonical chains:**
+    1. Predictive Loop: Kiln measures → Beacon forecasts → reasoning engine → recommendation → operator → outcome → Kiln
+    2. Regression Chain: push → Sentinel → anomaly → Beacon → Compass (blast radius) → fix
+    3. Consistency Chain: gate → Meridian → drift → Riven/Sable → fix → Meridian updates registry
+    4. Learning Chain: Wraith finds vuln → Tanaka absorbs → Scout flags proactively → fewer vulns (validated)
+    5. Ground Truth Chain: conflicting findings → Arbiter CONSORTIUM synthesis → operator decides → accuracy tracked
+  - Full intelligence interaction model documented in `docs/INTELLIGENCE-INTERACTION-MODEL.md`.
+
+- **Arbiter CONSORTIUM Synthesis (v2 addition, from G0DM0D3)**
+  - When the Build Triad or any multi-agent gate produces conflicting severity rulings on the same finding, the findings aggregator detects the conflict and dispatches Arbiter.
+  - Arbiter collects all positions + evidence, queries LightRAG for similar past conflicts, and synthesizes ground truth: "Tanaka says CRIT because X, Mara says LOW because Y — considering both threat models, the ground truth is Z. Confidence: high — 3 prior similar cases resolved this way."
+  - The synthesis AND the raw positions are both preserved. Arbiter synthesizes for the operator. Arbiter never overrides a persona.
+  - Outcome tracking: was Arbiter's synthesis correct? Filed as a decision trace with `validated` field updated after N batches.
+
 - **Injection Scanning on Context Files (from Hermes pattern)**
   - Before loading any context file (AGENTS.md, .cursorrules, SOUL.md, project vault files), scan for:
     - 13+ prompt injection regex patterns (role override, instruction override, ignore-previous)
@@ -678,6 +767,56 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 - Auto-index when `/init` or `/link` creates a new vault
 - **Temporal edges (from MiroFish pattern):** relationships in the knowledge graph carry `valid_from` / `valid_until` timestamps. Architecture decisions that get superseded have their edges invalidated rather than deleted. Scout can query "what was true about auth at the time L2 was built" vs "what's true now." Enables historical reasoning.
 
+### Session 8.3b — Predictive Intelligence Layer (v2 addition)
+
+**Goal:** TimesFM forecasting sidecar + anomaly detection + reasoning engine + recommendation store. The forward-looking intelligence that transforms the OS from reactive to self-directing.
+
+- **TimesFM Python sidecar** (`sidecar/timesfm/`):
+  - FastAPI HTTP server on configurable port (default 8787)
+  - Loads TimesFM model on startup (~200M params, ~800MB, ~30s cold start)
+  - `POST /forecast` — accepts `{ metric, values[], horizon }`, returns point forecasts + 10 quantile bands
+  - `POST /anomaly` — accepts `{ metric, values[], new_value }`, returns `{ is_anomaly, quantile_position, band_low, band_high }`
+  - `GET /health` — model loaded, last forecast time, signal count
+  - Launched by Tauri backend on app start. Health-checked before first forecast. Dashboard shows TimesFM status.
+  - **Why TimesFM over simple stats:** TimesFM isn't sized for build metrics. It's sized for running companies at scale — revenue forecasting, churn prediction, support volume projection, sales pipeline velocity. 200M params trained on 100B real-world time points. Zero-shot across any domain. Build metrics are the first signal feed; the model stays the same as signals multiply across domains.
+
+- **TimesFM Rust client** (`src-tauri/src/predictive/timesfm_client.rs`):
+  - HTTP client for the sidecar (reqwest)
+  - Retry logic (sidecar might be loading model)
+  - Response caching (same metric + values = same forecast, 5-minute TTL)
+  - Fallback: if sidecar is down, anomaly detection falls back to z-score (>2 std deviations)
+
+- **Anomaly detector** (`src-tauri/src/predictive/anomaly.rs`):
+  - On every new signal: pull metric window from aggregator, send to TimesFM `/anomaly`
+  - If anomaly detected: emit `signal.threshold` event on the bus
+  - Pre-32-datapoint fallback: z-score using simple moving average + standard deviation
+  - Minimum 32 data points per metric before TimesFM activates (model constraint)
+
+- **Reasoning engine** (`src-tauri/src/predictive/reasoning.rs`):
+  - Triggered by `signal.threshold` events and scheduled forecast recalculations
+  - Step 1: Query LightRAG for historical traces matching the current pattern
+  - Step 2: Extract reasoning + outcomes from matched traces. Filter for validated outcomes.
+  - Step 3: Compose recommendation: forecast data + historical evidence + suggested action + confidence score
+  - Step 4: File recommendation to store. Emit `forecast.alert` event.
+
+- **Recommendation store** (`src-tauri/src/predictive/recommendations.rs`):
+  - CRUD for pending/resolved recommendations
+  - Lifecycle: pending → approved/overridden/dismissed
+  - On resolution: file a decision trace recording the recommendation + operator's decision + outcome
+  - Outcome tracking: after N actions (configurable, default: 3), check whether predicted problem occurred. Update trace with `validated: true/false`.
+  - Tauri commands: `list_recommendations`, `resolve_recommendation`, `get_recommendation_accuracy`
+
+- **Dashboard surfaces** (panel types registered here, built in Phase 5 extension or Phase 8):
+  - `RecommendationSurface` — canvas-rendered cards: metric, forecast sparkline with projection, evidence trail, suggested action, confidence gauge, approve/override/dismiss. Urgency coloring (immediate=red pulse, next-action=amber, advisory=blue).
+  - `SignalCharts` — per-metric sparklines with TimesFM forecast overlay (actual + projected dashed + shaded prediction interval). Anomaly markers. Click-to-trace navigation.
+  - `TraceExplorer` — decision trace browser. Filter by source/type/time/tags. Full observation→reasoning→action→outcome chain. Causal graph view.
+  - `ContextHealth` — system intelligence health. Per-domain trends, TimesFM status, data maturity per metric.
+
+**New panel types:** RecommendationSurface, SignalCharts, TraceExplorer, ContextHealth (4 new)
+
+**Depends on:** Session 8.1 (trace store + signal store), Session 8.3 (LightRAG for reasoning queries)
+**New ADL:** OS-ADL-024 (TimesFM as predictive sidecar — domain-agnostic forecasting), OS-ADL-025 (decision traces as first-class graph edges)
+
 ### Session 8.4 — /init + /link Flows + Customer Simulator Generator
 - `/init` command: guided project creation wizard
   - **Platform Orientation first** — explains full system: personas, 105 agents, tiered MCPs (4 tiers incl. E2B + Composio), trigger words, commands
@@ -694,6 +833,14 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
   - Customer simulator generation from detected surfaces
   - LightRAG auto-indexes generated vault
 - Both flows render as guided wizards in the Chat panel
+- **/init v2 additions:**
+  - Domain adapter selection during discovery: "What functions will this system support?" Default: development. Future: operations, support, sales. Each adapter registers its event types, signals, and trace types.
+  - Per-domain signal configuration: which metrics to track, what thresholds trigger recommendations
+  - Forecast baseline note: "TimesFM needs 32 data points per metric. For a new project, forecasting activates after ~32 batches. Z-score fallback until then."
+- **/link v2 additions:**
+  - **Backfill engine** runs automatically. `backfill.rs` parses BOOT.md handoffs into decision traces, seeds the signal store with extracted metrics. Not perfectly structured (handoffs are prose), but sufficient to seed the graph.
+  - If project has 32+ batches of history, TimesFM calibration runs immediately. First forecasts available within minutes.
+  - Dashboard shows data maturity: "Backfilled 57 traces. 47 data points for finding_density (forecasting active). 12 for batch_duration_ms (need 20 more)."
 
 ### Session 8.5 — Persona Evolution Engine
 
@@ -822,6 +969,45 @@ The persona evolution data feeds the Canvas HUD:
 
 **Depends on:** Phase 1 (Tauri), Phase 8.2 (dispatch pipeline events)
 
+### Session 8.7 — Self-Modification Architecture (v2 addition)
+
+**Goal:** The OS can modify itself at three layers — config, source, and plugins. Together they enable a system that evolves its own interface, behavior, and capabilities while running.
+
+**Config Layer (default — no rebuild):**
+- Dashboard layout, panel arrangement, visible surfaces → `dashboard-config.json`
+- Signal chart definitions, intelligence surface visibility, threshold values → config entries
+- Domain adapter activation/deactivation → `forge-os.config.json`
+- Rust module `src-tauri/src/self_modify/config.rs`: schema-validated reads/writes, change validation, decision trace on every modification.
+- Tauri commands: `update_dashboard_config`, `get_dashboard_config`.
+- Frontend reads config on render. Changes are instant — no rebuild.
+
+**Source Layer (Sentinel-guarded):**
+- When config isn't expressive enough (need a genuinely new component type), the OS edits its own source.
+- `src-tauri/src/self_modify/source.rs`: Sentinel guard protocol:
+  1. Sentinel captures baseline (via preview tools — screenshot + snapshot + console)
+  2. OS writes the edit to the source file
+  3. Vite HMR hot-reloads in dev. CI/CD cycle in prod (git push → webhook → rebuild).
+  4. Sentinel re-verifies. If crash or regression → automatic rollback.
+  5. Decision trace filed: what changed, why, before/after, verification result.
+
+**Plugin Layer (dynamic loading):**
+- Domain adapters and the feedback loop can register new UI surfaces as loadable modules.
+- Plugin contract: `{ name, version, component: React.ComponentType, config: PluginConfig }`
+- Plugin host in dashboard: error-boundary-wrapped dynamic loader.
+- Plugin directory: `runtime/plugins/` (built-in) + `projects/{name}/plugins/` (project-specific).
+- A crashing plugin doesn't take down the dashboard. Disabled + trace filed.
+- Tauri commands: `list_plugins`, `enable_plugin`, `disable_plugin`.
+
+**Anti-corruption guarantees:**
+- Source modifications ALWAYS go through Sentinel guard.
+- Config modifications validated against schema before write.
+- Plugin loading sandboxed in error boundaries.
+- Every self-modification produces a decision trace.
+
+**New ADL:** OS-ADL-026 (self-modification — three-layer architecture with Sentinel guard)
+
+**Depends on:** Phase 4 (window manager), Phase 5 (canvas components), Phase 8.1 (state engine + traces)
+
 ---
 
 ## Phase 9: Integration Test + DMS Reconnection (2 sessions) — WAS PHASE 8
@@ -861,6 +1047,21 @@ The persona evolution data feeds the Canvas HUD:
 - Dev server preview showing DMS app
 - **Persona evolution test:** After DMS reconnection, verify all 10 personas' DMS-era journal entries and relationships are loaded. Pierce remembers his history with Nyx from L0-L4. Mara remembers the mobile findings patterns from L4-H.
 - **Proof:** Forge can resume building the DMS, personas remember their history, skills from DMS carry forward
+- **v2 predictive intelligence verification:**
+  - Backfill engine parses 57 DMS BOOT.md handoffs → decision traces filed → signal store seeded
+  - TimesFM calibrated on real DMS build history (47+ data points for finding_density)
+  - SignalCharts show actual DMS trends with forecast overlay
+  - TraceExplorer shows full causal history of the DMS build
+  - Inject anomalous signal → anomaly detected → reasoning engine queries LightRAG → recommendation composed → RecommendationSurface displays card → approve → outcome trace filed → validated
+  - Full intelligence chain test: push code → Sentinel `◈` detects regression → Beacon `✧` projects impact → Compass `✦` maps blast radius → recommendation surfaces → IntelligenceNetwork shows chain pulse
+- **v2 self-modification verification:**
+  - Modify dashboard-config.json → panels reorder instantly, no rebuild
+  - Accept feedback loop proposal requiring source edit → Sentinel guard: baseline → edit → HMR → verify → success → trace filed
+  - Register test plugin → renders in plugin host → crash test → error boundary catches → disable → removed
+- **v2 domain adapter verification:**
+  - Development adapter active, signals emitting, events flowing
+  - Trace schema works for non-development data (file a test "operations" trace → stored correctly, signals extracted)
+  - **The system can project where the DMS build is headed and recommend actions before the next batch starts**
 
 **Depends on:** All prior phases complete
 
@@ -868,12 +1069,12 @@ The persona evolution data feeds the Canvas HUD:
 
 ## Deferred to Post-v1
 
-- Visual regression system (Sentinel baseline capture/comparison)
+- Visual regression system (Sentinel baseline capture/comparison) — partially covered by intelligence chains
 - Scheduled tasks (periodic agent dispatch — stale findings, build progress, persona evolution)
 - n8n integration (workflow automation)
 - CLI provider implementation (shells out to arbitrary CLI tools)
 - Ollama provider implementation (local model hosting)
-- Provider marketplace / plugin system
+- Additional domain adapters beyond development (operations, support, sales) — architecture is ready, adapters built on demand
 - Customer simulation scaffolding during /init (sim-{role}.md auto-generation)
 - Competitive monitor (Calloway scheduled scans)
 
@@ -890,9 +1091,9 @@ The persona evolution data feeds the Canvas HUD:
 | 5. Canvas HUD | 3 | Living build state + agent board + findings + flow viz + graph (all as independent panel types) |
 | 6. Preview + Connectivity | 2 | Embedded dev server + service health (as independent panel types) |
 | 7. Team + Presence + Palette | 3 | Agent registry + tool gating + command registry + multi-select + action palette + orchestration UI |
-| 8. Orchestration + LightRAG + Persona Evolution | 6 | Vault watcher + skills crystallization + dispatch pipeline + goal ancestry + injection scanning + LightRAG + temporal edges + /init + /link + persona evolution engine + messaging gateway |
-| 9. Integration Test | 2 | End-to-end (incl. all new capabilities) + DMS reconnection (incl. persona memory) |
-| **Total** | **29** | **~24 on critical path (Phase 2 parallel)** |
+| 8. Orchestration + LightRAG + Predictive Intelligence + Evolution | 8 | Vault watcher + skills + dispatch pipeline + intelligence chains + CONSORTIUM + LightRAG + **TimesFM sidecar + reasoning engine + recommendations** + /init + /link + **backfill + domain adapters** + persona evolution + messaging + **self-modification architecture** |
+| 9. Integration Test | 2-3 | End-to-end + DMS reconnection + **predictive layer verification + chain cascade test + self-modification test + domain adapter test** |
+| **Total** | **31-34** | **~26-29 on critical path (Phase 2 parallel)** |
 
 ### Panel Type Registry (grows across phases)
 
@@ -900,10 +1101,10 @@ The persona evolution data feeds the Canvas HUD:
 |-------|----------------|---------------|
 | 1 (done) | Chat, Canvas HUD (placeholder), Team (placeholder), Preview (placeholder) | 4 |
 | 4 | Dock Bar (always visible, not a panel) | 4 + dock |
-| 5 | Canvas HUD (real), Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer | ~10 |
+| 5 | Canvas HUD (real), Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer, **Intelligence Network** | ~11 |
 | 6 | Dev Server Preview (multi-instance), Connectivity | ~12 |
 | 7 | Team Panel (rebuilt), Action Palette, Dispatch Queue | ~15 |
-| 8 | LightRAG Graph, Vault Watcher, Persona Evolution Graph, Skills Browser, Notification Log | ~20 |
+| 8 | LightRAG Graph, Vault Watcher, Persona Evolution Graph, Skills Browser, Notification Log, **RecommendationSurface, SignalCharts, TraceExplorer, ContextHealth** | ~24 |
 | 9+ | Per-agent detail views, document previews, report viewers... | 20+ |
 
 ### Repo Mining Integration Map
@@ -927,6 +1128,17 @@ Patterns adopted from external repo analysis (2026-04-01):
 | Temporal relationship edges | MiroFish | Phase 8 Sessions 8.3 + 8.5 |
 | Persona evolution engine | Novel (inspired by MiroFish temporal + Hermes skills) | Phase 8 Session 8.5 |
 | Messaging notification layer | Hermes/OpenClaw gateway | Phase 8 Session 8.6 |
+| Decision trace data model | Novel (from Block letter + context graph research) | Phase 8 Session 8.1 |
+| Signal streams + time-series store | Novel (from context graph research) | Phase 8 Session 8.1 |
+| Domain adapter architecture | Novel (organizational substrate vision) | Phase 8 Session 8.1 |
+| TimesFM forecasting sidecar | google-research/timesfm | Phase 8 Session 8.3b |
+| Anomaly detection via quantile bands | google-research/timesfm | Phase 8 Session 8.3b |
+| Reasoning engine (LightRAG + forecast → recommendation) | Novel (synthesis of context graph + TimesFM) | Phase 8 Session 8.3b |
+| Intelligence interaction model (10 specs + 5 chains) | Novel | Phase 8 Session 8.2 |
+| Arbiter CONSORTIUM synthesis | elder-plinius/G0DM0D3 | Phase 8 Session 8.2 |
+| Wraith Parseltongue (adversarial input perturbation) | elder-plinius/G0DM0D3 | Agent file update (Phase 2 era) |
+| Self-modification architecture (config/source/plugin) | Novel | Phase 8 Session 8.7 |
+| Intelligence glyphs + colors | Novel | Phase 5 Session 5.3 |
 
 ## Verification
 
@@ -938,4 +1150,4 @@ After each phase:
 - Canvas renders at 60fps (no jank)
 - All code pushed to CYM4TIC/forge-OS
 
-Final verification (Phase 8): Alex opens Forge, links the DMS project, LightRAG indexes it, and resumes the L4-J.2c build entirely from within the app. Gate reports export as typeset PDFs. All 105 agents respond in character through any configured provider.
+Final verification (Phase 9): Alex opens Forge, links the DMS project, backfill engine seeds 57 decision traces + signals, TimesFM calibrates on real history, LightRAG indexes it, and resumes the L4-J.2c build entirely from within the app. Gate reports export as typeset PDFs. Intelligence network shows chain propagation in real time. Recommendations surface proactive intelligence before the next batch starts. The OS can modify its own dashboard config and register new plugins. All 105 agents respond in character through any configured provider. The system remembers, reasons, predicts, recommends, and learns from its own recommendations.

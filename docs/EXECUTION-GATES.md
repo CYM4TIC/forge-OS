@@ -2,6 +2,7 @@
 
 > Pre-build validation, circuit breakers, severity calibration, and pre-mortem analysis.
 > Prevents wasted execution on vague requests and infinite spin on unsolvable problems.
+> **Enforced by:** `forge/EXECUTION-PROTOCOL.md` (The Compiler). This document defines the gates. The protocol enforces them.
 
 ---
 

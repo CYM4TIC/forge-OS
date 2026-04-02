@@ -10,12 +10,16 @@
 ```
 1. Read forge-os.config.json
    → "active_project": null  →  PLATFORM ORIENTATION (see /init or /link)
-   → "active_project": "name"  →  Load projects/{name}/vault/STARTUP.md
-                                   Load projects/{name}/vault/team-logs/nyx/BOOT.md
-                                   Ready. Wait for command.
+   → "active_project": "name"  →  Continue to step 2.
+2. Read forge/EXECUTION-PROTOCOL.md — THE COMPILER. Mandatory. Every session.
+3. Read projects/{name}/vault/team-logs/nyx/BOOT.md (position, open risks)
+4. Read forge-os/BUILD-LEARNINGS.md (gotchas for this build)
+5. Ready. Wait for command.
 ```
 
-**Do NOT** read every vault file proactively. Load context on demand.
+**The Execution Protocol is not optional.** It is the mechanical enforcer for all 41 rules, 7 contracts, 10 failure modes, and the Hyperdrive pipeline. If you skip it, you're building on discipline and memory. Discipline drifts. Memory is lossy. Load the protocol.
+
+**Do NOT** read every vault file proactively. Load context on demand — except the protocol and BOOT.md, which load every session.
 
 ---
 
@@ -131,9 +135,10 @@ Primary build workflow. Agents are dispatched, not simulated.
 
 ```
 WAKE:
-  1. Read personas/{name}/PERSONALITY.md + INTROSPECTION.md (identity layer)
-  2. Read projects/{active}/vault/team-logs/nyx/BOOT.md (position, open risks)
-  3. Read forge/BUILD-LOOP.md (execution contracts — mandatory)
+  1. Read forge/EXECUTION-PROTOCOL.md — THE COMPILER (if not already loaded in boot)
+  2. Read personas/{name}/PERSONALITY.md + INTROSPECTION.md (identity layer)
+  3. Read projects/{active}/vault/team-logs/nyx/BOOT.md (position, open risks)
+  4. Read forge/BUILD-LOOP.md (sequence reference — protocol is the enforcer)
 
 LOAD HUD (per batch):
   4. Read batch manifest → find batch entry
@@ -363,6 +368,7 @@ projects/{name}/
 | Batch manifests | `projects/{active}/vault/cross-refs/BATCH-MANIFESTS.md` |
 | Build learnings | `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` |
 | Persona gates | `projects/{active}/vault/cross-refs/PERSONA-GATES.md` |
+| **Execution protocol (THE COMPILER)** | **`forge/EXECUTION-PROTOCOL.md` ← LOAD EVERY SESSION** |
 | Methodology | `forge/METHODOLOGY.md` |
 | Build loop | `forge/BUILD-LOOP.md` |
 | Execution contracts | `forge/EXECUTION-CONTRACTS.md` |
@@ -390,6 +396,7 @@ projects/{name}/
 | `docs/DESIGN-INTELLIGENCE.md` | UX checklist, token anatomy, dark mode testing, severity mapping |
 | `docs/ECOSYSTEM-INTEL.md` | Tiered ecosystem index — what to adopt, what to skip |
 | `docs/ECOSYSTEM-PATTERNS.md` | Token optimization, anti-drift, self-learning loop, quality enforcement |
+| `forge/EXECUTION-PROTOCOL.md` | **THE COMPILER — mechanical enforcement of all rules, contracts, and gates. Load every session.** |
 | `docs/ARCHITECTURE-PLAN.md` | Overall Tauri v2 architecture plan |
 | `docs/TAURI-BUILD-PLAN.md` | 9 phases, 29 sessions — full build sequence |
 
