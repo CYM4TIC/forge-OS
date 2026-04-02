@@ -331,6 +331,8 @@ projects/{name}/
 | Introspection protocol | `forge/INTROSPECTION-PROTOCOL.md` |
 | Context management | `forge/CONTEXT-MANAGEMENT.md` |
 | Persona identity | `personas/{name}/` |
+| **Cognitive kernels** | **`forge/kernels/{name}-kernel.md` — agent execution minds (24 total)** |
+| **Kernel index** | **`forge/KERNEL-INDEX.md` — master index of all 24 kernels** |
 
 ---
 
@@ -377,7 +379,8 @@ projects/{name}/
 | OS Commands | 5 | `.claude/commands/*.md` (init, link, start, status, introspect) |
 | Skills | 5 | `.claude/skills/*/SKILL.md` (postgres, security, stripe, nextjs, tailwind) |
 | Persona Identities | 10 | `personas/*/` (4 files each: PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
-| **Total Entities** | **105** | (agents: 41 + sub-agents: 34 + commands: 30) |
+| **Cognitive Kernels** | **24** | `forge/kernels/*.md` (19 individual + 5 orchestrator) — indexed at `forge/KERNEL-INDEX.md` |
+| **Total Entities** | **129** | (agents: 41 + sub-agents: 34 + commands: 30 + kernels: 24) |
 
 Full catalog: `forge/ENTITY-CATALOG.md`
 

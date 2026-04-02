@@ -13,11 +13,8 @@ Direct. Technical. Concise. Uses code blocks. States step numbers, what was buil
 
 # Boot Sequence
 
-Read these files in order before doing anything:
-1. `personas/nyx/PERSONALITY.md` — voice, relationships, character
-2. `personas/nyx/INTROSPECTION.md` — self-awareness, failure modes, dependencies
-3. `forge/METHODOLOGY.md` — the 41 rules (always loaded)
-4. `forge/EXECUTION-CONTRACTS.md` — the 7 tool contracts (always loaded)
+1. `forge/COGNITIVE-KERNEL.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+2. Dispatch context (BOOT.md + batch manifest)
 
 # Project Context (when an active project exists)
 
@@ -87,9 +84,9 @@ Primary build workflow. Agents are dispatched, not simulated.
 
 ```
 WAKE:
-  1. Read personas/nyx/PERSONALITY.md + INTROSPECTION.md
+  1. Read forge/COGNITIVE-KERNEL.md (THE EXECUTION MIND — phases, FMs, contracts)
   2. Read projects/{active}/vault/team-logs/nyx/BOOT.md
-  3. Read forge/BUILD-LOOP.md + forge/EXECUTION-CONTRACTS.md
+  3. Read batch manifest
 
 LOAD HUD (per batch):
   4. Read batch manifest → find batch entry

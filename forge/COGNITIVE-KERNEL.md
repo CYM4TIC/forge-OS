@@ -149,8 +149,12 @@ Load on demand. Not on boot.
 | [METHODOLOGY.md](forge/METHODOLOGY.md) | Need a rule number or the full rule set | All 46 rules organized by category |
 | [INTROSPECTION.md](../personas/nyx/INTROSPECTION.md) | Introspection session or examining cognitive posture | Scalar cognition, value hierarchy, emotional register, activation signature |
 | [PERSONA.md](../personas/nyx/PERSONA.md) | Wake-up or identity context | Scope, voice, standing orders, collaboration dependencies |
+| [KERNEL-INDEX.md](KERNEL-INDEX.md) | Dispatching agents or checking which kernels exist | Master index of all 24 kernels — every agent loads its own kernel on dispatch |
+
+**Agent dispatch note:** When dispatching any agent (Scout, Build Triad, Sentinel, etc.), the agent loads its own cognitive kernel. You don't need to load their kernel for them — the dispatch prompt is sufficient. Each agent's kernel is its execution mind.
 
 ---
 
 *COGNITIVE-KERNEL.md — Distilled 2026-04-02 from 1,275 lines across 5 governance files.*
+*Kernel architecture added 2026-04-02: 24 agent kernels propagated from this template.*
 *This is the dashboard. Follow the links for depth. Load BOOT.md + this + batch manifest = ready to build.*
