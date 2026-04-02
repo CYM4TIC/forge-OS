@@ -3,7 +3,6 @@ import {
   listMessages,
   sendMessage,
   onChatStream,
-  type MessageRow,
   type StreamEvent,
   type CapabilityTier,
 } from '../lib/tauri';

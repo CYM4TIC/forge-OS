@@ -3,7 +3,7 @@
 // TODO: Wire virtual scroll (createIncrementalHeightMap + estimateCardHeight) when list > ~100.
 
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
-import { PersonaGlyph, CANVAS, STATUS, DOCK, RADIUS, TIMING } from '@forge-os/canvas-components';
+import { PersonaGlyph, CANVAS, STATUS, DOCK, RADIUS } from '@forge-os/canvas-components';
 import type { PersonaSlug } from '@forge-os/shared';
 import { PERSONA_NAMES, PERSONA_LABELS, PERSONA_SHORT } from '@forge-os/shared';
 import {
@@ -305,7 +305,8 @@ export default function FindingsPanel() {
         <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 240 }}>{error}</div>
         <button
           onClick={fetchFindings}
-          style={{ marginTop: 4, padding: '4px 12px', fontSize: 11, color: STATUS.accent, background: DOCK.activeBg, border: `1px solid ${DOCK.activeBorder}`, borderRadius: RADIUS.pill, cursor: 'pointer' }}
+          aria-label="Retry loading findings"
+          style={{ marginTop: 4, padding: '4px 12px', fontSize: 11, minHeight: 32, color: STATUS.accent, background: DOCK.activeBg, border: `1px solid ${DOCK.activeBorder}`, borderRadius: RADIUS.pill, cursor: 'pointer' }}
         >
           Retry
         </button>

@@ -10,7 +10,6 @@ import type {
   PanelType,
   PanelInstance,
   PanelPosition,
-  PanelSize,
   ResizeHandle,
   TabGroup,
   WorkspacePreset,

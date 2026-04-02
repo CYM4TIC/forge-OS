@@ -20,7 +20,6 @@ const EVENT_MAX_WIDTH = 280;
 const EVENT_GAP = 6;
 const PADDING_X = 12;
 const PADDING_Y = 8;
-const HEADER_HEIGHT = 36;
 const FONT_FAMILY = 'Inter, system-ui, sans-serif';
 const FONT = `12px ${FONT_FAMILY}`;
 

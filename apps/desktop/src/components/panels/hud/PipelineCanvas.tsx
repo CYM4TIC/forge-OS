@@ -14,6 +14,8 @@ import {
   FlowParticle,
   PersonaGlyph,
   StatusBadge,
+  PIPELINE,
+  getPipelineColor,
 } from '@forge-os/canvas-components';
 import type { NodeStatus } from '@forge-os/canvas-components';
 import type { PersonaSlug, GlyphState } from '@forge-os/canvas-components';
@@ -76,18 +78,10 @@ function agentToPersona(agent: string | null | undefined): PersonaSlug | null {
   return null;
 }
 
-// ─── Colors ─────────────────────────────────────────────────────────────────
-
-const STAGE_COLORS: Record<string, string> = {
-  scout: '#6366f1',    // indigo — Nyx dispatches
-  build: '#22c55e',    // green — active construction
-  triad: '#ec4899',    // pink — review
-  sentinel: '#f59e0b', // amber — regression watch
-};
+// ─── Colors (from PIPELINE tokens) ─────────────────────────────────────────
 
 function stageColor(stageId: string): string {
-  const key = stageId.toLowerCase();
-  return STAGE_COLORS[key] ?? '#6366f1';
+  return getPipelineColor(stageId.toLowerCase());
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -120,9 +114,8 @@ export function PipelineCanvas({ stages, width, height }: PipelineCanvasProps) {
       {/* Connection lines — rendered behind nodes */}
       {layout.connections.map((conn, i) => {
         const fromStage = stages[i];
-        const toStage = stages[i + 1];
         const isActive = fromStage?.status === 'complete' || fromStage?.status === 'active';
-        const color = isActive ? stageColor(fromStage.id) : '#2a2a3a';
+        const color = isActive ? stageColor(fromStage.id) : PIPELINE.inactive;
 
         return (
           <div
