@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::sync::Arc;
-use tauri::State;
+use tauri::{Emitter, State};
 use tokio::sync::Mutex;
 
 use crate::database::Database;
@@ -37,6 +37,7 @@ pub async fn list_providers(
 
 #[tauri::command]
 pub async fn set_default_provider(
+    app: tauri::AppHandle,
     db: State<'_, Database>,
     providers: State<'_, Arc<Mutex<ProviderRegistry>>>,
     provider_id: String,
@@ -49,6 +50,7 @@ pub async fn set_default_provider(
         let conn = db.conn.lock().map_err(|e| e.to_string())?;
         crate::database::queries::set_setting(&conn, "provider.default", &provider_id)
             .map_err(|e| e.to_string())?;
+        let _ = app.emit("provider-changed", "default-updated");
     }
 
     Ok(changed)

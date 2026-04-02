@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{Emitter, State};
 
 use crate::compact::CompactionEngine;
 use crate::compact::summary::{CompactionSummary, CompactionVariant};
@@ -99,6 +99,7 @@ pub struct StoreCompactRequest {
 
 #[tauri::command]
 pub fn store_compact_result(
+    app: tauri::AppHandle,
     db: State<'_, Database>,
     request: StoreCompactRequest,
 ) -> Result<(), String> {
@@ -121,7 +122,9 @@ pub fn store_compact_result(
         token_count: Some(token_count),
     };
 
-    engine.store_summary(&summary, &db)
+    engine.store_summary(&summary, &db)?;
+    let _ = app.emit("compact-changed", "result-stored");
+    Ok(())
 }
 
 // ── Get last summary ──

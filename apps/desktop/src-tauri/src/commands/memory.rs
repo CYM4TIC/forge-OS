@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tauri::State;
+use tauri::{Emitter, State};
 use uuid::Uuid;
 
 use crate::database::Database;
@@ -17,6 +17,7 @@ pub struct AppendMemoryRequest {
 
 #[tauri::command]
 pub fn append_memory(
+    app: tauri::AppHandle,
     db: State<'_, Database>,
     request: AppendMemoryRequest,
 ) -> Result<String, String> {
@@ -33,6 +34,7 @@ pub fn append_memory(
     logs::append_log(&conn, &id, &request.persona_id, &memory_type, &request.content, &log_date)
         .map_err(|e| e.to_string())?;
 
+    let _ = app.emit("memory-changed", "log-appended");
     Ok(id)
 }
 

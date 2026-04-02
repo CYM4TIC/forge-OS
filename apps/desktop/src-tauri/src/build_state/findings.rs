@@ -195,9 +195,9 @@ pub fn checkout_finding(
         params![id, agent_slug, now],
     )?;
     if rows == 0 {
-        return Err(rusqlite::Error::InvalidParameterName(
-            format!("Finding '{}' is already checked out by another agent", id),
-        ));
+        // Finding is already checked out by another agent — no rows were updated.
+        // Using QueryReturnedNoRows as the semantic equivalent of "update matched nothing."
+        return Err(rusqlite::Error::QueryReturnedNoRows);
     }
     Ok(())
 }

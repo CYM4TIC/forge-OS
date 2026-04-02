@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tauri::State;
+use tauri::{Emitter, State};
 use uuid::Uuid;
 
 use crate::database::Database;
@@ -25,6 +25,7 @@ pub struct UpdateTeamMemberRequest {
 
 #[tauri::command]
 pub fn update_team_member(
+    app: tauri::AppHandle,
     db: State<'_, Database>,
     request: UpdateTeamMemberRequest,
 ) -> Result<TeamFile, String> {
@@ -35,7 +36,9 @@ pub fn update_team_member(
         subscriptions: request.subscriptions,
         permission_mode: request.permission_mode,
     };
-    team_file::update_team_member(&db, &request.agent_id, updates)
+    let result = team_file::update_team_member(&db, &request.agent_id, updates)?;
+    let _ = app.emit("team-changed", "member-updated");
+    Ok(result)
 }
 
 // ── Session checkpoint commands ──
