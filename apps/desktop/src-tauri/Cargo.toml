@@ -24,5 +24,6 @@ chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
 futures = "0.3"
 keyring = { version = "3", features = ["sync-secret-service"] }
+tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
 regex = "1"

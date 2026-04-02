@@ -833,6 +833,15 @@ export function readVaultFile(vaultRoot: string, filePath: string): Promise<stri
   return invoke('read_vault_file', { vaultRoot, filePath });
 }
 
+// ── Dialog (P6-D: directory picker for dev server cwd) ──
+
+export async function openDirectoryDialog(): Promise<string | null> {
+  if (!isTauriRuntime) return null;
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const selected = await open({ directory: true, multiple: false });
+  return typeof selected === 'string' ? selected : null;
+}
+
 // ── Dev Server Types (P6) ──
 
 export type DevServerStatus = 'starting' | 'running' | 'healthy' | 'degraded' | 'stopped' | 'error';
