@@ -46,7 +46,7 @@ export function PanelContainer({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback(
-    (e: MouseEvent) => {
+    (_e: MouseEvent) => {
       onFocus(panel.id);
     },
     [panel.id, onFocus],

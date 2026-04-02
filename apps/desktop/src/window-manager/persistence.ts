@@ -5,7 +5,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauriRuntime } from '../lib/tauri';
 import type { ForgeWindowManager } from './manager';
-import type { PanelInstance, TabGroup, WorkspacePreset, PanelLayoutRow, WorkspacePresetRow } from './types';
+import type { PanelInstance, TabGroup, WorkspacePreset, WorkspacePresetRow } from './types';
 
 // ── Tauri command wrappers ──
 

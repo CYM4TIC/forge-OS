@@ -11,9 +11,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { CANVAS, ZONES, getZoneColor, getZoneLabel } from './canvas-tokens';
-
-const ZONE_COLORS = ZONES;
+import { CANVAS, getZoneColor, getZoneLabel } from './canvas-tokens';
 
 const COLORS = {
   bg: CANVAS.bg,

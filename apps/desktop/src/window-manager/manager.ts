@@ -4,11 +4,9 @@
 
 import type {
   PanelType,
-  PanelState,
   PanelInstance,
   PanelPosition,
   PanelSize,
-  PanelConstraints,
   PanelTypeInfo,
   TabGroup,
   WorkspacePreset,

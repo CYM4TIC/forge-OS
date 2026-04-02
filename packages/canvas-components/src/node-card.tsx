@@ -6,7 +6,7 @@
  */
 
 import { useRef, useEffect, useCallback } from 'react';
-import { setupCanvasForHiDPI, fitToContainer, renderText } from '@forge-os/layout-engine';
+import { setupCanvasForHiDPI, fitToContainer } from '@forge-os/layout-engine';
 import { CANVAS, STATUS } from './canvas-tokens';
 
 const COLORS = {
