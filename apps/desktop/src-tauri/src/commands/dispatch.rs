@@ -61,8 +61,15 @@ pub async fn dispatch_agent(
         timeout_ms: request.timeout_ms,
     };
 
+    let slug = agent_request.agent_slug.clone();
+
     let mut disp = dispatcher.lock().await;
-    disp.dispatch(agent_request, providers.inner().clone(), app).await
+    let dispatch_id = disp.dispatch(agent_request, providers.inner().clone(), app.clone()).await?;
+
+    // Emit HUD dispatch flow event AFTER successful dispatch (K-LOW-3: no false-positive trails)
+    crate::hud::dispatch_events::emit_agent_dispatched(&app, &slug);
+
+    Ok(dispatch_id)
 }
 
 /// Get the status of a dispatched agent.
