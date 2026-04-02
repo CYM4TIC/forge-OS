@@ -9,7 +9,7 @@ interface DispatchLogProps {
 export default function DispatchLog({ results, onClear }: DispatchLogProps) {
   if (results.length === 0) {
     return (
-      <div className="flex items-center justify-center py-6 text-text-muted text-xs">
+      <div role="status" className="flex items-center justify-center py-6 text-text-muted text-xs">
         No completed dispatches yet
       </div>
     );

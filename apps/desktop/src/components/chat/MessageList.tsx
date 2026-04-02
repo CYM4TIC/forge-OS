@@ -20,7 +20,7 @@ export default function MessageList({ messages, isStreaming }: MessageListProps)
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div role="status" className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-text-muted text-sm">No messages yet</p>
           <p className="text-text-muted text-xs mt-1">Type a message to begin</p>

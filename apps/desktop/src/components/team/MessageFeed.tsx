@@ -48,7 +48,7 @@ function truncatePayload(payload: string, maxLen = 80): string {
 export default function MessageFeed({ messages, onMarkRead }: MessageFeedProps) {
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center py-6 text-text-muted text-xs">
+      <div role="status" className="flex items-center justify-center py-6 text-text-muted text-xs">
         No messages
       </div>
     );
