@@ -15,6 +15,7 @@ import {
   ContextMeterCanvas,
   DockPill,
   PersonaGlyph,
+  STATUS,
 } from '@forge-os/canvas-components';
 import type { GlyphState } from '@forge-os/canvas-components';
 import type { PersonaSlug } from '@forge-os/shared';
@@ -43,7 +44,7 @@ export default function ComponentTestPage() {
       <Section title="StatCard">
         <StatCard width={160} height={120} value="57" label="Batches Done" trend="up" trendText="+3" />
         <StatCard width={160} height={120} value="$4.23" label="Token Cost" trend="neutral" trendText="$4.23" />
-        <StatCard width={200} height={140} value="89%" label="Phase Completion" trend="up" trendText="+12%" valueColor="#22c55e" />
+        <StatCard width={200} height={140} value="89%" label="Phase Completion" trend="up" trendText="+12%" valueColor={STATUS.success} />
         <StatCard width={120} height={90} value="12" label="Findings" trend="down" trendText="-5" />
       </Section>
 
@@ -87,7 +88,7 @@ export default function ComponentTestPage() {
             cp2: { x: 140, y: 70 },
             end: { x: 190, y: 40 },
           }}
-          color="#22c55e"
+          color={STATUS.success}
           radius={4}
           duration={1500}
         />
@@ -100,14 +101,14 @@ export default function ComponentTestPage() {
           height={80}
           from={{ x: 20, y: 40 }}
           to={{ x: 230, y: 40 }}
-          color="#6366f1"
+          color={STATUS.accent}
         />
         <ConnectionLine
           width={200}
           height={100}
           from={{ x: 20, y: 20 }}
           to={{ x: 180, y: 80 }}
-          color="#22c55e"
+          color={STATUS.success}
           curvature={0.5}
         />
       </Section>
@@ -126,7 +127,7 @@ export default function ComponentTestPage() {
         <TokenGauge width={100} height={50} value="$4.23" maxValue="$99.99" label="Cost" />
         <TokenGauge width={80} height={50} value="57" maxValue="999" label="Batches" />
         <TokenGauge width={120} height={50} value="0.09ms" maxValue="99.99ms" label="Layout" />
-        <TokenGauge width={100} height={50} value="$10.00" maxValue="$99.99" label="Budget" valueColor="#22c55e" />
+        <TokenGauge width={100} height={50} value="$10.00" maxValue="$99.99" label="Budget" valueColor={STATUS.success} />
       </Section>
 
       {/* ContextMeterCanvas */}
