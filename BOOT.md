@@ -8,9 +8,9 @@ project: forge_os
 architecture: tauri_v2
 phase: 5_IN_PROGRESS
 current_session: 5.3_IN_PROGRESS
-current_batch: P5-M
-batches_done: 83
-last_commit: 1bb5cfe
+current_batch: P5-N
+batches_done: 84
+last_commit: 22f9993
 session_5_1_complete: true
 session_5_2_complete: true
 phases_total: 9
@@ -30,7 +30,7 @@ phase_4_complete: true
 ---
 
 ## Current Position
-- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L DONE. Dispatch Event Bus: `dispatch_events.rs` (5 emission functions) hooked into dispatch pipeline. `trail-types.ts` (BezierPath, ParticleTrail, TrailConfig, TrailState) ready for P5-M flow overlay. Kehinde gate: 0 CRITs, 0 HIGHs. K-LOW-3 fixed (emission post-success only). 4 batches remain (P5-M through P5-P).
+- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M DONE. Flow visualization live: `FlowOverlay.tsx` renders persona glyph particle trails along bezier curves on agent dispatch. Ghost trails, severity-colored findings return, per-flow-type configs. `bezier-paths.ts` computes arc paths between pipeline nodes with concurrent trail offset. CanvasPanel layers FlowOverlay over PipelineCanvas (z-order: pipeline → flow → gauges). Mara+Riven gate: 2 HIGHs + 5 MEDs fixed (a11y, tokens, motion, perf cap). 3 batches remain (P5-N through P5-P).
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
 - **Phase:** 4 — Runtime Upgrades + Window Manager + Pretext + Document Gen. **COMPLETE.**
 - **PHASE 4 COMPLETE.** All 20 batches done (P4-A through P4-T). 5 sessions (4.0-4.4). ContextEngine trait + TTL pruning + iterative compression + FTS5 + atomic checkout + floating window manager + dock bar + Pretext layout engine + 9 canvas components + persona glyphs + document generation engine (4 templates, dual PDF+markdown output). 3 new packages (@forge-os/layout-engine, @forge-os/canvas-components, @forge-os/document-gen). 46 Tauri commands. 9 React hooks.
@@ -122,7 +122,7 @@ phase_4_complete: true
 | P5-J | Session Timeline Text River | 5.2 | ✅ DONE |
 | P5-K | Session 5.2 Integration | 5.2 | ✅ DONE |
 | P5-L | Dispatch Event Bus + Trails | 5.3 | ✅ DONE |
-| P5-M | Flow Overlay Particles | 5.3 | 🔲 |
+| P5-M | Flow Overlay Particles | 5.3 | ✅ DONE |
 | P5-N | Vault Browser Panel | 5.3 | 🔲 |
 | P5-O | Graph Viewer Panel | 5.3 | 🔲 |
 | P5-P | Phase 5 Integration + Ambient | 5.3 | 🔲 |
@@ -141,6 +141,14 @@ See `BUILD-LEARNINGS.md` (repo root) for OS-specific gotchas and patterns.
 - Segment files in `segments/` are from OLD block-based plan — superseded by BATCH-MANIFESTS.md
 
 ## Session Log
+
+**2026-04-02 — P5-M: Flow Overlay — Particle Trails**
+- **SCOPE:** Animated persona glyph trails on agent dispatch. Bezier path computation. CanvasPanel integration.
+- **FILES (4):** FlowOverlay.tsx (NEW — ~300 lines), bezier-paths.ts (NEW — 129 lines), trail-types.ts (fixed BezierPath collision), CanvasPanel.tsx (FlowOverlay layer + memoized nodes).
+- **FLOW OVERLAY:** Listens to `hud:dispatch-flow` events. Creates ParticleTrail per target agent. rAF animation loop. Ghost trail (N fading PersonaGlyph copies behind lead). Decay phase after arrival. Toggle button with focus style + aria-pressed.
+- **BEZIER PATHS:** `computeTrailPath` arcs above pipeline connections (30px + 12px/concurrent). `resolveStageIndex` maps all 10 personas + intelligences. `evalBezier` cubic evaluation.
+- **GATE (Mara + Riven):** 10 findings (0 CRIT, 2 HIGH, 5 MED, 3 LOW). ALL fixed: MARA-HIGH-1 (toggle out of aria-hidden), RIVEN-HIGH-1 (design tokens), MARA-MED-1 (prefers-reduced-motion), MARA-MED-2 (MAX_ACTIVE_TRAILS=20), RIVEN-MED-1 (named glow constants), RIVEN-MED-3 (useRef counter), MARA-LOW-2 (focus ring).
+- **COMMIT:** `22f9993`.
 
 **2026-04-02 — P5-L: Dispatch Event Bus + Trail Types**
 - **SCOPE:** Backend dispatch event emission + frontend particle trail type system for flow visualization.
