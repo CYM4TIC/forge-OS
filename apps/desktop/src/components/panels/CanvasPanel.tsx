@@ -109,6 +109,18 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
     );
   }
 
+  // Empty state — no pipeline stages and no snapshot (no BOOT.md loaded)
+  if (!pipeline.length && !snapshot && dimensions.width > 0) {
+    return (
+      <div style={CENTER_STATE}>
+        <div style={{ textAlign: 'center', padding: '0 16px' }}>
+          <span style={{ color: CANVAS.muted, fontSize: 13, display: 'block', marginBottom: 4 }}>No build state</span>
+          <span style={{ color: CANVAS.muted, fontSize: 11, opacity: 0.7 }}>Load a BOOT.md to activate the pipeline</span>
+        </div>
+      </div>
+    );
+  }
+
   const gaugesHeight = dimensions.height - pipelineHeight;
 
   const GAUGE_CELL: React.CSSProperties = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 };

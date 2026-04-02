@@ -127,12 +127,12 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'gate_review',
     name: 'Gate Review',
-    description: 'Canvas HUD + Findings + Agent Board for gate sessions',
+    description: 'Agent Board + Findings + Timeline for gate sessions',
     isBuiltIn: true,
     panels: [
-      { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 640, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'findings', state: 'docked', position: { x: 640, y: 0 }, size: { width: 420, height: 350 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'agent_board', state: 'docked', position: { x: 640, y: 350 }, size: { width: 420, height: 250 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'agent_board', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 350 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'findings', state: 'docked', position: { x: 500, y: 0 }, size: { width: 420, height: 350 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'session_timeline', state: 'docked', position: { x: 0, y: 350 }, size: { width: 920, height: 250 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {

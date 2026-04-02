@@ -7,7 +7,7 @@
  * Connection lines animate between nodes. Responds to container resize.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import {
   NodeCard,
   ConnectionLine,
@@ -16,12 +16,29 @@ import {
   StatusBadge,
   PIPELINE,
   STATUS,
+  CANVAS,
   getPipelineColor,
 } from '@forge-os/canvas-components';
 import type { NodeStatus, GlyphState } from '@forge-os/canvas-components';
 import type { PersonaSlug } from '@forge-os/shared';
 import type { PipelineStage, StageStatus } from '../../../lib/tauri';
 import { computePipelineLayout } from './pipeline-layout';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
+
+// ─── Ambient Animation Constants ───────────────────────────────────────────
+
+/** Max vertical drift in px for idle sine wave */
+const IDLE_DRIFT_PX = 3;
+/** Cycle period in ms for idle drift */
+const IDLE_DRIFT_PERIOD = 4000;
+/** Ember glow intensity for idle persona glyphs (0-1) */
+const EMBER_GLOW = 0.4;
+/** Glow intensity when active — for pulse variation */
+const ACTIVE_GLOW_BASE = 1.0;
+/** Glow pulse amplitude on active nodes */
+const ACTIVE_GLOW_PULSE = 0.3;
+/** Pulse period in ms for active glow variation */
+const ACTIVE_PULSE_PERIOD = 2000;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -95,21 +112,47 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
     [width, height, stages.length],
   );
 
+  // ── Ambient animation phase (0-1 cycling, throttled to ~15fps) ──────────
+  const [animPhase, setAnimPhase] = useState(0);
+  const rafRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+  const lastUpdateRef = useRef<number>(0);
+  const prefersReducedMotion = useReducedMotion();
+
+  /** Throttle interval — 15fps is smooth enough for 3px drift */
+  const THROTTLE_MS = 66; // ~15fps
+
+  const animate = useCallback((timestamp: number) => {
+    if (!startRef.current) startRef.current = timestamp;
+    // Throttle state updates to ~15fps to reduce GC pressure
+    if (timestamp - lastUpdateRef.current >= THROTTLE_MS) {
+      const elapsed = timestamp - startRef.current;
+      const phase = (elapsed % IDLE_DRIFT_PERIOD) / IDLE_DRIFT_PERIOD;
+      setAnimPhase(phase);
+      lastUpdateRef.current = timestamp;
+    }
+    rafRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [animate, prefersReducedMotion]);
+
   if (!stages.length || width === 0 || height === 0) {
     return (
       <div
-        className="flex items-center justify-center"
-        style={{ width, height }}
+        style={{ width, height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <span className="text-text-muted text-sm">No pipeline data</span>
+        <span style={{ color: CANVAS.muted, fontSize: 13 }}>No pipeline data</span>
       </div>
     );
   }
 
   return (
     <div
-      className="relative"
-      style={{ width, height }}
+      style={{ width, height, position: 'relative' }}
       role="img"
       aria-label={`Pipeline: ${stages.map((s) => `${s.label} (${s.status})`).join(' → ')}`}
     >
@@ -122,8 +165,7 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
         return (
           <div
             key={`conn-${i}`}
-            className="absolute"
-            style={{ top: 0, left: 0, width, height, pointerEvents: 'none' }}
+            style={{ position: 'absolute', top: 0, left: 0, width, height, pointerEvents: 'none' }}
           >
             <ConnectionLine
               width={width}
@@ -150,8 +192,7 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
         return (
           <div
             key={`particle-${i}`}
-            className="absolute"
-            style={{ top: 0, left: 0, width, height, pointerEvents: 'none' }}
+            style={{ position: 'absolute', top: 0, left: 0, width, height, pointerEvents: 'none' }}
           >
             <FlowParticle
               width={width}
@@ -175,20 +216,34 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
 
         const persona = agentToPersona(stage.agent);
         const isActive = stage.status === 'active';
+        const isIdle = stage.status === 'idle';
         const isClickable = onStageClick && (isActive || stage.status === 'complete' || stage.status === 'error');
+
+        // Ambient idle drift — each node offset by index to create wave effect
+        const nodePhase = (animPhase + i * 0.25) % 1;
+        const driftY = isIdle && !prefersReducedMotion
+          ? Math.sin(nodePhase * Math.PI * 2) * IDLE_DRIFT_PX
+          : 0;
+
+        // Pulse-varying glow for active nodes
+        const activePulsePhase = (animPhase * IDLE_DRIFT_PERIOD / ACTIVE_PULSE_PERIOD + i * 0.15) % 1;
+        const activeGlow = isActive && !prefersReducedMotion
+          ? ACTIVE_GLOW_BASE + Math.sin(activePulsePhase * Math.PI * 2) * ACTIVE_GLOW_PULSE
+          : isActive ? ACTIVE_GLOW_BASE : EMBER_GLOW;
 
         return (
           <div
             key={stage.id}
-            className="absolute"
             style={{
+              position: 'absolute',
               left: rect.x,
-              top: rect.y,
+              top: rect.y + driftY,
               width: rect.width,
               height: rect.height,
               cursor: isClickable ? 'pointer' : undefined,
               outline: 'none',
               borderRadius: 10,
+              transition: prefersReducedMotion ? undefined : 'top 0.3s ease-out',
             }}
             // Focus-visible ring via CSS custom property — neon accent glow
             onFocus={isClickable ? (e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}, 0 0 8px ${STATUS.accent}40`; } : undefined}
@@ -213,8 +268,8 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
             {/* Status badge — top right */}
             {stage.status !== 'idle' && (
               <div
-                className="absolute"
                 style={{
+                  position: 'absolute',
                   top: 4,
                   right: 4,
                   pointerEvents: 'none',
@@ -234,21 +289,22 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
               </div>
             )}
 
-            {/* Persona glyph — centered inside node when agent is active */}
-            {persona && isActive && (
+            {/* Persona glyph — ember state when idle (soft glow), full state when active */}
+            {persona && (isActive || isIdle) && (
               <div
-                className="absolute"
                 style={{
+                  position: 'absolute',
                   left: (rect.width - layout.glyphSize) / 2,
                   bottom: 4,
                   pointerEvents: 'none',
+                  opacity: isIdle ? 0.5 : 1,
                 }}
               >
                 <PersonaGlyph
                   size={layout.glyphSize}
                   persona={persona}
-                  state={stageStatusToGlyphState(stage.status)}
-                  glowIntensity={1.2}
+                  state={isIdle ? 'idle' : stageStatusToGlyphState(stage.status)}
+                  glowIntensity={activeGlow}
                 />
               </div>
             )}

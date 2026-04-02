@@ -21,13 +21,17 @@ import type { NodeRect } from './pipeline-layout';
 import type { ParticleTrail, TrailConfig } from './trail-types';
 import { DEFAULT_TRAIL_CONFIG, FLOW_TRAIL_CONFIGS, INITIAL_TRAIL_STATE } from './trail-types';
 import { computeDispatchPath, resolveStageIndex, evalBezier } from './bezier-paths';
-import { STATUS, CANVAS } from '@forge-os/canvas-components';
+import { STATUS, CANVAS, RADIUS } from '@forge-os/canvas-components';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 // RIVEN-MED-1: Named glow constants instead of inline magic numbers
 const GLOW_BLUR_GHOST = 4;  // px base blur for ghost trail particles
 const GLOW_BLUR_LEAD = 8;   // px base blur for lead particle
 
 // ─── Types ──────────────────────────────────────────────────────────────────
+
+/** Max stored events for replay history */
+const MAX_REPLAY_HISTORY = 100;
 
 interface FlowOverlayProps {
   /** Pipeline node rects from computePipelineLayout. */
@@ -39,6 +43,12 @@ interface FlowOverlayProps {
   visible?: boolean;
   /** Toggle visibility callback. */
   onToggle?: () => void;
+}
+
+/** Stored dispatch event with timestamp for replay */
+interface ReplayEntry {
+  event: DispatchFlowEvent;
+  timestamp: number;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -78,66 +88,132 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
   // RIVEN-MED-3: component-scoped counter for unique trail IDs
   const trailCounterRef = useRef(0);
 
-  // MARA-MED-1: Respect prefers-reduced-motion
-  const prefersReducedMotion = typeof window !== 'undefined'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ── Replay System ──────────────────────────────────────────────────────
+  const [replayHistory, setReplayHistory] = useState<ReplayEntry[]>([]);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const replayIndexRef = useRef(0);
+  const replayTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // MARA-MED-1: Respect prefers-reduced-motion (reactive via hook)
+  const prefersReducedMotion = useReducedMotion();
+
+  // ── Trail Creation (shared by live events + replay) ─────────────────────
+
+  const injectEvent = useCallback((event: DispatchFlowEvent) => {
+    if (!nodesRef.current.length) return;
+
+    const sourceSlug = event.source_agent.toLowerCase();
+    const sourceIndex = resolveStageIndex(sourceSlug);
+    const sourcePersona: PersonaSlug | null = isPersonaSlug(sourceSlug) ? sourceSlug : null;
+
+    const newTrails: ParticleTrail[] = [];
+    event.target_agents.forEach((target, i) => {
+      const targetSlug = target.toLowerCase();
+      const targetIndex = resolveStageIndex(targetSlug);
+      const targetPersona: PersonaSlug | null = isPersonaSlug(targetSlug) ? targetSlug : null;
+
+      const path = computeDispatchPath(
+        nodesRef.current,
+        sourceIndex,
+        targetIndex,
+        activeCountRef.current + i,
+      );
+      if (!path) return;
+
+      const trailId = `trail-${++trailCounterRef.current}`;
+      const color = severityToColor(event.severity)
+        ?? (targetPersona ? PERSONA_COLORS[targetPersona] : PERSONA_COLORS.nyx);
+
+      newTrails.push({
+        id: trailId,
+        source_glyph: sourcePersona ?? 'nyx',
+        target_glyphs: targetPersona ? [targetPersona] : ['nyx'],
+        path: [path],
+        color,
+        progress: 0,
+        flow_type: event.flow_type,
+        severity: event.severity,
+        created_at: performance.now(),
+      });
+    });
+
+    if (newTrails.length > 0) {
+      activeCountRef.current += newTrails.length;
+      setTrails((prev) => {
+        // MARA-MED-2: cap active trails — expire oldest if over limit
+        const combined = [...prev.active, ...newTrails];
+        const capped = combined.length > MAX_ACTIVE_TRAILS
+          ? combined.slice(combined.length - MAX_ACTIVE_TRAILS)
+          : combined;
+        return { ...prev, active: capped };
+      });
+    }
+  }, []);
 
   // ── Event Listener ──────────────────────────────────────────────────────
 
   useEffect(() => {
     const unsub = onDispatchFlow((event: DispatchFlowEvent) => {
-      if (!nodesRef.current.length) return;
-
-      const sourceSlug = event.source_agent.toLowerCase();
-      const sourceIndex = resolveStageIndex(sourceSlug);
-      const sourcePersona: PersonaSlug | null = isPersonaSlug(sourceSlug) ? sourceSlug : null;
-
-      // Create a trail for each target agent
-      const newTrails: ParticleTrail[] = [];
-      event.target_agents.forEach((target, i) => {
-        const targetSlug = target.toLowerCase();
-        const targetIndex = resolveStageIndex(targetSlug);
-        const targetPersona: PersonaSlug | null = isPersonaSlug(targetSlug) ? targetSlug : null;
-
-        const path = computeDispatchPath(
-          nodesRef.current,
-          sourceIndex,
-          targetIndex,
-          activeCountRef.current + i,
-        );
-        if (!path) return;
-
-        const trailId = `trail-${++trailCounterRef.current}`;
-        const color = severityToColor(event.severity)
-          ?? (targetPersona ? PERSONA_COLORS[targetPersona] : PERSONA_COLORS.nyx);
-
-        newTrails.push({
-          id: trailId,
-          source_glyph: sourcePersona ?? 'nyx',
-          target_glyphs: targetPersona ? [targetPersona] : ['nyx'],
-          path: [path],
-          color,
-          progress: 0,
-          flow_type: event.flow_type,
-          severity: event.severity,
-          created_at: performance.now(),
-        });
+      // Record to history
+      setReplayHistory((prev) => {
+        const entry: ReplayEntry = { event, timestamp: Date.now() };
+        const updated = [...prev, entry];
+        return updated.length > MAX_REPLAY_HISTORY
+          ? updated.slice(updated.length - MAX_REPLAY_HISTORY)
+          : updated;
       });
 
-      if (newTrails.length > 0) {
-        activeCountRef.current += newTrails.length;
-        setTrails((prev) => {
-          // MARA-MED-2: cap active trails — expire oldest if over limit
-          const combined = [...prev.active, ...newTrails];
-          const capped = combined.length > MAX_ACTIVE_TRAILS
-            ? combined.slice(combined.length - MAX_ACTIVE_TRAILS)
-            : combined;
-          return { ...prev, active: capped };
-        });
+      // Inject live trail (unless replaying — avoid mixing live + replay)
+      if (!isReplaying) {
+        injectEvent(event);
       }
     });
 
     return () => { unsub.then((fn) => fn()); };
+  }, [injectEvent, isReplaying]);
+
+  // ── Replay Control ──────────────────────────────────────────────────────
+
+  const startReplay = useCallback(() => {
+    if (replayHistory.length === 0) return;
+    // Clear any in-progress replay timers before starting fresh
+    for (const t of replayTimersRef.current) clearTimeout(t);
+    replayTimersRef.current = [];
+    setIsReplaying(true);
+    replayIndexRef.current = 0;
+    setTrails(INITIAL_TRAIL_STATE);
+    activeCountRef.current = 0;
+
+    // Schedule events using relative timing from the recorded history
+    const baseTime = replayHistory[0].timestamp;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    replayHistory.forEach((entry, i) => {
+      const delay = Math.min(entry.timestamp - baseTime, 30000); // Cap at 30s to avoid extremely long replays
+      timers.push(setTimeout(() => {
+        injectEvent(entry.event);
+        replayIndexRef.current = i + 1;
+        // End replay when last event fires
+        if (i === replayHistory.length - 1) {
+          timers.push(setTimeout(() => setIsReplaying(false), 2000));
+        }
+      }, delay));
+    });
+    replayTimersRef.current = timers;
+  }, [replayHistory, injectEvent]);
+
+  const stopReplay = useCallback(() => {
+    setIsReplaying(false);
+    for (const t of replayTimersRef.current) clearTimeout(t);
+    replayTimersRef.current = [];
+    setTrails(INITIAL_TRAIL_STATE);
+    activeCountRef.current = 0;
+  }, []);
+
+  // Cleanup replay timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const t of replayTimersRef.current) clearTimeout(t);
+    };
   }, []);
 
   // ── Animation Loop ────────────────────────────────────────────────────────
@@ -193,33 +269,53 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
 
   return (
     <>
-      {/* Toggle button — outside aria-hidden for screen reader access (MARA-HIGH-1) */}
-      {onToggle && (
-        <button
-          onClick={onToggle}
-          style={{
-            position: 'absolute',
-            top: 4,
-            right: 4,
-            pointerEvents: 'auto',
-            background: `${CANVAS.bg}cc`,
-            border: `1px solid ${CANVAS.border}`,
-            borderRadius: 4,
-            color: visible ? STATUS.accent : CANVAS.muted,
-            fontSize: 10,
-            padding: '2px 6px',
-            cursor: 'pointer',
-            zIndex: 20,
-            outline: 'none',
-          }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}`; }}
-          onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
-          aria-label={visible ? 'Hide flow overlay' : 'Show flow overlay'}
-          aria-pressed={visible}
-        >
-          Flow
-        </button>
-      )}
+      {/* Toggle buttons — outside aria-hidden for screen reader access (MARA-HIGH-1) */}
+      <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 4, zIndex: 20, pointerEvents: 'auto' }}>
+        {/* Replay button */}
+        {replayHistory.length > 0 && (
+          <button
+            onClick={isReplaying ? stopReplay : startReplay}
+            style={{
+              background: `${CANVAS.bg}cc`,
+              border: `1px solid ${CANVAS.border}`,
+              borderRadius: RADIUS.pill,
+              color: isReplaying ? STATUS.warning : CANVAS.muted,
+              fontSize: 10,
+              padding: '2px 6px',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}`; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
+            aria-label={isReplaying ? `Stop replay (${replayIndexRef.current}/${replayHistory.length})` : `Replay ${replayHistory.length} dispatch events`}
+          >
+            {isReplaying ? '⏹' : '⏵'} {replayHistory.length}
+          </button>
+        )}
+
+        {/* Flow visibility toggle */}
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            style={{
+              background: `${CANVAS.bg}cc`,
+              border: `1px solid ${CANVAS.border}`,
+              borderRadius: RADIUS.pill,
+              color: visible ? STATUS.accent : CANVAS.muted,
+              fontSize: 10,
+              padding: '2px 6px',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}`; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
+            aria-label={visible ? 'Hide flow overlay' : 'Show flow overlay'}
+            aria-pressed={visible}
+          >
+            Flow
+          </button>
+        )}
+      </div>
 
       {/* Decorative particle layer — hidden from screen readers */}
       <div
