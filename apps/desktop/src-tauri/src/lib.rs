@@ -19,6 +19,7 @@ mod swarm;
 
 use std::sync::Arc;
 
+use commands::devserver::DevServerManager;
 use database::Database;
 use dispatch::AgentDispatcher;
 use providers::claude::ClaudeProvider;
@@ -159,6 +160,7 @@ fn init_providers(db: &Database) -> ProviderRegistry {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_data_dir = app
                 .path()
@@ -183,6 +185,7 @@ pub fn run() {
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
+            app.manage(DevServerManager::new());
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -273,6 +276,12 @@ pub fn run() {
             commands::hud::get_finding_counts,
             commands::vault::list_vault_tree,
             commands::vault::read_vault_file,
+            commands::devserver::start_dev_server,
+            commands::devserver::stop_dev_server,
+            commands::devserver::restart_dev_server,
+            commands::devserver::remove_dev_server,
+            commands::devserver::list_dev_servers,
+            commands::devserver::get_server_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
