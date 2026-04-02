@@ -61,6 +61,25 @@ export const TIMING = {
   fast: '0.2s ease',
 } as const;
 
+/** Glow and tint variants (alpha-channel derivatives of STATUS colors) */
+export const GLOW = {
+  accent: 'rgba(99, 102, 241, 0.3)',
+  accentSubtle: 'rgba(99, 102, 241, 0.2)',
+  danger: 'rgba(239, 68, 68, 0.3)',
+  dangerSubtle: 'rgba(239, 68, 68, 0.2)',
+  success: 'rgba(34, 197, 94, 0.15)',
+  warning: 'rgba(245, 158, 11, 0.15)',
+} as const;
+
+/** Background tints for badges and pills */
+export const TINT = {
+  danger: 'rgba(239, 68, 68, 0.15)',
+  success: 'rgba(34, 197, 94, 0.15)',
+  accent: 'rgba(99, 102, 241, 0.15)',
+  warning: 'rgba(245, 158, 11, 0.15)',
+  neutral: 'rgba(90, 90, 110, 0.15)',
+} as const;
+
 /** Dock pill colors (derived from base tokens) */
 export const DOCK = {
   activeBg: 'rgba(99, 102, 241, 0.2)',

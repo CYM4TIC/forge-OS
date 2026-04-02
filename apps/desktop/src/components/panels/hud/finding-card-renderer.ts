@@ -4,7 +4,7 @@
  * Used by FindingsPanel for virtualized list.
  */
 
-import { CANVAS, STATUS, RADIUS, TIMING } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, GLOW, TINT, RADIUS, TIMING } from '@forge-os/canvas-components';
 import type { HudSeverity } from '../../../lib/tauri';
 
 // ─── Severity Visual Config ────────────────────────────────────────────────
@@ -22,14 +22,14 @@ const SEVERITY_MAP: Record<HudSeverity, SeverityVisual> = {
     fontSize: 20,
     fontWeight: 700,
     color: STATUS.danger,
-    glowColor: 'rgba(239, 68, 68, 0.3)',
+    glowColor: GLOW.danger,
     label: 'CRIT',
   },
   high: {
     fontSize: 16,
     fontWeight: 600,
-    color: STATUS.accent,
-    glowColor: 'rgba(99, 102, 241, 0.2)',
+    color: STATUS.critical,  // Orange — warm urgency, distinct from accent (indigo)
+    glowColor: GLOW.accentSubtle,
     label: 'HIGH',
   },
   medium: {
@@ -109,6 +109,15 @@ export interface FindingCardStyles {
   statusBadge: React.CSSProperties;
 }
 
+function getStatusBadgeColors(status: string): { background: string; color: string } {
+  switch (status) {
+    case 'resolved': return { background: TINT.success, color: STATUS.success };
+    case 'acknowledged': return { background: TINT.warning, color: STATUS.warning };
+    case 'deferred': return { background: TINT.neutral, color: CANVAS.muted };
+    default: return { background: TINT.danger, color: STATUS.danger }; // open
+  }
+}
+
 export function buildCardStyles(
   severity: string,
   status: string,
@@ -166,8 +175,7 @@ export function buildCardStyles(
       fontWeight: 500,
       padding: '1px 5px',
       borderRadius: RADIUS.pill,
-      background: isResolved ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-      color: isResolved ? STATUS.success : STATUS.danger,
+      ...getStatusBadgeColors(status),
       textTransform: 'uppercase' as const,
     },
   };

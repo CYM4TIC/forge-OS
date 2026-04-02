@@ -734,6 +734,8 @@ export interface FindingsFilter {
   status?: string | null;
 }
 
+export type HudSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
 export interface HudSeverityCounts {
   critical: number;
   high: number;

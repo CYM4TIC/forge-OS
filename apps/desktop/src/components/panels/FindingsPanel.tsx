@@ -1,5 +1,6 @@
 // Findings Feed — Phase 5.2 (P5-I)
-// Virtualized scrolling findings list. Severity-as-typography. Persona glyph attribution.
+// Severity-as-typography findings list. Persona glyph attribution. Filters + real-time updates.
+// TODO: Wire virtual scroll (createIncrementalHeightMap + estimateCardHeight) when list > ~100.
 
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { PersonaGlyph, CANVAS, STATUS, DOCK, RADIUS, TIMING } from '@forge-os/canvas-components';
@@ -20,7 +21,6 @@ import {
 import {
   getSeverityVisual,
   buildCardStyles,
-  estimateCardHeight,
 } from './hud/finding-card-renderer';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -31,7 +31,8 @@ function isPersonaSlug(slug: string): slug is PersonaSlug {
 }
 
 const SEVERITY_OPTIONS = ['all', 'critical', 'high', 'medium', 'low', 'info'] as const;
-const STATUS_OPTIONS = ['all', 'open', 'resolved', 'acknowledged', 'deferred'] as const;
+// Backend currently supports 'open' and 'resolved'. Add 'acknowledged'/'deferred' when backend supports them.
+const STATUS_OPTIONS = ['all', 'open', 'resolved'] as const;
 const CARD_GAP = 4;
 
 // ─── Filter Bar ─────────────────────────────────────────────────────────────
@@ -47,9 +48,10 @@ interface FilterBarProps {
 }
 
 const SELECT_STYLE: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 11,
   fontWeight: 500,
-  padding: '2px 6px',
+  padding: '5px 8px',
+  minHeight: 32,
   borderRadius: RADIUS.pill,
   background: CANVAS.bgElevated,
   color: CANVAS.text,
@@ -127,6 +129,7 @@ const FindingCard = memo(function FindingCard({ finding }: FindingCardProps) {
   const [hovered, setHovered] = useState(false);
   const styles = useMemo(() => buildCardStyles(finding.severity, finding.status), [finding.severity, finding.status]);
   const sv = getSeverityVisual(finding.severity);
+  const personaDisplayName = PERSONA_NAMES[finding.persona as keyof typeof PERSONA_NAMES] ?? finding.persona;
 
   const containerStyle: React.CSSProperties = {
     ...styles.container,
@@ -135,6 +138,9 @@ const FindingCard = memo(function FindingCard({ finding }: FindingCardProps) {
 
   return (
     <div
+      role="listitem"
+      tabIndex={0}
+      aria-label={`${sv.label} — ${finding.title} — ${finding.status}`}
       style={containerStyle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -157,7 +163,7 @@ const FindingCard = memo(function FindingCard({ finding }: FindingCardProps) {
         {isPersonaSlug(finding.persona) && (
           <PersonaGlyph size={14} persona={finding.persona} state="idle" />
         )}
-        <span style={styles.personaName}>{finding.persona}</span>
+        <span style={styles.personaName}>{personaDisplayName}</span>
 
         {finding.file_path && (
           <span style={{ color: CANVAS.muted, fontSize: 10 }}>
@@ -190,9 +196,7 @@ export default function FindingsPanel() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [personaFilter, setPersonaFilter] = useState('all');
 
-  // Container sizing for virtual scroll estimation
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(400);
 
   // ─── Data fetching ──────────────────────────────────────────────────────
   const fetchFindings = useCallback(async () => {
@@ -228,11 +232,8 @@ export default function FindingsPanel() {
 
     onFindingAdded((finding: HudFinding) => {
       setFindings((prev) => [finding, ...prev]);
-      setCounts((prev) => ({
-        ...prev,
-        [finding.severity]: (prev[finding.severity as keyof Omit<HudSeverityCounts, 'total'>] ?? 0) + 1,
-        total: prev.total + 1,
-      }));
+      // Re-fetch accurate counts from server (real-time additions may not match active filters)
+      getFindingCounts().then(setCounts).catch(() => {});
     }).then((fn) => {
       if (mounted) unlistenAdd = fn;
       else fn();
@@ -246,6 +247,7 @@ export default function FindingsPanel() {
             : f
         )
       );
+      getFindingCounts().then(setCounts).catch(() => {});
     }).then((fn) => {
       if (mounted) unlistenResolve = fn;
       else fn();
@@ -256,19 +258,6 @@ export default function FindingsPanel() {
       unlistenAdd?.();
       unlistenResolve?.();
     };
-  }, []);
-
-  // ─── ResizeObserver ─────────────────────────────────────────────────────
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
   }, []);
 
   // ─── Filtered + sorted findings ─────────────────────────────────────────
@@ -288,7 +277,7 @@ export default function FindingsPanel() {
 
     // Sort: severity weight desc (CRIT first), then newest first
     const severityWeight: Record<string, number> = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
-    return result.sort((a, b) => {
+    return [...result].sort((a, b) => {
       const wDiff = (severityWeight[b.severity] ?? 0) - (severityWeight[a.severity] ?? 0);
       if (wDiff !== 0) return wDiff;
       return b.created_at.localeCompare(a.created_at);
@@ -376,7 +365,7 @@ export default function FindingsPanel() {
           <button
             onClick={handlePopOut}
             aria-label="Pop out findings feed"
-            style={{ background: 'transparent', border: 'none', color: CANVAS.muted, cursor: 'pointer', fontSize: 13, padding: '2px 4px', borderRadius: RADIUS.pill, lineHeight: 1 }}
+            style={{ background: 'transparent', border: 'none', color: CANVAS.muted, cursor: 'pointer', fontSize: 13, padding: '2px 4px', borderRadius: RADIUS.pill, lineHeight: 1, minWidth: 32, minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Pop out"
           >
             &#x2197;
@@ -395,7 +384,9 @@ export default function FindingsPanel() {
         counts={counts}
       />
 
-      {/* Findings list (native scroll — virtual scroll deferred to when list exceeds 100+) */}
+      {/* Findings list — native scroll for now. TODO: Wire createIncrementalHeightMap
+          + estimateCardHeight from layout-engine when list exceeds ~100 findings for
+          windowed rendering. See layout-engine/virtual.ts. */}
       <div style={{ flex: 1, overflow: 'auto', padding: '4px 8px 8px' }}>
         {filteredFindings.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: 16 }}>
