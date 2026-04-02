@@ -11,8 +11,27 @@ type Tab = 'dispatch' | 'messages';
 
 export default function TeamPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('dispatch');
-  const { messages, unreadCount, markRead } = useSwarmMessages('nyx');
+  const { messages, unreadCount, markRead, loading, error } = useSwarmMessages('nyx');
   const { pending, approve, deny } = usePermissions('nyx');
+
+  // Loading state (MARA-HIGH-3)
+  if (loading) {
+    return (
+      <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle flex items-center justify-center">
+        <span className="text-text-muted text-sm">Loading team...</span>
+      </div>
+    );
+  }
+
+  // Error state (MARA-HIGH-4)
+  if (error) {
+    return (
+      <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle flex flex-col items-center justify-center gap-2 p-4">
+        <span className="text-danger text-sm">{error}</span>
+        <span className="text-text-muted text-xs">Check your connection and try again.</span>
+      </div>
+    );
+  }
 
   return (
     <div role="region" aria-label="Team" className="h-full bg-bg-secondary rounded-lg border border-border-subtle overflow-hidden flex flex-col">

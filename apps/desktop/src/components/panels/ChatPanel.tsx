@@ -115,8 +115,15 @@ export default function ChatPanel() {
           isRestored={lastSummary != null}
         />
 
-        {/* Messages */}
-        <MessageList messages={messages} isStreaming={isStreaming} />
+        {/* Messages — empty state for new sessions (MARA-HIGH-6) */}
+        {messages.length === 0 && !isStreaming ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
+            <span className="text-text-muted text-sm">No messages yet</span>
+            <span className="text-text-muted text-xs">Start a conversation or select a persona above.</span>
+          </div>
+        ) : (
+          <MessageList messages={messages} isStreaming={isStreaming} />
+        )}
 
         {/* Input */}
         <MessageInput onSend={handleSend} disabled={isStreaming} />

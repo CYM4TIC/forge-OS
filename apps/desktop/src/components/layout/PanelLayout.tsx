@@ -4,6 +4,7 @@
 // Preset switching moved to TitleBar (P4-I.1).
 
 import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { ErrorBoundary } from './ErrorBoundary';
 import { PanelContainer } from '../../window-manager/panel';
 import { DockBar } from '../../window-manager/dock';
 import { DOCK_BAR_HEIGHT } from '../../window-manager/snapping';
@@ -125,7 +126,9 @@ export default function PanelLayout({
             onClose={removePanel}
             onResizeStart={handleResizeStart}
           >
-            <PanelContent panel={panel} />
+            <ErrorBoundary panelType={panel.type}>
+              <PanelContent panel={panel} />
+            </ErrorBoundary>
           </PanelContainer>
         ))}
       </div>
