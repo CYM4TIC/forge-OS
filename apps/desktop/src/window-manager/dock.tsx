@@ -110,7 +110,7 @@ function DockPill({
       {pill.badgeCount > 0 && (
         <span
           className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 min-w-[14px] px-0.5 rounded-full text-[9px] text-white font-bold"
-          style={pill.badgeColor ? { backgroundColor: pill.badgeColor } : undefined}
+          style={{ backgroundColor: pill.badgeColor ?? STATUS.danger }}
         >
           {pill.badgeCount > 99 ? '99+' : pill.badgeCount}
         </span>
