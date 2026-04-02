@@ -161,12 +161,14 @@ export function cancelAgent(dispatchId: string): Promise<boolean> {
 export function onChatStream(
   callback: (event: StreamEvent) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<StreamEvent>('chat:stream', (e) => callback(e.payload));
 }
 
 export function onAgentResult(
   callback: (result: AgentResult) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<AgentResult>('agent:result', (e) => callback(e.payload));
 }
 
@@ -207,6 +209,7 @@ export function swarmSend(request: {
   msg_type: string;
   payload?: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('swarm_send', { request });
 }
 
@@ -215,10 +218,12 @@ export function swarmGetMessages(request: {
   unread_only?: boolean;
   limit?: number;
 }): Promise<SwarmMessage[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('swarm_get_messages', { request });
 }
 
 export function swarmMarkRead(messageId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('swarm_mark_read', { messageId });
 }
 
@@ -228,6 +233,7 @@ export function swarmRespondPermission(request: {
   approved: boolean;
   reason?: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('swarm_respond_permission', { request });
 }
 
@@ -236,6 +242,7 @@ export function swarmRespondPermission(request: {
 export function onSwarmMessage(
   callback: (event: SwarmMessageEvent) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<SwarmMessageEvent>('swarm-message', (e) => callback(e.payload));
 }
 
