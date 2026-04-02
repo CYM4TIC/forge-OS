@@ -6,13 +6,15 @@
 ```yaml
 project: forge_os
 architecture: tauri_v2
-phase: 5_IN_PROGRESS
-current_session: 5.3_IN_PROGRESS
-current_batch: P5-P
-batches_done: 86
-last_commit: 2098d1f
+phase: 5_COMPLETE
+current_session: 5.3_COMPLETE
+current_batch: P5-P_DONE
+batches_done: 87
+last_commit: f4b9650
 session_5_1_complete: true
 session_5_2_complete: true
+session_5_3_complete: true
+phase_5_complete: true
 phases_total: 9
 sessions_total: 29
 environment: claude_code
@@ -30,7 +32,8 @@ phase_4_complete: true
 ---
 
 ## Current Position
-- **Phase:** 5 — Living Canvas HUD. **IN PROGRESS.** Session 5.1 COMPLETE. Session 5.2 COMPLETE. **Session 5.3 IN PROGRESS** — P5-L + P5-M + P5-N + P5-O DONE. Flow visualization: FlowOverlay with persona glyph particle trails on dispatch. Vault Browser: split-pane file tree + content preview with path containment security. Graph Viewer: canvas-rendered force-directed knowledge graph (16 nodes, 16 edges) with pan/zoom, persona glyph overlays, click-to-detail, Pretext fitToContainer label measurement, keyboard navigation, prefers-reduced-motion support. Build Triad gate: 10 findings (0 CRIT, 2 HIGH, 4 MED, 4 LOW), all resolved. 51 Tauri commands, 13 hooks. 1 batch remains (P5-P).
+- **PHASE 5 COMPLETE.** Living Canvas HUD. 16 batches (P5-A through P5-P), 3 sessions (5.1-5.3). All systems verified: BOOT.md parser + HUD events, pipeline canvas (4-stage nodes with glyphs/particles + ambient idle animation), batch progress gauge, token gauge, context meter text density, findings SQLite + feed, agent board, session timeline, flow overlay (glyph trails + replay mode), vault browser (split-pane tree + preview), graph viewer (force-directed + pan/zoom), 3 workspace presets (build, gate_review, observatory). Phase 5 exit gate: Pierce 0C/1H/4M/4L (all resolved), Sentinel 19/19 PASS, Meridian 17/20 CONSISTENT (2 drift fixed). 51 Tauri commands, 14 hooks (added useReducedMotion). 87 batches done.
+- **Research session (2026-04-02):** Block engineering post analysis. 5 insights integrated into TAURI-BUILD-PLAN.md: Smart Review command (7.1), Proposal Feed/ADL-005 (7.3), Skills Marketplace granularity (8.1), trade-off pattern index (8.2), policy evolution (8.3b). No new sessions added — all fit into existing seams. Repo Mining Integration Map +5 entries.
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
 - **Phase:** 4 — Runtime Upgrades + Window Manager + Pretext + Document Gen. **COMPLETE.**
 - **PHASE 4 COMPLETE.** All 20 batches done (P4-A through P4-T). 5 sessions (4.0-4.4). ContextEngine trait + TTL pruning + iterative compression + FTS5 + atomic checkout + floating window manager + dock bar + Pretext layout engine + 9 canvas components + persona glyphs + document generation engine (4 templates, dual PDF+markdown output). 3 new packages (@forge-os/layout-engine, @forge-os/canvas-components, @forge-os/document-gen). 46 Tauri commands. 9 React hooks.
@@ -125,7 +128,7 @@ phase_4_complete: true
 | P5-M | Flow Overlay Particles | 5.3 | ✅ DONE |
 | P5-N | Vault Browser Panel | 5.3 | ✅ DONE |
 | P5-O | Graph Viewer Panel | 5.3 | ✅ DONE |
-| P5-P | Phase 5 Integration + Ambient | 5.3 | 🔲 |
+| P5-P | Phase 5 Integration + Ambient | 5.3 | ✅ DONE |
 
 ## Architecture Decisions
 See `ADL.md` (repo root) for OS-specific architecture decisions.
@@ -141,6 +144,35 @@ See `BUILD-LEARNINGS.md` (repo root) for OS-specific gotchas and patterns.
 - Segment files in `segments/` are from OLD block-based plan — superseded by BATCH-MANIFESTS.md
 
 ## Session Log
+
+**2026-04-02 — Build Session: P5-P Phase 5 Integration + Ambient Animation (PHASE 5 EXIT)**
+- **BATCH:** P5-P (final batch of Phase 5). Session 5.3 complete. Phase 5 complete.
+- **FILES:** 5 files modified/created:
+  - `PipelineCanvas.tsx` — ambient idle animation (sine wave drift 3px/4s, ~15fps throttled), pulse-varying glow on active nodes, persona glyph ember states (idle = 0.4 glow + 0.5 opacity).
+  - `FlowOverlay.tsx` — replay mode: event history store (100 max), time-relative replay with play/stop toggle, all timer cleanup. `injectEvent` extracted for shared live/replay trail creation.
+  - `manager.ts` — gate_review preset updated: Agent Board + Findings + Session Timeline. Observatory confirmed: Canvas HUD + Graph Viewer + Vault Browser.
+  - `CanvasPanel.tsx` — empty state ("No build state / Load a BOOT.md") for null pipeline + null snapshot.
+  - `useReducedMotion.ts` — NEW shared hook. Reactive `prefers-reduced-motion` via MediaQueryList change listener.
+- **GATE (Phase 5 EXIT):** Build Triad + Sentinel + Meridian.
+  - Pierce: 0 CRIT, 1 HIGH (manifest wording — accepted), 4 MED, 4 LOW. All MED/LOW resolved: reactive reduced-motion hook, animation throttle to ~15fps, RADIUS.pill token, className→inline style migration.
+  - Sentinel: 19/19 PASS. Zero regressions.
+  - Meridian: 17/20 CONSISTENT, 2 DRIFT (both fixed: borderRadius token, Tailwind className).
+- **PHASE 5 TOTALS:** 16 batches, 3 sessions, 87 batches cumulative. 51 Tauri commands, 14 React hooks. 6 new panel types (canvas_hud, findings, agent_board, session_timeline, vault_browser, graph_viewer). 3 workspace presets (build, gate_review, observatory). Phase 6 next: Dev Server Preview + Connectivity.
+- **COMMITS:** `f4b9650` (P5-P code), `43dfe44` (research docs).
+
+**2026-04-02 — Research Session: Block Engineering + Build Plan Integration**
+- **TYPE:** Research session — no code written, no build protocol engaged.
+- **SOURCE:** Block engineering blog post "Protecting Our Systems with Intelligence" (Joah Gerstenberg, 2026-04-02). Analysis against existing research doc `docs/RESEARCH-CONTEXT-GRAPHS-AND-PREDICTIVE-INTELLIGENCE.md`.
+- **ANALYSIS:** Convergent evolution identified — Block arrived at nearly identical architecture (AGENTS.md progressive disclosure = our 24 kernels, parallel subagent review = Build Triad, continuously evolving policies = BUILD-LEARNINGS propagation, Skills Marketplace = Phase 8.1 skills system). Forge OS exceeds Block on architectural depth (full immune architecture vs. review-only, constitutive vs. external protection, predictive dimension). Block exceeds on deployment scale.
+- **5 INSIGHTS INTEGRATED INTO TAURI-BUILD-PLAN.md:**
+  1. **Smart Review command** → Session 7.1: `CommandDef` + `smart-review` orchestrator + diff-aware routing table. Operator types `/review`, system auto-dispatches right agents from `git diff`.
+  2. **Proposal Feed / Agent Social Media (ADL-005 implementation)** → Session 7.3: Full Rust backend (`src-tauri/src/proposals/`), SQLite tables, 7 Tauri commands, Proposal Feed panel with persona glyph attribution + threaded evaluation. The "social media for agents" — visible inter-agent reasoning, proposals, debates, decisions.
+  3. **Skills Marketplace granularity** → Session 8.1: Atomic skill decomposition rule (>8 steps → propose split via ADL-005). Skills Browser marketplace panel. Target hundreds of fine-grained skills.
+  4. **Inter-agent trade-off pattern index** → Session 8.2 CONSORTIUM: Conflict-typed decision traces (`security-vs-ux`, etc.), `get_tradeoff_pattern` query with empirical win/loss data, Arbiter prompt auto-includes historical confidence scores.
+  5. **Incident-driven policy evolution** → Session 8.3b: `policy_evolution.rs` — categorical pattern detection on gate findings, auto-files proposals through ADL-005 with `source: Automated`.
+- **BUILD PLAN UPDATES:** Summary table (Phase 7 renamed), Panel Type Registry (+1 Proposal Feed → ~16 in Phase 7), Repo Mining Integration Map (+5 Block engineering entries), Phase 9 verification (+4 new checks), Final verification paragraph updated. New ADL: OS-ADL-027 (incident-driven policy evolution).
+- **RESEARCH DOC UPDATED:** `docs/RESEARCH-CONTEXT-GRAPHS-AND-PREDICTIVE-INTELLIGENCE.md` — Session 2 added (Block engineering analysis), all 10 open questions answered or partially answered, 5 insights marked INTEGRATED with session references.
+- **NO BUILD STATE CHANGE.** Position remains: Phase 5, Session 5.3, batch P5-P queued.
 
 **2026-04-02 — P5-O: Graph Viewer Panel**
 - **SCOPE:** Knowledge graph visualization — force-directed layout, canvas pan/zoom, persona glyph overlays, click-to-detail, Pretext label measurement.
