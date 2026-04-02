@@ -26,6 +26,21 @@ Every build batch follows this sequence. No skips. No reordering.
 
 → [Full phase spec](forge/EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](forge/EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](forge/EXECUTION-PROTOCOL.md#dispatch-reference)
 
+### Pre-Batch Checklist (run before Phase 0)
+
+1. BOOT.md — confirm current position
+2. Batch manifest — get segments, blockers, persona gates
+3. Dependency board — are blockers resolved?
+4. Persona gates (load findings when relevant to this batch):
+   - Tanaka: auth findings resolved? (if batch has auth RPCs)
+   - Mara: UX findings reviewed? (if frontend)
+   - Riven: component specs exist? (if frontend)
+   - Pierce: prior batch verification passed?
+   - Vane: financial flows traceable? (if financial)
+   - Voss: legal requirements addressed? (if compliance-touching)
+   - Sable: string registry covers strings? (if customer-facing)
+5. Load segments (max 3) + build learnings for this domain
+
 ---
 
 ## 3. THE 14 FAILURE MODES
