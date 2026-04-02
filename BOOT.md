@@ -130,6 +130,21 @@ phase_4_complete: true
 | P5-O | Graph Viewer Panel | 5.3 | ✅ DONE |
 | P5-P | Phase 5 Integration + Ambient | 5.3 | ✅ DONE |
 
+## Phase 6 Batch Sequence
+
+| Batch | Name | Session | Status |
+|-------|------|---------|--------|
+| P6-A | Shell Plugin + Process Manager | 6.1 | 🔲 |
+| P6-B | Port Detection + Health Polling | 6.1 | 🔲 |
+| P6-C | Bridge + Hook | 6.1 | 🔲 |
+| P6-D | Preview Panel Shell + Webview | 6.1 | 🔲 |
+| P6-E | Viewport Controls + URL Bar | 6.1 | 🔲 |
+| P6-F | Agent DOM Access + 6.1 Integration | 6.1 | 🔲 |
+| P6-G | Health Check Backend | 6.2 | 🔲 |
+| P6-H | Connectivity Bridge + Hook | 6.2 | 🔲 |
+| P6-I | Connectivity Panel | 6.2 | 🔲 |
+| P6-J | Dock Pill Compact + 6.2 Integration | 6.2 | 🔲 |
+
 ## Architecture Decisions
 See `ADL.md` (repo root) for OS-specific architecture decisions.
 
