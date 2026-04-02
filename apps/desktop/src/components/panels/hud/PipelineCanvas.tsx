@@ -175,7 +175,7 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
 
         const persona = agentToPersona(stage.agent);
         const isActive = stage.status === 'active';
-        const isClickable = onStageClick && (isActive || stage.status === 'complete');
+        const isClickable = onStageClick && (isActive || stage.status === 'complete' || stage.status === 'error');
 
         return (
           <div
