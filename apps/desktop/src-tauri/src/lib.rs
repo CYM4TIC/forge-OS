@@ -228,6 +228,10 @@ pub fn run() {
             commands::hud::get_pipeline_stages,
             commands::hud::refresh_build_state,
             commands::hud::update_pipeline_stage,
+            commands::hud::list_hud_findings,
+            commands::hud::add_hud_finding,
+            commands::hud::resolve_hud_finding,
+            commands::hud::get_finding_counts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

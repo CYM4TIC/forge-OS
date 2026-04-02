@@ -63,5 +63,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 9;")?;
     }
 
+    // Phase 5: HUD findings — persistent findings store
+    if current_version < 10 {
+        conn.execute_batch(schema::SCHEMA_V10)?;
+        conn.execute_batch("PRAGMA user_version = 10;")?;
+    }
+
     Ok(())
 }

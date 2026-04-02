@@ -724,6 +724,45 @@ export function updatePipelineStage(stage: PipelineStage): Promise<void> {
   return invoke('update_pipeline_stage', { stage });
 }
 
+// ── HUD Findings Commands ──
+
+export interface FindingsFilter {
+  session_id?: string | null;
+  batch_id?: string | null;
+  severity?: string | null;
+  persona?: string | null;
+  status?: string | null;
+}
+
+export interface HudSeverityCounts {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  info: number;
+  total: number;
+}
+
+export function listHudFindings(filter: FindingsFilter = {}): Promise<HudFinding[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('list_hud_findings', { filter });
+}
+
+export function addHudFinding(finding: HudFinding): Promise<HudFinding> {
+  if (!isTauriRuntime) return Promise.resolve(finding);
+  return invoke('add_hud_finding', { finding });
+}
+
+export function resolveHudFinding(findingId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
+  return invoke('resolve_hud_finding', { findingId });
+}
+
+export function getFindingCounts(sessionId?: string | null): Promise<HudSeverityCounts> {
+  if (!isTauriRuntime) return Promise.resolve({ critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 });
+  return invoke('get_finding_counts', { sessionId: sessionId ?? null });
+}
+
 // ── HUD Event Listeners ──
 
 // Rust HudEvent uses #[serde(tag = "type", content = "payload")],

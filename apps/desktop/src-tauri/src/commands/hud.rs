@@ -1,7 +1,9 @@
 use std::sync::Mutex;
 
+use crate::database::Database;
 use crate::hud::boot_parser::{self, BuildStateSnapshot, PipelineStage};
-use crate::hud::events::{self, HudEvent};
+use crate::hud::events::{self, HudEvent, HudFinding};
+use crate::hud::findings::{self, FindingsFilter, HudSeverityCounts};
 
 /// In-memory pipeline stage state. Initialized with default_pipeline(),
 /// mutated by update_pipeline_stage, read by get_pipeline_stages.
@@ -56,4 +58,48 @@ pub fn update_pipeline_stage(
     }
     events::emit_hud_event(&app, &HudEvent::PipelineStageChanged(stage));
     Ok(())
+}
+
+// ── HUD Findings Commands ──────────────────────────────────────────────────
+
+/// List findings with optional filters.
+#[tauri::command]
+pub fn list_hud_findings(
+    db: tauri::State<'_, Database>,
+    filter: FindingsFilter,
+) -> Result<Vec<HudFinding>, String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock: {e}"))?;
+    findings::list_findings(&conn, &filter)
+}
+
+/// Add a new finding to the HUD findings store.
+#[tauri::command]
+pub fn add_hud_finding(
+    app: tauri::AppHandle,
+    db: tauri::State<'_, Database>,
+    finding: HudFinding,
+) -> Result<HudFinding, String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock: {e}"))?;
+    findings::insert_finding(&conn, &app, &finding)
+}
+
+/// Resolve a finding by ID.
+#[tauri::command]
+pub fn resolve_hud_finding(
+    app: tauri::AppHandle,
+    db: tauri::State<'_, Database>,
+    finding_id: String,
+) -> Result<(), String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock: {e}"))?;
+    findings::resolve_finding(&conn, &app, &finding_id)
+}
+
+/// Get finding counts by severity for badge display.
+#[tauri::command]
+pub fn get_finding_counts(
+    db: tauri::State<'_, Database>,
+    session_id: Option<String>,
+) -> Result<HudSeverityCounts, String> {
+    let conn = db.conn.lock().map_err(|e| format!("DB lock: {e}"))?;
+    findings::get_finding_counts(&conn, session_id.as_deref())
 }

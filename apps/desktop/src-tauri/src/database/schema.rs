@@ -331,3 +331,32 @@ CREATE TABLE IF NOT EXISTS layout_state (
 );
 COMMIT;
 "#;
+
+/// Phase 5 schema v10: HUD findings — persistent findings store for the Canvas HUD.
+/// Protocol Enforcement Point #2: every gate finding gets an ID, severity, and status.
+/// A batch cannot close with `status = 'open'` rows.
+pub const SCHEMA_V10: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS hud_findings (
+    id TEXT PRIMARY KEY NOT NULL,
+    session_id TEXT,
+    batch_id TEXT,
+    severity TEXT NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low', 'info')),
+    persona TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved', 'deferred', 'wont_fix')),
+    file_path TEXT,
+    line_number INTEGER,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_hud_findings_session ON hud_findings(session_id);
+CREATE INDEX IF NOT EXISTS idx_hud_findings_batch ON hud_findings(batch_id);
+CREATE INDEX IF NOT EXISTS idx_hud_findings_severity ON hud_findings(severity);
+CREATE INDEX IF NOT EXISTS idx_hud_findings_persona ON hud_findings(persona);
+CREATE INDEX IF NOT EXISTS idx_hud_findings_status ON hud_findings(status);
+CREATE INDEX IF NOT EXISTS idx_hud_findings_session_status ON hud_findings(session_id, status);
+COMMIT;
+"#;
