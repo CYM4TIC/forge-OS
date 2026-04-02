@@ -69,6 +69,14 @@ export const PERSONA_LABELS: Record<PersonaSlug, string> = Object.fromEntries(
   ])
 ) as Record<PersonaSlug, string>;
 
+/** Set of valid persona slugs for runtime type guard */
+export const PERSONA_SLUG_SET: ReadonlySet<string> = new Set(Object.keys(PERSONA_COLORS));
+
+/** Type guard: is this string a valid PersonaSlug? */
+export function isPersonaSlug(slug: string): slug is PersonaSlug {
+  return PERSONA_SLUG_SET.has(slug);
+}
+
 export const PERSONA_GLYPHS: Record<PersonaSlug, string> = {
   nyx: 'Lightning Bolt',
   pierce: 'Crosshair',

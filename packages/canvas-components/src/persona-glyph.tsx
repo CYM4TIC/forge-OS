@@ -11,9 +11,10 @@ import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-// PersonaSlug imported from @forge-os/shared (single source of truth)
+// PersonaSlug + colors imported from @forge-os/shared (single source of truth)
 export type { PersonaSlug } from '@forge-os/shared';
 import type { PersonaSlug } from '@forge-os/shared';
+import { PERSONA_COLORS } from '@forge-os/shared';
 
 export type GlyphState = 'idle' | 'thinking' | 'speaking' | 'finding' | 'complete' | 'error';
 
@@ -42,17 +43,18 @@ interface PersonaVisual {
   draw: (ctx: CanvasRenderingContext2D, size: number, color: string, phase: number, state: GlyphState) => void;
 }
 
+// Colors derived from @forge-os/shared PERSONA_COLORS (MERIDIAN-HIGH-6: no duplication)
 const PERSONA_VISUALS: Record<PersonaSlug, PersonaVisual> = {
-  nyx: { color: '#6366F1', draw: drawLightningBolt },
-  pierce: { color: '#EF4444', draw: drawCrosshair },
-  mara: { color: '#EC4899', draw: drawEye },
-  riven: { color: '#8B5CF6', draw: drawGrid },
-  kehinde: { color: '#3B82F6', draw: drawBrackets },
-  tanaka: { color: '#F59E0B', draw: drawHexShield },
-  vane: { color: '#10B981', draw: drawLedgerMark },
-  voss: { color: '#6B7280', draw: drawPilcrow },
-  calloway: { color: '#F97316', draw: drawWave },
-  sable: { color: '#14B8A6', draw: drawCursor },
+  nyx: { color: PERSONA_COLORS.nyx, draw: drawLightningBolt },
+  pierce: { color: PERSONA_COLORS.pierce, draw: drawCrosshair },
+  mara: { color: PERSONA_COLORS.mara, draw: drawEye },
+  riven: { color: PERSONA_COLORS.riven, draw: drawGrid },
+  kehinde: { color: PERSONA_COLORS.kehinde, draw: drawBrackets },
+  tanaka: { color: PERSONA_COLORS.tanaka, draw: drawHexShield },
+  vane: { color: PERSONA_COLORS.vane, draw: drawLedgerMark },
+  voss: { color: PERSONA_COLORS.voss, draw: drawPilcrow },
+  calloway: { color: PERSONA_COLORS.calloway, draw: drawWave },
+  sable: { color: PERSONA_COLORS.sable, draw: drawCursor },
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
