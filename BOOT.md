@@ -8,9 +8,9 @@ project: forge_os
 architecture: tauri_v2
 phase: 6_IN_PROGRESS
 current_session: 6.1_IN_PROGRESS
-current_batch: P6-E
-batches_done: 91
-last_commit: dd286db
+current_batch: P6-F
+batches_done: 92
+last_commit: 7cf64c0
 session_5_1_complete: true
 session_5_2_complete: true
 session_5_3_complete: true
@@ -32,7 +32,7 @@ phase_4_complete: true
 ---
 
 ## Current Position
-- **Phase:** 6 — Dev Server Preview + Connectivity. **IN PROGRESS.** 10 batches (P6-A through P6-J), 2 sessions. P6-A complete: DevServerManager with 6 Tauri commands (start/stop/restart/remove/list/get_logs), background stdout/stderr ring buffer (1000 lines), exit monitor, command allowlist (19 dev binaries), cwd validation, max 10 concurrent servers. `tauri-plugin-shell` v2.3.5 wired. Build Triad gate: 1 CRIT + 3 HIGH resolved. P6-B complete: port auto-detection (11 regex patterns + TCP fallback with 10s timeout), health poller (HTTP GET every 5s, Healthy/Degraded/Running transitions), `detect_server_port` command, `devserver:status-changed` Tauri event emission from both health poller and exit monitor, `health_poller_active` duplicate guard. P6-C complete: frontend bridge (8 functions + 4 types in tauri.ts, all isTauriRuntime guarded), useDevServer hook (real-time events + 2s log polling + start/stop/restart actions). P6-D complete: PreviewPanel.tsx rewritten from placeholder — 5 states (no-server/loading/healthy/error/stopped), server picker + Start New form (single command input), native directory picker via tauri-plugin-dialog, iframe preview with sandbox + path tracking, toolbar (status dot + URL bar + refresh + stop), restart in error/stopped states, loading skeleton shimmer, focus management on transitions, Enter-to-refresh keyboard shortcut, auto-scroll log container. Build Triad gate: 1C/5H/9M/5L/3I found, all CRIT+HIGH resolved (19 fixes). 15 React hooks total. 68 Tauri commands. Next batch: P6-E (Viewport Controls + URL Bar).
+- **Phase:** 6 — Dev Server Preview + Connectivity. **IN PROGRESS.** 10 batches (P6-A through P6-J), 2 sessions. P6-A complete: DevServerManager with 6 Tauri commands (start/stop/restart/remove/list/get_logs), background stdout/stderr ring buffer (1000 lines), exit monitor, command allowlist (19 dev binaries), cwd validation, max 10 concurrent servers. `tauri-plugin-shell` v2.3.5 wired. Build Triad gate: 1 CRIT + 3 HIGH resolved. P6-B complete: port auto-detection (11 regex patterns + TCP fallback with 10s timeout), health poller (HTTP GET every 5s, Healthy/Degraded/Running transitions), `detect_server_port` command, `devserver:status-changed` Tauri event emission from both health poller and exit monitor, `health_poller_active` duplicate guard. P6-C complete: frontend bridge (8 functions + 4 types in tauri.ts, all isTauriRuntime guarded), useDevServer hook (real-time events + 2s log polling + start/stop/restart actions). P6-D complete: PreviewPanel.tsx rewritten from placeholder — 5 states (no-server/loading/healthy/error/stopped), server picker + Start New form (single command input), native directory picker via tauri-plugin-dialog, iframe preview with sandbox + path tracking, toolbar (status dot + URL bar + refresh + stop), restart in error/stopped states, loading skeleton shimmer, focus management on transitions, Enter-to-refresh keyboard shortcut, auto-scroll log container. Build Triad gate: 1C/5H/9M/5L/3I found, all CRIT+HIGH resolved (19 fixes). P6-E complete: viewport presets (Desktop 1280×800, Tablet 768×1024, Mobile 375×812, Custom), CSS transform scaling with percentage display, URL bar upgraded to navigable input (Enter navigates, onLoad syncs, onFocus selects all), localStorage persistence keyed by serverId, focus-visible styles (accent box-shadow) on all 7 render branches, dimension inputs with onBlur persistence. Build Triad gate: 5H/10M/7L/3I, all HIGH resolved. 15 React hooks total. 68 Tauri commands. Next batch: P6-F (Agent DOM Access + 6.1 Integration).
 - **PHASE 5 COMPLETE.** Living Canvas HUD. 16 batches (P5-A through P5-P), 3 sessions (5.1-5.3). All systems verified: BOOT.md parser + HUD events, pipeline canvas (4-stage nodes with glyphs/particles + ambient idle animation), batch progress gauge, token gauge, context meter text density, findings SQLite + feed, agent board, session timeline, flow overlay (glyph trails + replay mode), vault browser (split-pane tree + preview), graph viewer (force-directed + pan/zoom), 3 workspace presets (build, gate_review, observatory). Phase 5 exit gate: Pierce 0C/1H/4M/4L (all resolved), Sentinel 19/19 PASS, Meridian 17/20 CONSISTENT (2 drift fixed). 51 Tauri commands, 14 hooks (added useReducedMotion). 87 batches done.
 - **Research session (2026-04-02):** Block engineering post analysis. 5 insights integrated into TAURI-BUILD-PLAN.md: Smart Review command (7.1), Proposal Feed/ADL-005 (7.3), Skills Marketplace granularity (8.1), trade-off pattern index (8.2), policy evolution (8.3b). No new sessions added — all fit into existing seams. Repo Mining Integration Map +5 entries.
 - **SESSION 5.1 COMPLETE.** Build State Topology + Core Gauges. 6 batches (P5-A through P5-F). BOOT.md parser, HUD events, pipeline canvas (4-stage nodes with glyphs/particles), batch progress gauge, token gauge, context meter text density visualization. Build Triad gate: 26 findings, all CRITs + HIGHs resolved. isTauriRuntime guard added — zero console errors in browser-only mode. 49 Tauri commands, 10 React hooks, 348 Vite modules.
@@ -139,7 +139,7 @@ phase_4_complete: true
 | P6-B | Port Detection + Health Polling | 6.1 | ✅ DONE |
 | P6-C | Bridge + Hook | 6.1 | ✅ DONE |
 | P6-D | Preview Panel Shell + Webview | 6.1 | ✅ DONE |
-| P6-E | Viewport Controls + URL Bar | 6.1 | 🔲 |
+| P6-E | Viewport Controls + URL Bar | 6.1 | ✅ DONE |
 | P6-F | Agent DOM Access + 6.1 Integration | 6.1 | 🔲 |
 | P6-G | Health Check Backend | 6.2 | 🔲 |
 | P6-H | Connectivity Bridge + Hook | 6.2 | 🔲 |
