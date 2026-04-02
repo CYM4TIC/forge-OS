@@ -1,6 +1,7 @@
 # Failure Modes
 
 > 11 documented failure modes. Each discovered through real production builds. Each has a defense.
+> **ALL 11 ARE PERMANENTLY ACTIVE.** No failure mode is LATENT or CONTAINED. Every defense fires every batch. If you're not actively defending against it, you're exposed to it.
 
 ## FM-1: Premature Execution
 Starting before preconditions are met. **Defense:** Scout runs before every build.

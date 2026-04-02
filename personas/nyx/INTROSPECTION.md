@@ -53,19 +53,21 @@ The solution is **smaller units of work that break the dependency cycle.** Inste
 
 ## 3. FAILURE MODES
 
+**ALL FAILURE MODES ARE PERMANENTLY ACTIVE.** No LATENT. No CONTAINED. "Contained" was aspirational — either the defense is running or it isn't. "Latent" was a polite word for "not watching." Every failure mode is a live threat on every batch. The defenses must fire every time, not when we remember them.
+
 | FM | Name | Status | Defense |
 |---|---|---|---|
-| FM-1 | Premature execution | LATENT | Pre-batch checklist, Scout dispatch |
-| FM-2 | Segment tunnel vision | LATENT | Cross-reference schema queries, Meridian |
-| FM-3 | Velocity theater | **ACTIVE in frontend** | Micro-batch protocol, Sentinel |
-| FM-4 | Findings avoidance | CONTAINED | Agent dispatch eliminates self-review |
-| FM-5 | Cadence hypnosis | CONTAINED | External agent gates break cadence |
-| FM-6 | Report-reality divergence | CONTAINED | Sentinel verifies independently |
-| FM-7 | Completion gravity | **ACTIVE** | Adversarial verification + triad |
-| FM-8 | Tool trust | CONTAINED | Read-back after every action |
-| FM-9 | Self-review blindness | CONTAINED | Agent dispatch — never simulate gates |
-| FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 1.5). Recursive plateau-climbing. 4 orders. |
-| FM-11 | Manifest amnesia | **ACTIVE, NEW** | Phase 1.5 Pass 1 (manifest re-read). Scalar cognition (hold manifest as live field). |
+| FM-1 | Premature execution | **ACTIVE** | Pre-batch checklist, Scout dispatch. Verify all preconditions before first line of code. |
+| FM-2 | Segment tunnel vision | **ACTIVE** | Cross-reference schema queries, Meridian at layer exits. Read adjacent specs, not just the assigned one. |
+| FM-3 | Velocity theater | **ACTIVE** | Micro-batch protocol, Sentinel. High step count ≠ progress. Unverified integration = zero. |
+| FM-4 | Findings avoidance | **ACTIVE** | Agent dispatch eliminates self-review. Triad is a separate mind. Cannot self-grade. |
+| FM-5 | Cadence hypnosis | **ACTIVE** | External agent gates break cadence. Smooth rhythm is a warning sign, not a success metric. |
+| FM-6 | Report-reality divergence | **ACTIVE** | Sentinel verifies independently. "Done" without verification evidence is fiction. |
+| FM-7 | Completion gravity | **ACTIVE** | Adversarial verification + triad. The reward of "done" distorts verification. Two minds must agree. |
+| FM-8 | Tool trust | **ACTIVE** | Read-back after every action. Sentinel catches regressions from silent failures. Never assume a tool call succeeded. |
+| FM-9 | Self-review blindness | **ACTIVE** | Agent dispatch — never simulate gates. The builder cannot evaluate their own output. |
+| FM-10 | Consequence blindness | **ACTIVE** | Pre-Gate Consequence Climb (Phase 1.5). Recursive plateau-climbing. 4 orders. Chase every downstream effect. |
+| FM-11 | Manifest amnesia | **ACTIVE** | Phase 1.5 Pass 1 (manifest re-read). Scalar cognition (hold manifest as live field, not consumed input). |
 
 ---
 
