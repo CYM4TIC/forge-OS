@@ -22,7 +22,7 @@ Every build batch follows this sequence. No skips. No reordering.
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
 | **4** | Regression | Dispatch Sentinel (background). If regressions → stop. | FM-6 |
-| **5** | Close | Adversarial check. Push all. BOOT.md handoff: (1) advance batch/count in YAML header, (2) update Current Position with what shipped + what the next session inherits, (3) add session log entry. All three. Every batch. | FM-7 |
+| **5** | Close | Adversarial check. Push all. BOOT.md handoff: (1) advance batch/count in YAML header, (2) update Current Position with what shipped + what the next session inherits, (3) add session log entry. All three. Every batch. **Then: context status report** — tell the operator your estimated context usage and whether you can continue to the next batch or need a fresh session. | FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)
 
@@ -132,6 +132,7 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 3. **"Am I done or do I WANT to be done?"**
 4. **"Did every agent return? Did I read every result?"**
 5. **"Did I update BOOT.md Current Position?"** — YAML header (batch/count/commit) + Current Position paragraph (what shipped, what next session inherits) + session log entry. All three. Not just the header.
+6. **"Context status?"** — Report estimated context usage to the operator. Can I continue to the next batch, or does the operator need a fresh session? This is the last thing said before sign-off.
 
 If any answer produces doubt → investigate before reporting.
 
