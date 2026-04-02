@@ -12,3 +12,4 @@ pub mod search;
 pub mod layout;
 pub mod windows;
 pub mod hud;
+pub mod vault;

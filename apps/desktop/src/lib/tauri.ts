@@ -813,3 +813,22 @@ export function onDispatchFlow(
 ): Promise<UnlistenFn> {
   return listen<HudEventEnvelope<DispatchFlowEvent>>('hud:dispatch-flow', (e) => callback(e.payload.payload));
 }
+
+// ── Vault Browser Commands (P5-N) ──
+
+export interface VaultTreeNode {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  children: VaultTreeNode[];
+}
+
+export function listVaultTree(vaultPath: string): Promise<VaultTreeNode[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('list_vault_tree', { vaultPath });
+}
+
+export function readVaultFile(vaultRoot: string, filePath: string): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
+  return invoke('read_vault_file', { vaultRoot, filePath });
+}

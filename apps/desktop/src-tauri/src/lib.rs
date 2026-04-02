@@ -271,6 +271,8 @@ pub fn run() {
             commands::hud::add_hud_finding,
             commands::hud::resolve_hud_finding,
             commands::hud::get_finding_counts,
+            commands::vault::list_vault_tree,
+            commands::vault::read_vault_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
