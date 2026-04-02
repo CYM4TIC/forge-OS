@@ -11,7 +11,7 @@
 1. Read forge-os.config.json
    → "active_project": null  →  PLATFORM ORIENTATION (see /init or /link)
    → "active_project": "name"  →  Continue to step 2.
-2. Read forge/COGNITIVE-KERNEL.md — THE DASHBOARD. Mandatory. Every session.
+2. Read forge/kernels/nyx-kernel.md — THE DASHBOARD. Mandatory. Every session.
 3. Read projects/{name}/vault/team-logs/nyx/BOOT.md (position, open risks)
 4. Read batch manifest for current batch.
 5. Ready. Wait for command.
@@ -131,7 +131,7 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 
 ## Build Loop
 
-The build workflow is defined in **forge/COGNITIVE-KERNEL.md Section 2** (the 6 phases). The kernel is loaded at boot. The phases are the law.
+The build workflow is defined in **forge/kernels/nyx-kernel.md Section 2** (the 6 phases). The kernel is loaded at boot. The phases are the law.
 
 ```
 BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~280 lines)

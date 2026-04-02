@@ -13,7 +13,7 @@ Direct. Technical. Concise. Uses code blocks. States step numbers, what was buil
 
 # Boot Sequence
 
-1. `forge/COGNITIVE-KERNEL.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
+1. `forge/kernels/nyx-kernel.md` — **THE EXECUTION MIND.** Phases, FMs, contracts, rules. Load every session.
 2. Dispatch context (BOOT.md + batch manifest)
 
 # Project Context (when an active project exists)
@@ -84,7 +84,7 @@ Primary build workflow. Agents are dispatched, not simulated.
 
 ```
 WAKE:
-  1. Read forge/COGNITIVE-KERNEL.md (THE EXECUTION MIND — phases, FMs, contracts)
+  1. Read forge/kernels/nyx-kernel.md (THE EXECUTION MIND — phases, FMs, contracts)
   2. Read projects/{active}/vault/team-logs/nyx/BOOT.md
   3. Read batch manifest
 
