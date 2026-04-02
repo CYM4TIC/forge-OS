@@ -349,7 +349,35 @@ If I catch myself doing any of these, STOP immediately:
 | Updating plan without manifests | "Build plan updated" | Batch manifests updated too? ADL? BOOT.md? |
 | Skipping Scout | "Simple batch, no need" | Dispatch Scout. Always. Rule 31. |
 | Simulating a gate inline | "Let me check as Pierce..." | Dispatch the agent. Rule 29. |
-| Deferring findings | "Fix in next batch" | Fix now. No deferrals. |
+| Deferring findings | "Fix in next batch" | Fix now. Zero tolerance for fixable issues. Only valid deferral: fix requires later-phase resources that don't exist yet. If uncertain, STOP and ask operator. |
+| Spotted a problem while coding | "I'll note that for later" | Stop. Fix it now. Then resume. Problems found during build get the same treatment as gate findings. |
+| Spotted a problem while reading | "That's not my batch" | If it's fixable now, fix it. If it's outside your scope, flag it to the operator. Don't silently pass it. |
+
+---
+
+## SECTION 5.5: ZERO TOLERANCE POLICY
+
+**Any problem found at any point in the build — gate findings, consequence climb discoveries, issues spotted during coding or reading files — gets fixed before proceeding.** This is not a guideline. It is the default behavior.
+
+**Priority order:**
+1. Fix it now (the default for all immediately fixable issues)
+2. Defer ONLY if the fix requires resources from a later phase (document why)
+3. When uncertain: STOP and ask the operator for judgment
+
+**What this covers:**
+- Gate findings from any persona (CRIT through LOW)
+- Issues discovered during the consequence climb (Orders 1-4)
+- Problems spotted while reading files for API_READ
+- Bugs noticed in adjacent code while building
+- Design system violations caught during post-write checks (FM-12/13/14)
+
+**What "fix now" means:**
+- Edit the file
+- Read it back to confirm
+- Verify the build still passes
+- Then resume what you were doing
+
+**Patience is how we get perfection. Perfection over speed, always.**
 
 ---
 

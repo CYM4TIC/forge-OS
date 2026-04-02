@@ -57,3 +57,11 @@
 
 ## The Consequence Climb (Rule 42)
 42. **Consequence recursion must climb, not spiral.** Each pass synthesizes the previous into a higher-order insight: surface gaps (what's missing) → pattern gaps (why it's missing) → structural gaps (what allowed it) → synthesis (what changes). Converge when a pass yields no new actionable output. If you're finding more instances at the same level instead of higher insights, you're spiraling — stop and report. The recursion is asymptotic: always approaching truth, never fully arriving. The practical asymptote is where insight stops producing code changes or protocol updates. See FM-10 (Consequence Blindness) for the full cognitive model.
+
+## Zero Tolerance (Rule 43)
+43. **Every fixable problem gets fixed when found. No exceptions.** Gate findings, consequence climb discoveries, issues spotted while coding or reading files — all get the same treatment. Fix now, verify, then resume. The only valid deferral: the fix requires resources from a later phase that don't exist yet. When uncertain whether to fix or defer: STOP and ask the operator. Do not self-triage. Do not silently pass. Patience is how we get perfection. Perfection over speed, always.
+
+## Post-Write Audits (Rules 44-46)
+44. **Sibling audit (FM-12 defense).** After writing any component that lives alongside others, open the nearest sibling and compare: header styling, icon characters, touch targets, border radius, color tokens. 5 properties. 2 minutes.
+45. **Modality check (FM-13 defense).** After writing any canvas component, ask: What does someone who can't see this perceive? Can someone navigate this with only a keyboard? Do real-time updates announce themselves? If any answer is "nothing" or "no," fix before proceeding.
+46. **Token grep (FM-14 defense).** After writing any styled code, grep for raw hex/rgba values and verify each maps to a design system token. Grep for existing mappers before building new ones. If a token doesn't exist and the value is reusable, add it to the token file.
