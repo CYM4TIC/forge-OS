@@ -1,4 +1,8 @@
 import { useAgentDispatch } from '../../hooks/useAgentDispatch';
+import { PersonaGlyph } from '@forge-os/canvas-components';
+import type { GlyphState } from '@forge-os/canvas-components';
+import { PERSONA_SHORT } from '@forge-os/shared';
+import type { PersonaSlug } from '@forge-os/shared';
 
 type PresenceStatus = 'active' | 'idle' | 'offline';
 
@@ -7,17 +11,19 @@ interface AgentPresenceItem {
   status: PresenceStatus;
 }
 
-const STATUS_DOT: Record<PresenceStatus, string> = {
-  active: 'bg-success',
-  idle: 'bg-warning',
-  offline: 'bg-text-muted',
-};
-
 const STATUS_LABEL: Record<PresenceStatus, string> = {
   active: 'Active',
   idle: 'Idle',
   offline: 'Offline',
 };
+
+const STATUS_TO_GLYPH: Record<PresenceStatus, GlyphState> = {
+  active: 'speaking',
+  idle: 'idle',
+  offline: 'idle',
+};
+
+const PERSONA_SLUGS: ReadonlySet<string> = new Set(Object.keys(PERSONA_SHORT));
 
 export default function AgentPresence() {
   const { activeAgents } = useAgentDispatch();
@@ -26,7 +32,7 @@ export default function AgentPresence() {
   const activeSet = new Set(activeAgents.map((a) => a.agent_slug));
 
   // Core personas — always shown
-  const coreAgents = [
+  const coreAgents: string[] = [
     'nyx', 'pierce', 'mara', 'riven', 'kehinde',
     'tanaka', 'vane', 'voss', 'calloway', 'sable',
   ];
@@ -42,13 +48,19 @@ export default function AgentPresence() {
         <div
           key={agent.slug}
           className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-bg-tertiary/50"
-          title={`${agent.slug}: ${STATUS_LABEL[agent.status]}`}
+          title={`${PERSONA_SHORT[agent.slug as PersonaSlug] ?? agent.slug}: ${STATUS_LABEL[agent.status]}`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[agent.status]} ${
-            agent.status === 'active' ? 'animate-pulse' : ''
-          }`} />
-          <span className="text-text-secondary text-[10px] capitalize">
-            {agent.slug}
+          {PERSONA_SLUGS.has(agent.slug) ? (
+            <PersonaGlyph
+              size={14}
+              persona={agent.slug as PersonaSlug}
+              state={STATUS_TO_GLYPH[agent.status]}
+            />
+          ) : (
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-text-muted`} />
+          )}
+          <span className="text-text-secondary text-[10px]">
+            {PERSONA_SHORT[agent.slug as PersonaSlug] ?? agent.slug}
           </span>
         </div>
       ))}
