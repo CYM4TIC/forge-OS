@@ -110,10 +110,14 @@ export function useAgentRegistry(): UseAgentRegistryReturn {
           setCommands(cachedCommands);
         }
 
-        // Phase 2: fresh rescan (triggers agent/ directory walk)
-        const freshAgents = await refreshAgentRegistry();
+        // Phase 2: fresh rescan (triggers agent/ directory walk) + commands re-fetch (K-02)
+        const [freshAgents, freshCommands2] = await Promise.all([
+          refreshAgentRegistry(),
+          getCommandRegistry(),
+        ]);
         if (!cancelled) {
           setAgents(freshAgents);
+          setCommands(freshCommands2);
           setLoading(false);
         }
       } catch (e) {
@@ -145,7 +149,9 @@ export function useAgentRegistry(): UseAgentRegistryReturn {
           [event.agent_slug]: event.state,
         }));
       });
-      if (!cancelled) unlisten = unsub;
+      // K-04: assign even when cancelled so cleanup can call it
+      unlisten = unsub;
+      if (cancelled) unsub();
     };
 
     setup();
@@ -156,32 +162,61 @@ export function useAgentRegistry(): UseAgentRegistryReturn {
   }, []);
 
   // ── Re-fetch on connectivity changes (availability may have changed) ──
+  // K-01: 500ms debounce prevents thundering herd on rapid connectivity flaps.
 
   useEffect(() => {
     let unlisten: (() => void) | null = null;
     let cancelled = false;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const setup = async () => {
-      const unsub = await onConnectivityChanged(async () => {
+      const unsub = await onConnectivityChanged(() => {
         if (cancelled) return;
-        try {
-          const fresh = await refreshAgentRegistry();
-          if (!cancelled && mountedRef.current) {
-            setAgents(fresh);
+        // Debounce: coalesce rapid connectivity events into one refresh
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          if (cancelled) return;
+          try {
+            const fresh = await refreshAgentRegistry();
+            if (!cancelled && mountedRef.current) {
+              setAgents(fresh);
+            }
+          } catch {
+            // Non-fatal: keep stale data
           }
-        } catch {
-          // Non-fatal: keep stale data
-        }
+        }, 500);
       });
-      if (!cancelled) unlisten = unsub;
+      // K-04: assign even when cancelled so cleanup can call it
+      unlisten = unsub;
+      if (cancelled) unsub();
     };
 
     setup();
     return () => {
       cancelled = true;
+      if (debounceTimer) clearTimeout(debounceTimer);
       unlisten?.();
     };
   }, []);
+
+  // ── Prune stale agentStates when registry changes (K-07) ──
+
+  useEffect(() => {
+    if (agents.length === 0) return;
+    const validSlugs = new Set(agents.map((a) => a.slug));
+    setAgentStates((prev) => {
+      const pruned: AgentStateMap = {};
+      let changed = false;
+      for (const [slug, state] of Object.entries(prev)) {
+        if (validSlugs.has(slug)) {
+          pruned[slug] = state;
+        } else {
+          changed = true;
+        }
+      }
+      return changed ? pruned : prev;
+    });
+  }, [agents]);
 
   // ── Actions ──
 

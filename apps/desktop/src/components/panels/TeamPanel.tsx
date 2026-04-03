@@ -4,7 +4,7 @@
 // Dispatch tab: existing AgentStatusPanel + MessageFeed.
 // Actions tab: placeholder for P7-G Action Palette.
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import AgentStatusPanel from '../team/AgentStatusPanel';
 import AgentPresence from '../team/AgentPresence';
 import MessageFeed from '../team/MessageFeed';
@@ -23,13 +23,20 @@ type Tab = 'team' | 'dispatch' | 'actions';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Map backend AgentWorkingState to PersonaGlyph animation state. */
+/**
+ * Map backend AgentWorkingState to PersonaGlyph animation state.
+ * M-HIGH-4: waiting_for_confirmation maps to 'finding' (alert state, not 'speaking')
+ * because the agent is blocked waiting for user action, not actively communicating.
+ * P7E-01: 'complete' and 'error' states ready for when dispatch lifecycle emits them.
+ */
 function workingStateToGlyph(state: string | undefined): GlyphState {
   switch (state) {
     case 'streaming':
     case 'executing_tool': return 'thinking';
-    case 'waiting_for_confirmation': return 'speaking';
+    case 'waiting_for_confirmation': return 'finding';
     case 'compacting': return 'thinking';
+    case 'complete': return 'complete';
+    case 'error': return 'error';
     case 'idle':
     default: return 'idle';
   }
@@ -75,7 +82,25 @@ function modelClassBadge(mc: string): BadgeStatus {
   }
 }
 
+/** Translate raw errors to friendly messages (M-MED-4). */
+function friendlyError(raw: string): string {
+  if (raw.includes('network') || raw.includes('fetch')) return 'Network error — check your connection.';
+  if (raw.includes('timeout')) return 'Request timed out.';
+  if (raw.includes('not found') || raw.includes('404')) return 'Agent registry not found — check project structure.';
+  return 'Something went wrong. Try again.';
+}
+
 // ─── Static Styles (canvas-tokens, no Tailwind — RIVEN-HIGH-3) ─────────────
+
+const SR_ONLY: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 const PANEL_SHELL: React.CSSProperties = {
   height: '100%',
@@ -210,20 +235,28 @@ const DL_ROW: React.CSSProperties = {
 
 // ─── Tab Button ─────────────────────────────────────────────────────────────
 
-function TabButton({ active, onClick, children, id, controls }: {
+/**
+ * TabButton with roving tabindex (M-CRIT-1: WAI-ARIA Tabs pattern).
+ * Only the active tab is in the tab order (tabIndex=0). Inactive tabs have tabIndex=-1.
+ * Arrow keys handled at the tablist level to navigate between tabs.
+ */
+function TabButton({ active, onClick, children, id, controls, buttonRef }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   id?: string;
   controls?: string;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
+      ref={buttonRef}
       role="tab"
       aria-selected={active}
-      aria-controls={controls}
+      aria-controls={active ? controls : undefined}
       id={id}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -406,13 +439,14 @@ function TeamTabContent({ grouped, agentStates, loading, error, refresh }: TeamT
     [agentStates],
   );
 
-  // Loading skeleton
+  // Loading skeleton (M-HIGH-1: role="status" for SR announcement)
   if (loading && totalAgents === 0) {
     return (
       <div style={{ flex: 1, overflowY: 'auto' }} aria-busy="true">
+        <span role="status" style={SR_ONLY}>Loading agent registry…</span>
         <div style={CARDS_GRID}>
           {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <div key={i} style={SKELETON_CARD} />
+            <div key={i} style={SKELETON_CARD} aria-hidden="true" />
           ))}
         </div>
         <style>{`@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }`}</style>
@@ -420,16 +454,16 @@ function TeamTabContent({ grouped, agentStates, loading, error, refresh }: TeamT
     );
   }
 
-  // Error state (with data: show banner + stale cards)
+  // Error state (M-HIGH-2: role="alert" for SR announcement)
   if (error && totalAgents === 0) {
     return (
-      <div style={{ ...CENTER_STATE, height: 'auto', flex: 1 }}>
+      <div style={{ ...CENTER_STATE, height: 'auto', flex: 1 }} role="alert">
         <span style={{ fontSize: 24 }} aria-hidden="true">{'\u26A0'}</span>
         <span style={{ color: STATUS.danger, fontSize: 13, fontWeight: 600 }}>
           Failed to load agent registry
         </span>
         <span style={{ color: CANVAS.label, fontSize: 11, maxWidth: 260, textAlign: 'center' }}>
-          {error}
+          {friendlyError(error)}
         </span>
         <button type="button" style={BTN} onClick={refresh} autoFocus>Retry</button>
       </div>
@@ -468,7 +502,7 @@ function TeamTabContent({ grouped, agentStates, loading, error, refresh }: TeamT
           style={BTN}
           onClick={refresh}
           disabled={loading}
-          aria-label="Refresh agent registry"
+          aria-label={loading ? 'Refreshing agent registry…' : 'Refresh agent registry'}
         >
           {loading ? '\u231B' : '\u21BB'}
         </button>
@@ -515,14 +549,62 @@ function TeamTabContent({ grouped, agentStates, loading, error, refresh }: TeamT
 
 // ─── Main Panel ─────────────────────────────────────────────────────────────
 
+const TABS: Tab[] = ['team', 'dispatch', 'actions'];
+
 export default function TeamPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('team');
   const { messages, unreadCount, markRead } = useSwarmMessages('nyx');
   const { pending, approve, deny } = usePermissions('nyx');
   const { grouped, agentStates, loading: regLoading, error: regError, refresh } = useAgentRegistry();
 
+  // Refs for roving tabindex (M-CRIT-1)
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ team: null, dispatch: null, actions: null });
+
+  // M-HIGH-3: aria-live region for agent state transitions
+  const liveRegionRef = useRef<HTMLDivElement>(null);
+  const prevActiveCountRef = useRef(0);
+  const activeCount = useMemo(
+    () => Object.values(agentStates).filter((s) => s !== 'idle').length,
+    [agentStates],
+  );
+  useEffect(() => {
+    if (activeCount !== prevActiveCountRef.current && liveRegionRef.current) {
+      liveRegionRef.current.textContent = activeCount > 0
+        ? `${activeCount} agent${activeCount === 1 ? '' : 's'} active`
+        : 'All agents idle';
+      prevActiveCountRef.current = activeCount;
+    }
+  }, [activeCount]);
+
+  // M-CRIT-1: Arrow key navigation for roving tabindex
+  const handleTablistKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const idx = TABS.indexOf(activeTab);
+    let nextIdx = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIdx = (idx + 1) % TABS.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIdx = (idx - 1 + TABS.length) % TABS.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIdx = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIdx = TABS.length - 1;
+    }
+    if (nextIdx >= 0) {
+      const nextTab = TABS[nextIdx];
+      setActiveTab(nextTab);
+      tabRefs.current[nextTab]?.focus();
+    }
+  }, [activeTab]);
+
   return (
     <div role="region" aria-label="Magi" style={PANEL_SHELL}>
+      {/* M-HIGH-3: live region for SR agent state announcements */}
+      <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" style={SR_ONLY} />
+
       {/* Presence bar */}
       <div style={{ padding: '8px 12px 4px', flexShrink: 0 }}>
         <AgentPresence />
@@ -542,21 +624,28 @@ export default function TeamPanel() {
         </div>
       )}
 
-      {/* Tab bar — ARIA tab pattern (MARA-CRIT-4) */}
-      <div role="tablist" aria-label="Magi panel tabs" style={{ display: 'flex', borderBottom: `1px solid ${CANVAS.border}`, flexShrink: 0 }}>
+      {/* Tab bar — ARIA tab pattern (MARA-CRIT-4, M-CRIT-1 roving tabindex) */}
+      <div
+        role="tablist"
+        aria-label="Magi panel tabs"
+        onKeyDown={handleTablistKeyDown}
+        style={{ display: 'flex', borderBottom: `1px solid ${CANVAS.border}`, flexShrink: 0 }}
+      >
         <TabButton
           active={activeTab === 'team'}
           onClick={() => setActiveTab('team')}
           id="tab-team"
           controls="panel-team"
+          buttonRef={(el) => { tabRefs.current.team = el; }}
         >
-          {'\u{1F9D9}'} Team
+          <span aria-hidden="true">{'\u{1F9D9}'}</span> Team
         </TabButton>
         <TabButton
           active={activeTab === 'dispatch'}
           onClick={() => setActiveTab('dispatch')}
           id="tab-dispatch"
           controls="panel-dispatch"
+          buttonRef={(el) => { tabRefs.current.dispatch = el; }}
         >
           Dispatch
           <MailboxBadge count={unreadCount} />
@@ -566,61 +655,56 @@ export default function TeamPanel() {
           onClick={() => setActiveTab('actions')}
           id="tab-actions"
           controls="panel-actions"
+          buttonRef={(el) => { tabRefs.current.actions = el; }}
         >
-          {'\u26A1'} Actions
+          <span aria-hidden="true">{'\u26A1'}</span> Actions
         </TabButton>
       </div>
 
-      {/* Tab content */}
-      {activeTab === 'team' && (
-        <div
-          role="tabpanel"
-          id="panel-team"
-          aria-labelledby="tab-team"
-          style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
-        >
-          <TeamTabContent
-            grouped={grouped}
-            agentStates={agentStates}
-            loading={regLoading}
-            error={regError}
-            refresh={refresh}
-          />
-        </div>
-      )}
+      {/* Tab content — M-CRIT-2: all panels rendered, inactive hidden with display:none */}
+      <div
+        role="tabpanel"
+        id="panel-team"
+        aria-labelledby="tab-team"
+        style={{ flex: 1, minHeight: 0, display: activeTab === 'team' ? 'flex' : 'none', flexDirection: 'column' }}
+      >
+        <TeamTabContent
+          grouped={grouped}
+          agentStates={agentStates}
+          loading={regLoading}
+          error={regError}
+          refresh={refresh}
+        />
+      </div>
 
-      {activeTab === 'dispatch' && (
-        <div
-          role="tabpanel"
-          id="panel-dispatch"
-          aria-labelledby="tab-dispatch"
-          style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}
-        >
-          <AgentStatusPanel />
-          <div style={{ padding: 8 }}>
-            <MessageFeed messages={messages} onMarkRead={markRead} />
-          </div>
+      <div
+        role="tabpanel"
+        id="panel-dispatch"
+        aria-labelledby="tab-dispatch"
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: activeTab === 'dispatch' ? 'block' : 'none' }}
+      >
+        <AgentStatusPanel />
+        <div style={{ padding: 8 }}>
+          <MessageFeed messages={messages} onMarkRead={markRead} />
         </div>
-      )}
+      </div>
 
-      {activeTab === 'actions' && (
-        <div
-          role="tabpanel"
-          id="panel-actions"
-          aria-labelledby="tab-actions"
-          style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <div style={{ textAlign: 'center', padding: 24 }}>
-            <span style={{ fontSize: 32, display: 'block', marginBottom: 8 }} aria-hidden="true">{'\u2697\uFE0F'}</span>
-            <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>
-              Invocation Palette
-            </span>
-            <span style={{ color: CANVAS.muted, fontSize: 11, lineHeight: '16px' }}>
-              Select personas in the Team tab to unlock orchestrator actions.
-            </span>
-          </div>
+      <div
+        role="tabpanel"
+        id="panel-actions"
+        aria-labelledby="tab-actions"
+        style={{ flex: 1, minHeight: 0, display: activeTab === 'actions' ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <div style={{ textAlign: 'center', padding: 24 }}>
+          <span style={{ fontSize: 32, display: 'block', marginBottom: 8 }} aria-hidden="true">{'\u2697\uFE0F'}</span>
+          <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>
+            Invocation Palette
+          </span>
+          <span style={{ color: CANVAS.muted, fontSize: 11, lineHeight: '16px' }}>
+            Select personas in the Team tab to unlock orchestrator actions.
+          </span>
         </div>
-      )}
+      </div>
     </div>
   );
 }
