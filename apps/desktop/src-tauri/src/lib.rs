@@ -19,6 +19,7 @@ mod swarm;
 
 use std::sync::Arc;
 
+use commands::connectivity::HealthCheckManager;
 use commands::devserver::DevServerManager;
 use database::Database;
 use dispatch::AgentDispatcher;
@@ -183,10 +184,15 @@ pub fn run() {
             // Clone dispatcher before manage() moves it
             let maint_dispatcher = dispatcher.clone();
 
+            let health_mgr = HealthCheckManager::new();
+            let health_cache = health_mgr.cache.clone();
+            let health_interval = health_mgr.check_interval.clone();
+
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
             app.manage(DevServerManager::new());
+            app.manage(health_mgr);
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -204,6 +210,7 @@ pub fn run() {
                 .app_data_dir()
                 .expect("app data dir for dream bg")
                 .join("forge.db");
+            let health_db_path = db_path.clone();
             tauri::async_runtime::spawn(async move {
                 loop {
                     tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
@@ -214,6 +221,14 @@ pub fn run() {
                     }
                 }
             });
+
+            // Background health check poller for connectivity panel
+            commands::connectivity::spawn_health_poller(
+                app.handle().clone(),
+                health_cache,
+                health_interval,
+                health_db_path,
+            );
 
             Ok(())
         })
@@ -286,6 +301,10 @@ pub fn run() {
             commands::devserver::detect_server_port,
             commands::devserver::read_preview_dom,
             commands::devserver::preview_dom_response,
+            commands::connectivity::check_service,
+            commands::connectivity::check_all_services,
+            commands::connectivity::get_service_status,
+            commands::connectivity::set_check_interval,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

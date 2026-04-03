@@ -75,5 +75,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 11;")?;
     }
 
+    // Phase 6: Service health check configuration
+    if current_version < 12 {
+        conn.execute_batch(schema::SCHEMA_V12)?;
+        conn.execute_batch("PRAGMA user_version = 12;")?;
+    }
+
     Ok(())
 }

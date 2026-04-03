@@ -371,3 +371,18 @@ DROP TABLE IF EXISTS agent_state;
 DROP INDEX IF EXISTS idx_agent_state_slug;
 COMMIT;
 "#;
+
+/// Phase 6 schema v12: Service health check configuration.
+/// Stores which external services are configured for connectivity monitoring.
+pub const SCHEMA_V12: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS service_configs (
+    service_type TEXT PRIMARY KEY NOT NULL
+        CHECK (service_type IN ('github', 'supabase', 'cloudflare', 'stripe', 'typesense', 'custom')),
+    config_json TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+COMMIT;
+"#;

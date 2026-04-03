@@ -15,3 +15,4 @@ pub mod hud;
 pub mod vault;
 pub mod devserver;
 pub mod devserver_patterns;
+pub mod connectivity;
