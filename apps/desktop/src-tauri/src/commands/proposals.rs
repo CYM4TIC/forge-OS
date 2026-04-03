@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::sync::Arc;
 use tauri::{Emitter, State};
 use tokio::sync::Mutex;
-use uuid::Uuid;
+use ulid::Ulid;
 
 use crate::database::Database;
 use crate::proposals::store::{
@@ -95,7 +95,7 @@ pub fn file_proposal(
         }
     }
 
-    let id = Uuid::new_v4().to_string();
+    let id = Ulid::new().to_string();
     let proposal = Proposal {
         id: id.clone(),
         author: request.author,
@@ -112,7 +112,7 @@ pub fn file_proposal(
         preconditions: request.preconditions.unwrap_or_default(),
         verification_steps: request.verification_steps.unwrap_or_default(),
         fulfills: request.fulfills,
-        created_at: String::new(), // SQLite default
+        created_at: String::new(), // Not inserted — column omitted from INSERT, SQLite DEFAULT applies
         resolved_at: None,
         decision_trace_id: None,
     };

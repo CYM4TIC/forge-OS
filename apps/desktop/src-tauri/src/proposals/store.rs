@@ -422,91 +422,118 @@ pub fn get_proposal_feed(
     per_page: i64,
     filter: &ProposalFilter,
 ) -> Result<Vec<FeedEntry>, rusqlite::Error> {
-    let offset = page * per_page;
+    // Three separate queries returning full rows — no N+1 re-fetch.
+    // Over-fetch per_page from each type, merge, sort, take page slice.
+    let fetch_limit = (page + 1) * per_page;
 
-    // Build filter clause for proposals
-    let mut where_clause = String::from("1=1");
-    let mut param_values: Vec<String> = Vec::new();
+    // 1. Proposals (full rows, filtered)
+    let proposals = list_proposals(conn, filter)?;
 
+    // 2. Responses (joined to filtered proposals)
+    let mut response_sql = String::from(
+        "SELECT r.id, r.proposal_id, r.author, r.body, r.created_at
+         FROM proposal_responses r
+         INNER JOIN proposals p ON r.proposal_id = p.id WHERE 1=1"
+    );
+    let mut r_params: Vec<String> = Vec::new();
     if let Some(ref author) = filter.author {
-        param_values.push(author.clone());
-        where_clause.push_str(&format!(" AND author = ?{}", param_values.len()));
+        r_params.push(author.clone());
+        response_sql.push_str(&format!(" AND p.author = ?{}", r_params.len()));
     }
     if let Some(ref pt) = filter.proposal_type {
-        param_values.push(pt.clone());
-        where_clause.push_str(&format!(" AND proposal_type = ?{}", param_values.len()));
+        r_params.push(pt.clone());
+        response_sql.push_str(&format!(" AND p.proposal_type = ?{}", r_params.len()));
     }
     if let Some(ref status) = filter.status {
-        param_values.push(status.clone());
-        where_clause.push_str(&format!(" AND status = ?{}", param_values.len()));
+        r_params.push(status.clone());
+        response_sql.push_str(&format!(" AND p.status = ?{}", r_params.len()));
     }
     if let Some(ref source) = filter.source {
-        param_values.push(source.clone());
-        where_clause.push_str(&format!(" AND source = ?{}", param_values.len()));
+        r_params.push(source.clone());
+        response_sql.push_str(&format!(" AND p.source = ?{}", r_params.len()));
     }
+    response_sql.push_str(" ORDER BY r.created_at DESC");
 
-    // Union query: proposals + responses + decisions, ordered chronologically
-    let next_idx = param_values.len() + 1;
-    let sql = format!(
-        "SELECT 'proposal' AS entry_type, p.id, p.created_at, p.id AS ref_id
-         FROM proposals p WHERE {}
-         UNION ALL
-         SELECT 'response' AS entry_type, r.id, r.created_at, r.proposal_id AS ref_id
-         FROM proposal_responses r
-         INNER JOIN proposals p ON r.proposal_id = p.id WHERE {}
-         UNION ALL
-         SELECT 'decision' AS entry_type, d.id, d.created_at, d.proposal_id AS ref_id
-         FROM decisions d
-         INNER JOIN proposals p ON d.proposal_id = p.id WHERE {}
-         ORDER BY created_at DESC
-         LIMIT ?{} OFFSET ?{}",
-        where_clause, where_clause, where_clause,
-        next_idx, next_idx + 1
-    );
-
-    // SQLite ?N params are global across UNION ALL — same ?1 in all branches
-    // binds to the same value. Only one copy of filter params needed.
-    let mut all_params: Vec<String> = param_values;
-    all_params.push(per_page.to_string());
-    all_params.push(offset.to_string());
-
-    let mut stmt = conn.prepare(&sql)?;
-    let param_refs: Vec<&dyn rusqlite::types::ToSql> = all_params
+    let mut r_stmt = conn.prepare(&response_sql)?;
+    let r_refs: Vec<&dyn rusqlite::types::ToSql> = r_params
         .iter()
         .map(|v| v as &dyn rusqlite::types::ToSql)
         .collect();
+    let responses: Vec<ProposalResponse> = r_stmt
+        .query_map(r_refs.as_slice(), |row| {
+            Ok(ProposalResponse {
+                id: row.get(0)?,
+                proposal_id: row.get(1)?,
+                author: row.get(2)?,
+                body: row.get(3)?,
+                created_at: row.get(4)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    let rows = stmt.query_map(param_refs.as_slice(), |row| {
-        let entry_type: String = row.get(0)?;
-        let id: String = row.get(1)?;
-        let ref_id: String = row.get(3)?;
-        Ok((entry_type, id, ref_id))
-    })?;
+    // 3. Decisions (joined to filtered proposals)
+    let mut decision_sql = String::from(
+        "SELECT d.id, d.proposal_id, d.resolution, d.rationale, d.implementing_batch, d.outcome_tracking, d.outcome, d.created_at
+         FROM decisions d
+         INNER JOIN proposals p ON d.proposal_id = p.id WHERE 1=1"
+    );
+    let mut d_params: Vec<String> = Vec::new();
+    if let Some(ref author) = filter.author {
+        d_params.push(author.clone());
+        decision_sql.push_str(&format!(" AND p.author = ?{}", d_params.len()));
+    }
+    if let Some(ref pt) = filter.proposal_type {
+        d_params.push(pt.clone());
+        decision_sql.push_str(&format!(" AND p.proposal_type = ?{}", d_params.len()));
+    }
+    if let Some(ref status) = filter.status {
+        d_params.push(status.clone());
+        decision_sql.push_str(&format!(" AND p.status = ?{}", d_params.len()));
+    }
+    if let Some(ref source) = filter.source {
+        d_params.push(source.clone());
+        decision_sql.push_str(&format!(" AND p.source = ?{}", d_params.len()));
+    }
+    decision_sql.push_str(" ORDER BY d.created_at DESC");
 
-    let mut entries = Vec::new();
-    for row in rows {
-        let (entry_type, id, ref_id) = row?;
-        match entry_type.as_str() {
-            "proposal" => {
-                if let Some(p) = get_proposal(conn, &id)? {
-                    entries.push(FeedEntry::ProposalFiled { proposal: p });
-                }
-            }
-            "response" => {
-                if let Some(r) = get_response(conn, &id)? {
-                    entries.push(FeedEntry::ResponseAdded { response: r });
-                }
-            }
-            "decision" => {
-                if let Some(d) = get_decision_by_proposal(conn, &ref_id)? {
-                    entries.push(FeedEntry::DecisionMade { decision: d });
-                }
-            }
-            _ => {}
-        }
+    let mut d_stmt = conn.prepare(&decision_sql)?;
+    let d_refs: Vec<&dyn rusqlite::types::ToSql> = d_params
+        .iter()
+        .map(|v| v as &dyn rusqlite::types::ToSql)
+        .collect();
+    let decisions: Vec<Decision> = d_stmt
+        .query_map(d_refs.as_slice(), row_to_decision)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Merge all entries with timestamps, sort chronologically, paginate
+    let mut entries: Vec<(String, FeedEntry)> = Vec::new();
+    for p in proposals {
+        let ts = p.created_at.clone();
+        entries.push((ts, FeedEntry::ProposalFiled { proposal: p }));
+    }
+    for r in responses {
+        let ts = r.created_at.clone();
+        entries.push((ts, FeedEntry::ResponseAdded { response: r }));
+    }
+    for d in decisions {
+        let ts = d.created_at.clone();
+        entries.push((ts, FeedEntry::DecisionMade { decision: d }));
     }
 
-    Ok(entries)
+    // Sort descending by timestamp (ISO 8601 is lexicographically sortable)
+    entries.sort_by(|a, b| b.0.cmp(&a.0));
+
+    // Paginate
+    let offset = (page * per_page) as usize;
+    let limit = per_page as usize;
+    let page_entries: Vec<FeedEntry> = entries
+        .into_iter()
+        .skip(offset)
+        .take(limit)
+        .map(|(_, entry)| entry)
+        .collect();
+
+    Ok(page_entries)
 }
 
 pub fn get_response(conn: &Connection, id: &str) -> Result<Option<ProposalResponse>, rusqlite::Error> {

@@ -398,7 +398,7 @@ CREATE TABLE IF NOT EXISTS proposals (
     proposal_type TEXT NOT NULL CHECK (proposal_type IN ('optimization', 'pattern', 'rule', 'architecture', 'skill', 'policy')),
     scope TEXT NOT NULL,
     target TEXT NOT NULL,
-    severity TEXT NOT NULL,
+    severity TEXT NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low', 'info')),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     evidence TEXT NOT NULL DEFAULT '[]',
@@ -430,7 +430,7 @@ CREATE INDEX IF NOT EXISTS idx_proposal_responses_proposal_id ON proposal_respon
 
 CREATE TABLE IF NOT EXISTS decisions (
     id TEXT PRIMARY KEY NOT NULL,
-    proposal_id TEXT NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
+    proposal_id TEXT NOT NULL UNIQUE REFERENCES proposals(id) ON DELETE CASCADE,
     resolution TEXT NOT NULL,
     rationale TEXT NOT NULL,
     implementing_batch TEXT,
@@ -440,5 +440,6 @@ CREATE TABLE IF NOT EXISTS decisions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_decisions_proposal_id ON decisions(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_decisions_outcome ON decisions(outcome);
 COMMIT;
 "#;
