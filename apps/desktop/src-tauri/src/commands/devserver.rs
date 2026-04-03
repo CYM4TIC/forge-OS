@@ -4,11 +4,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::Emitter;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command as TokioCommand};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, oneshot};
 use uuid::Uuid;
 
 use super::devserver_patterns;
@@ -90,14 +90,34 @@ struct ServerEntry {
     health_poller_active: bool,
 }
 
+/// Payload sent from frontend in response to a DOM snapshot request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DomResponsePayload {
+    pub request_id: String,
+    pub html: Option<String>,
+    pub error: Option<String>,
+}
+
+/// Payload emitted to frontend requesting a DOM snapshot.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DomRequestPayload {
+    pub request_id: String,
+    pub server_id: String,
+}
+
 pub struct DevServerManager {
     servers: Arc<Mutex<HashMap<String, ServerEntry>>>,
+    /// Pending DOM snapshot requests: request_id → oneshot sender.
+    dom_requests: Arc<Mutex<HashMap<String, oneshot::Sender<DomResponsePayload>>>>,
 }
 
 impl DevServerManager {
     pub fn new() -> Self {
         Self {
             servers: Arc::new(Mutex::new(HashMap::new())),
+            dom_requests: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -627,4 +647,93 @@ pub async fn detect_server_port(
     }
 
     Ok(None)
+}
+
+/// Request a DOM snapshot from the preview iframe for a given server.
+/// Emits `preview:request-dom` to the frontend, waits up to 5s for the response
+/// via `preview_dom_response`. Returns the serialized HTML or an error string.
+#[tauri::command]
+pub async fn read_preview_dom(
+    app: tauri::AppHandle,
+    manager: tauri::State<'_, DevServerManager>,
+    server_id: String,
+) -> Result<Option<String>, String> {
+    // Verify server exists and is in a running state
+    {
+        let servers = manager.servers.lock().await;
+        match servers.get(&server_id) {
+            None => return Err(format!("Server {server_id} not found")),
+            Some(entry) => match entry.info.status {
+                DevServerStatus::Running
+                | DevServerStatus::Healthy
+                | DevServerStatus::Degraded
+                | DevServerStatus::Starting => {}
+                ref status => {
+                    return Err(format!(
+                        "Server {server_id} is not running (status: {:?})",
+                        status
+                    ));
+                }
+            },
+        }
+    }
+
+    let request_id = Uuid::new_v4().to_string();
+    let (tx, rx) = oneshot::channel::<DomResponsePayload>();
+
+    // Register the pending request (bounded to prevent leaks — TANAKA-MED-1)
+    {
+        let mut reqs = manager.dom_requests.lock().await;
+        if reqs.len() >= 100 {
+            return Err("Too many pending DOM requests — try again later".to_string());
+        }
+        reqs.insert(request_id.clone(), tx);
+    }
+
+    // Emit request event to frontend
+    let _ = app.emit(
+        "preview:request-dom",
+        DomRequestPayload {
+            request_id: request_id.clone(),
+            server_id,
+        },
+    );
+
+    // Wait for response with timeout
+    let result = tokio::time::timeout(Duration::from_secs(5), rx).await;
+
+    // Clean up if still pending (timeout or channel error)
+    {
+        let mut reqs = manager.dom_requests.lock().await;
+        reqs.remove(&request_id);
+    }
+
+    match result {
+        Ok(Ok(payload)) => {
+            if let Some(err) = payload.error {
+                Err(err)
+            } else {
+                Ok(payload.html)
+            }
+        }
+        Ok(Err(_)) => Err("DOM response channel closed unexpectedly".to_string()),
+        Err(_) => Err("DOM snapshot request timed out (5s)".to_string()),
+    }
+}
+
+/// Called by the frontend to deliver a DOM snapshot in response to
+/// a `preview:request-dom` event. Matches by request_id.
+#[tauri::command]
+pub async fn preview_dom_response(
+    manager: tauri::State<'_, DevServerManager>,
+    response: DomResponsePayload,
+) -> Result<(), String> {
+    let mut reqs = manager.dom_requests.lock().await;
+    if let Some(tx) = reqs.remove(&response.request_id) {
+        let _ = tx.send(response);
+        Ok(())
+    } else {
+        // Request already timed out or was never registered — not an error
+        Ok(())
+    }
 }

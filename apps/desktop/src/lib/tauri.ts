@@ -906,6 +906,39 @@ export function detectServerPort(serverId: string): Promise<number | null> {
   return invoke('detect_server_port', { serverId });
 }
 
+// ── Dev Server DOM Access (P6-F) ──
+
+export interface DomRequestPayload {
+  requestId: string;
+  serverId: string;
+}
+
+export interface DomResponsePayload {
+  requestId: string;
+  html: string | null;
+  error: string | null;
+}
+
+/** Request a DOM snapshot from the preview iframe for a given server. */
+export function readPreviewDom(serverId: string): Promise<string | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
+  return invoke('read_preview_dom', { serverId });
+}
+
+/** Listen for DOM snapshot requests from the backend. */
+export function onPreviewDomRequest(
+  callback: (payload: DomRequestPayload) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<DomRequestPayload>('preview:request-dom', (e) => callback(e.payload));
+}
+
+/** Send a DOM snapshot response back to the backend. */
+export function respondPreviewDom(response: DomResponsePayload): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
+  return invoke('preview_dom_response', { response });
+}
+
 // ── Dev Server Event Listeners (P6) ──
 
 export function onDevServerStatusChanged(

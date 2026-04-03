@@ -9,7 +9,10 @@ import {
   listDevServers,
   openDirectoryDialog,
   isTauriRuntime,
+  onPreviewDomRequest,
+  respondPreviewDom,
   type DevServerInfo,
+  type DomRequestPayload,
 } from '../../lib/tauri';
 import { CANVAS, STATUS, RADIUS } from '@forge-os/canvas-components';
 
@@ -342,6 +345,67 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
+
+  // ── DOM snapshot request handler (P6-F: agent DOM access) ──
+  // Listens for backend requests to read the preview iframe's DOM.
+  // Same-origin only (localhost); cross-origin returns an error.
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | null = null;
+
+    const setup = async () => {
+      const unsub = await onPreviewDomRequest(async (payload: DomRequestPayload) => {
+        if (cancelled) return;
+
+        // Only respond if this request targets our current server
+        if (payload.serverId !== selectedServerId) return;
+
+        try {
+          const iframe = iframeRef.current;
+          if (!iframe) {
+            await respondPreviewDom({
+              requestId: payload.requestId,
+              html: null,
+              error: 'No iframe element available',
+            });
+            return;
+          }
+
+          // Attempt same-origin DOM read
+          const doc = iframe.contentDocument;
+          if (!doc) {
+            await respondPreviewDom({
+              requestId: payload.requestId,
+              html: null,
+              error: 'Cross-origin iframe — cannot read DOM. Only localhost previews support DOM access.',
+            });
+            return;
+          }
+
+          const html = doc.documentElement.outerHTML;
+          await respondPreviewDom({
+            requestId: payload.requestId,
+            html,
+            error: null,
+          });
+        } catch {
+          await respondPreviewDom({
+            requestId: payload.requestId,
+            html: null,
+            error: 'Failed to read iframe DOM — may be cross-origin',
+          });
+        }
+      });
+      if (!cancelled) unlisten = unsub;
+    };
+
+    setup();
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [selectedServerId]);
 
   // ── Actions ──
 
@@ -1000,6 +1064,11 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
                 // standard fallback for web content before the page paints.
                 background: '#fff',
               }}
+              // SECURITY NOTE (TANAKA-HIGH-1): allow-same-origin + allow-scripts means
+              // localhost dev server code can access window.parent and Tauri invoke API.
+              // This is the standard trust model for dev-server preview tools: localhost
+              // dev servers are trusted code run by the developer. Required for P6-F agent
+              // DOM access (parent reads iframe.contentDocument for same-origin localhost).
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
             />
           </div>

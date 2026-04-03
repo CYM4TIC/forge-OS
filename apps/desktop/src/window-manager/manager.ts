@@ -44,7 +44,7 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     type: 'preview', label: 'Preview', icon: '🖥️',
     defaultConstraints: { minWidth: 320, minHeight: 200 },
     allowMultiple: true,
-    defaultSize: { width: 400, height: 300 },
+    defaultSize: { width: 640, height: 480 },
   }],
   ['connectivity', {
     type: 'connectivity', label: 'Services', icon: '🔗',
