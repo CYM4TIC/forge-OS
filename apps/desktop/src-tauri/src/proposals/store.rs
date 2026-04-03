@@ -180,6 +180,24 @@ impl MissionState {
             _ => Err(format!("Invalid mission state: {}", s)),
         }
     }
+
+    /// Valid mission state transitions (P-MED-2 fix).
+    /// Directed graph: AwaitingInput→Initializing, Initializing→Running,
+    /// Running→{Paused,OrchestratorTurn,Completed}, Paused→Running,
+    /// OrchestratorTurn→{Running,Completed}.
+    pub fn valid_transition(&self, to: &MissionState) -> bool {
+        matches!(
+            (self, to),
+            (Self::AwaitingInput, Self::Initializing)
+                | (Self::Initializing, Self::Running)
+                | (Self::Running, Self::Paused)
+                | (Self::Running, Self::OrchestratorTurn)
+                | (Self::Running, Self::Completed)
+                | (Self::Paused, Self::Running)
+                | (Self::OrchestratorTurn, Self::Running)
+                | (Self::OrchestratorTurn, Self::Completed)
+        )
+    }
 }
 
 // ── Row structs ──
@@ -327,17 +345,42 @@ pub fn list_proposals(conn: &Connection, filter: &ProposalFilter) -> Result<Vec<
     rows.collect()
 }
 
+/// Valid proposal status transitions (P-HIGH-4 fix).
+/// Open -> Evaluating, Evaluating -> Accepted|Rejected. No backwards transitions.
+pub fn valid_status_transition(from: &ProposalStatus, to: &ProposalStatus) -> bool {
+    matches!(
+        (from, to),
+        (ProposalStatus::Open, ProposalStatus::Evaluating)
+            | (ProposalStatus::Evaluating, ProposalStatus::Accepted)
+            | (ProposalStatus::Evaluating, ProposalStatus::Rejected)
+    )
+}
+
 pub fn update_proposal_status(
     conn: &Connection,
     id: &str,
-    status: &ProposalStatus,
+    new_status: &ProposalStatus,
     resolved_at: Option<&str>,
     decision_trace_id: Option<&str>,
-) -> Result<(), rusqlite::Error> {
+) -> Result<(), String> {
+    // Read current status to validate transition
+    let current = get_proposal(conn, id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("Proposal not found: {}", id))?;
+
+    if !valid_status_transition(&current.status, new_status) {
+        return Err(format!(
+            "Invalid status transition: {} -> {}",
+            current.status.as_str(),
+            new_status.as_str()
+        ));
+    }
+
     conn.execute(
         "UPDATE proposals SET status = ?1, resolved_at = ?2, decision_trace_id = ?3 WHERE id = ?4",
-        params![status.as_str(), resolved_at, decision_trace_id, id],
-    )?;
+        params![new_status.as_str(), resolved_at, decision_trace_id, id],
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -350,17 +393,27 @@ pub fn add_response(conn: &Connection, response: &ProposalResponse) -> Result<()
 }
 
 /// Rate limit: max 3 proposals per persona per session (automated exempt).
-pub fn count_proposals_by_author_session(
+/// When session_id is provided, counts since session start.
+/// When session_id is None, counts proposals in the last hour as fallback.
+pub fn count_proposals_by_author(
     conn: &Connection,
     author: &str,
-    session_id: &str,
+    session_id: Option<&str>,
 ) -> Result<i64, rusqlite::Error> {
-    conn.query_row(
-        "SELECT COUNT(*) FROM proposals WHERE author = ?1 AND source != 'automated'
-         AND created_at >= (SELECT created_at FROM sessions WHERE id = ?2)",
-        params![author, session_id],
-        |row| row.get(0),
-    )
+    match session_id {
+        Some(sid) => conn.query_row(
+            "SELECT COUNT(*) FROM proposals WHERE author = ?1 AND source != 'automated'
+             AND created_at >= (SELECT created_at FROM sessions WHERE id = ?2)",
+            params![author, sid],
+            |row| row.get(0),
+        ),
+        None => conn.query_row(
+            "SELECT COUNT(*) FROM proposals WHERE author = ?1 AND source != 'automated'
+             AND created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 hour')",
+            params![author],
+            |row| row.get(0),
+        ),
+    }
 }
 
 pub fn get_proposal_feed(

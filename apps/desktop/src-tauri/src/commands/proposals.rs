@@ -79,16 +79,19 @@ pub fn file_proposal(
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
     // Rate limit: max 3 per persona per session (automated exempt)
+    // P-CRIT-2 fix: always enforce, even without session_id (falls back to 1-hour window)
     if request.source != ProposalSource::Automated {
-        if let Some(ref session_id) = request.session_id {
-            let count = store::count_proposals_by_author_session(&conn, &request.author, session_id)
-                .map_err(|e| e.to_string())?;
-            if count >= 3 {
-                return Err(format!(
-                    "Rate limit: {} has already filed 3 proposals this session",
-                    request.author
-                ));
-            }
+        let count = store::count_proposals_by_author(
+            &conn,
+            &request.author,
+            request.session_id.as_deref(),
+        )
+        .map_err(|e| e.to_string())?;
+        if count >= 3 {
+            return Err(format!(
+                "Rate limit: {} has already filed 3 proposals this session",
+                request.author
+            ));
         }
     }
 
@@ -172,6 +175,14 @@ pub async fn update_mission_state(
     request: UpdateMissionStateRequest,
 ) -> Result<MissionState, String> {
     let mut holder = mission.lock().await;
+    // P-MED-2 fix: validate state transitions
+    if !holder.state.valid_transition(&request.state) {
+        return Err(format!(
+            "Invalid mission state transition: {} -> {}",
+            holder.state.as_str(),
+            request.state.as_str()
+        ));
+    }
     holder.state = request.state;
     let _ = app.emit("mission:state-changed", &holder.state);
     Ok(holder.state)

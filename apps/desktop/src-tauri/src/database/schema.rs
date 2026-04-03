@@ -416,6 +416,7 @@ CREATE INDEX IF NOT EXISTS idx_proposals_author ON proposals(author);
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status);
 CREATE INDEX IF NOT EXISTS idx_proposals_created_at ON proposals(created_at);
 CREATE INDEX IF NOT EXISTS idx_proposals_author_status ON proposals(author, status);
+CREATE INDEX IF NOT EXISTS idx_proposals_author_source ON proposals(author, source);
 
 CREATE TABLE IF NOT EXISTS proposal_responses (
     id TEXT PRIMARY KEY NOT NULL,
