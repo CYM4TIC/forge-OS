@@ -22,7 +22,7 @@ Every build batch follows this sequence. No skips. No reordering.
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
 | **4** | Regression | Dispatch Sentinel (background). If regressions → stop. | FM-6 |
-| **5** | Close | **Rule 43 gate (BLOCKING):** `tsc --noEmit` must return zero errors across the full build. Any error — including ones not introduced by this batch — is a hard stop. Fix before close. No "pre-existing" exemptions. **Then:** adversarial check. Push all. BOOT.md handoff — 3 writes, all mandatory: (1) YAML header: advance `current_batch`, increment `batches_done`, update `last_commit`, (2) Current Position: append what shipped + what next batch inherits, (3) batch table: mark batch ✅ DONE. Read back after writing. **Then: context status report** — estimated context usage, can continue or fresh session needed. | FM-4, FM-7 |
+| **5** | Close | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged to BUILD-LEARNINGS or BOOT.md carried risks, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 7). Push all. BOOT.md handoff — 3 writes. Context status report. | FM-4, FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)
 
@@ -39,7 +39,9 @@ Every build batch follows this sequence. No skips. No reordering.
    - Vane: financial flows traceable? (if financial)
    - Voss: legal requirements addressed? (if compliance-touching)
    - Sable: string registry covers strings? (if customer-facing)
-5. Load segments (max 3) + build learnings for this domain
+5. Load BUILD-LEARNINGS.md filtered by domain tags for this batch:
+   `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`
+   Grep for the tag(s) that match the batch's domain. Read matching entries. Skip the rest.
 
 ---
 
@@ -127,15 +129,41 @@ The rules I've actually violated. The rest are in [METHODOLOGY.md](../METHODOLOG
 
 Run at Phase 5 before every completion report. Also run when you "feel done."
 
-0. **RULE 43 GATE (BLOCKING):** Run `tsc --noEmit` on the full build. Zero errors required. Any error — regardless of origin — is a hard stop. Fix it, re-run, confirm zero. This is not a check. This is a gate. You cannot proceed past this step with errors.
-1. **"What would Pierce flag that the Triad didn't catch?"**
-2. **"What haven't I verified?"**
-3. **"Am I done or do I WANT to be done?"**
-4. **"Did every agent return? Did I read every result?"**
-5. **"Did I complete the BOOT.md handoff?"** — 3 writes: (1) YAML header (batch/count/commit), (2) Current Position paragraph (what shipped, what next batch inherits), (3) batch table (mark ✅ DONE). All three. Read back. Not just the header.
-6. **"Context status?"** — Report estimated context usage to the operator. Can I continue to the next batch, or does the operator need a fresh session? This is the last thing said before sign-off.
+**RULE: Every step that CAN produce evidence MUST produce evidence.** Introspection without verification is self-review blindness wearing a checklist costume. If a step can be answered with a tool call, grep, count, or read-back — it must be. "I believe" is not evidence. "The grep returned 0 matches" is.
 
-If any answer produces doubt → investigate before reporting.
+0. **RULE 43 GATE (BLOCKING).** Three sub-gates. All must pass. Failure on any = hard stop.
+
+   **0a. ZERO COMPILER ERRORS.** Run `tsc --noEmit`. Zero errors across the full build. Any error — regardless of origin — fix it, re-run, confirm zero. "Pre-existing" is not an exemption.
+
+   **0b. EVERY FINDING RESOLVED.** Produce a table: every gate finding by ID and severity. Every CRIT, HIGH, MED, and LOW must have a corresponding fix with read-back confirmation. No severity tier is exempt. INFO findings must be logged where they won't get lost — BUILD-LEARNINGS.md, BOOT.md carried risks, or the relevant persona's findings-log. An INFO that isn't logged is a finding that's been silently dropped. Count in vs. count out. The arithmetic must balance.
+
+   **0c. CONSEQUENCE CLIMB ON EVERY FIX.** Every fix is a code change. Every code change has downstream effects. For each fix applied: did I run at minimum a brief consequence climb (what else does this touch? what imports it? what pattern did I just propagate or break?)? If any fix shipped without a climb — run one now. A fix without a climb is how you trade one bug for another.
+
+   **You cannot proceed past step 0 until all three sub-gates pass.**
+
+1. **MANIFEST RECONCILIATION:** Re-read the batch manifest. Every listed deliverable. Check each one against what shipped. Cite evidence per item. This catches FM-11 (manifest amnesia) — building from intent rather than spec.
+
+2. **"What would Pierce flag?"** Answer must cite evidence from a tool call — a grep, a read-back, an import check. Not just reasoning. If you can't find anything, grep for something specific: an unused import, a raw hex value, an unchecked error path. The answer "nothing" requires proof.
+
+3. **"What haven't I verified?"** List every file written or edited this batch. For each: was it read back? Was the push confirmed? Was the integration tested? Any gap → verify now.
+
+4. **"Am I done or do I WANT to be done?"** Then: **"What's the laziest thing I did this batch?"** — force an honest admission. Every batch has one. Name it. If it's fixable, fix it.
+
+5. **"Did every agent return? Did I read every result?"** Factual count: agents dispatched vs. results received.
+
+6. **BOOT.md HANDOFF** — 3 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position paragraph (what shipped, what next batch inherits), (3) batch table (mark ✅ DONE). All three. Read back after writing.
+
+7. **HONESTY META-CHECK:** "Did I fudge any of the above answers?" Did I answer from reasoning when I should have answered from evidence? Did I say "all findings resolved" without counting? Did I say "consequence climb complete" without actually climbing? Did I answer "nothing" to step 2 without grepping? **If yes → go back to the step I fudged and do it for real.** This step is the reason the check exists.
+
+8. **BOOKKEEPING.** Two mandatory outputs:
+
+   **8a. BUILD-LEARNINGS.md** — "Did this batch produce any technical pattern, gotcha, or convention worth preserving?" If yes, write the entry with a domain tag: `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`. Tag is mandatory — an untagged entry is unfindable. If nothing new, state it explicitly. Silence is not an answer.
+
+   **8b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
+
+9. **"Context status?"** — Report estimated context usage. Can continue or fresh session needed. Last thing before sign-off.
+
+**If any step produces doubt → investigate before proceeding to the next step.** Do not batch your doubts.
 
 → [Completion checklist](../EXECUTION-PROTOCOL.md#section-4-batch-completion-checklist)
 

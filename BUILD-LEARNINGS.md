@@ -15,21 +15,28 @@
 
 ---
 
+## Domain Tags
+
+Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
+`[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`
+
 ## Quick Index
 
-| Entry | Domain | Severity | One-Line Summary |
+| Entry | Tags | Severity | One-Line Summary |
 |---|---|---|---|
-| OS-BL-001 | tooling | blocker | GitHub MCP PAT scoped to forge-dms only — use git CLI for forge-OS pushes |
-| OS-BL-002 | tooling | blocker | MSVC C++ build tools required for Tauri on Windows — Git's link.exe shadows MSVC linker |
-| OS-BL-003 | tooling | gotcha | pnpm 10.x blocks esbuild postinstall by default — add `pnpm.onlyBuiltDependencies: ["esbuild"]` to root package.json |
-| OS-BL-004 | runtime | gotcha | react-resizable-panels v4 renamed API: PanelGroup→Group, PanelResizeHandle→Separator. Read dist exports, not docs. |
-| OS-BL-005 | tooling | gotcha | Tauri v2 build.rs requires icons/icon.ico on Windows — generate a placeholder if no real icon exists yet |
-| OS-BL-006 | tooling | gotcha | Background agents cannot inherit MCP/Bash permissions — push from main session only |
-| OS-BL-007 | process | blocker | Updating TAURI-BUILD-PLAN.md without updating BATCH-MANIFESTS.md = next session has nothing to build. FM-10. |
-| OS-BL-008 | runtime | gotcha | Tauri invoke floods console in browser-only dev mode — guard every bridge function with `isTauriRuntime` |
-| OS-BL-009 | runtime | gotcha | rusqlite Rows borrows Statement — can't branch stmt creation and collect across if/else boundary. Collect within each branch. |
-| OS-BL-010 | process | pattern | Batch manifests must use actual repo file paths, not assumed paths. Remediation session required after build plan changes. |
-| OS-BL-011 | runtime | gotcha | ThresholdStatus field is `usage_fraction` (0-1), not `usage_percent`. Phantom fields compile but evaluate to undefined at runtime. TypeScript won't catch this without strict null checks on optional access. |
+| OS-BL-001 | `[tooling]` | blocker | GitHub MCP PAT scoped to forge-dms only — use git CLI for forge-OS pushes |
+| OS-BL-002 | `[tooling]` `[rust]` | blocker | MSVC C++ build tools required for Tauri on Windows — Git's link.exe shadows MSVC linker |
+| OS-BL-003 | `[tooling]` | gotcha | pnpm 10.x blocks esbuild postinstall by default — add `pnpm.onlyBuiltDependencies: ["esbuild"]` to root package.json |
+| OS-BL-004 | `[frontend]` | gotcha | react-resizable-panels v4 renamed API: PanelGroup→Group, PanelResizeHandle→Separator. Read dist exports, not docs. |
+| OS-BL-005 | `[tooling]` `[rust]` | gotcha | Tauri v2 build.rs requires icons/icon.ico on Windows — generate a placeholder if no real icon exists yet |
+| OS-BL-006 | `[tooling]` `[governance]` | gotcha | Background agents cannot inherit MCP/Bash permissions — push from main session only |
+| OS-BL-007 | `[governance]` | blocker | Updating TAURI-BUILD-PLAN.md without updating BATCH-MANIFESTS.md = next session has nothing to build. FM-10. |
+| OS-BL-008 | `[frontend]` `[runtime]` | gotcha | Tauri invoke floods console in browser-only dev mode — guard every bridge function with `isTauriRuntime` |
+| OS-BL-009 | `[rust]` `[runtime]` | gotcha | rusqlite Rows borrows Statement — can't branch stmt creation and collect across if/else boundary. Collect within each branch. |
+| OS-BL-010 | `[governance]` | pattern | Batch manifests must use actual repo file paths, not assumed paths. Remediation session required after build plan changes. |
+| OS-BL-011 | `[frontend]` `[runtime]` | gotcha | ThresholdStatus field is `usage_fraction` (0-1), not `usage_percent`. Phantom fields compile but evaluate to undefined at runtime. |
+| OS-BL-012 | `[design-system]` `[canvas]` | drift | Font strings hardcoded across 12 files. Added FONT token to canvas-tokens.ts. New tokens need propagation sweep. |
+| OS-BL-013 | `[governance]` | process-failure | "Pre-existing" is not an exemption. Rule 43 now structural gate at Phase 5: tsc zero errors + all findings fixed + climb per fix. |
 
 ---
 

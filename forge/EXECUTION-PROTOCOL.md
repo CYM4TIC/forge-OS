@@ -304,10 +304,17 @@ Before writing the BOOT.md handoff:
 ```
 RULE 43 GATE (BLOCKING — runs first, before everything else):
 
-□ tsc --noEmit returns ZERO errors across the full build
-□ Any error — regardless of which batch introduced it — is a hard stop
-□ "Pre-existing" is not a valid exemption. Fix it. Re-run. Confirm zero.
-□ This gate cannot be skipped, deferred, or rationalized away.
+□ 0a. ZERO COMPILER ERRORS: tsc --noEmit = zero errors across full build.
+  Any error regardless of origin = hard stop. Fix. Re-run. Confirm zero.
+□ 0b. EVERY FINDING RESOLVED: Table every gate finding by ID + severity.
+  Every CRIT, HIGH, MED, LOW must have a fix with read-back confirmation.
+  Every INFO must be logged (BUILD-LEARNINGS, BOOT.md carried risks, or
+  persona findings-log). Count in vs. count out. Arithmetic must balance.
+□ 0c. CONSEQUENCE CLIMB ON EVERY FIX: For each fix applied — did I run
+  a brief climb? (What else does this touch? What imports it? What
+  pattern did I propagate or break?) Fix without climb = hard stop.
+
+All three sub-gates must pass before proceeding.
 
 COMPLETION GATE — ALL MUST BE TRUE:
 
@@ -327,11 +334,21 @@ CONSEQUENCE CHECK (Rules 35-41):
 □ New ADL decisions → ADL file updated?
 □ New failure modes → FAILURE-MODES.md updated?
 
-ADVERSARIAL CHECK:
-□ "What would Pierce flag that I haven't checked?"
-□ "What haven't I verified?"
-□ "Am I reporting 'done' because it IS done, or because I WANT it to be done?"
-□ "Did every agent return? Did I read every result?"
+ADVERSARIAL CHECK (every answer that CAN produce evidence MUST produce evidence):
+
+□ MANIFEST RECONCILIATION: Re-read manifest. Check every listed item
+  against what shipped. Cite evidence per item.
+□ "What would Pierce flag?" — answer must cite a tool call (grep,
+  read-back, import check). "Nothing" requires proof.
+□ "What haven't I verified?" — list every file written/edited. For
+  each: read back? Push confirmed? Integration tested?
+□ "Am I done or do I WANT to be done?" Then: "What's the laziest
+  thing I did this batch?" Name it. Fix it if fixable.
+□ "Did every agent return? Did I read every result?" Factual count.
+□ HONESTY META-CHECK: "Did I fudge any of the above answers?" If
+  I answered from reasoning when evidence was available, or said "all
+  resolved" without counting, or said "nothing" without grepping →
+  go back to the fudged step and do it for real.
 
 ONLY AFTER ALL BOXES ARE CHECKED:
 
@@ -341,6 +358,16 @@ BOOT.MD HANDOFF — 3 WRITES, ALL MANDATORY:
 □ 3. Batch table: mark batch ✅ DONE
 
 All three. Every batch. Not just the header. Read back after writing.
+
+BOOKKEEPING — 2 MANDATORY OUTPUTS:
+□ BUILD-LEARNINGS.md: any technical pattern, gotcha, or convention
+  from this batch. Domain-tagged: [frontend] [canvas] [rust] [runtime]
+  [design-system] [governance] [tooling]. Tag is mandatory. If nothing
+  new, state it explicitly — silence is not an answer.
+□ Persona journal (personas/nyx/JOURNAL.md): what I learned about how
+  I work this batch. Where I cut corners, where FMs fired, where I
+  surprised myself. One honest paragraph. Every batch teaches something.
+
 Then: context status report — estimated usage, can continue or fresh session needed.
 ```
 
@@ -523,7 +550,8 @@ PHASE 4 — REGRESSION CHECK
   If regressions → STOP, fix before handoff.
 
 PHASE 5 — COMPLETION
-  RULE 43 GATE: tsc --noEmit = zero errors. Hard stop if not. Fix all.
+  RULE 43 GATE: (a) tsc zero errors, (b) every finding fixed by severity
+  with INFO logged, (c) consequence climb on every fix. All three or stop.
   Run Completion Checklist (Section 4).
   Run Consequence Check (Rules 35-41, OS-BL-007).
   Run Adversarial Check.
