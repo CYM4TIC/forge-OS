@@ -21,7 +21,7 @@ Every build batch follows this sequence. No skips. No reordering.
 | **1** | Build | Micro-batches (1-3 files). Contract 2-5 on every file. Push ≤5. Verify. | FM-3, FM-8 |
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
-| **4** | Regression | Dispatch Sentinel (background). If regressions → stop. | FM-6 |
+| **4** | Regression | Dispatch Sentinel (background). If regressions → stop. **Phase exit only:** also dispatch Meridian for cross-surface consistency. | FM-2, FM-6 |
 | **5** | Close | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged to BUILD-LEARNINGS or BOOT.md carried risks, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 7). Push all. BOOT.md handoff — 3 writes. Context status report. | FM-4, FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)

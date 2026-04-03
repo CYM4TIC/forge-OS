@@ -9,7 +9,7 @@ import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
 import { getFindingCounts, getServiceStatus } from '../lib/tauri';
 import type { HudSeverityCounts, ServiceHealth } from '../lib/tauri';
-import { STATUS, CANVAS, GLOW, TINT, TIMING } from '@forge-os/canvas-components';
+import { STATUS, CANVAS, TIMING, DOCK as DOCK_TOKENS } from '@forge-os/canvas-components';
 
 interface DockBarProps {
   panels: PanelInstance[];
@@ -145,10 +145,10 @@ const PILL_BASE: React.CSSProperties = {
 
 const PILL_STATES: Record<DockPillState, React.CSSProperties> = {
   active: {
-    background: TINT.accent,
-    borderColor: GLOW.accentSubtle,
-    color: STATUS.accent,
-    boxShadow: `0 0 8px ${GLOW.accent}`,
+    background: DOCK_TOKENS.activeBg,
+    borderColor: DOCK_TOKENS.activeBorder,
+    color: DOCK_TOKENS.activeText,
+    boxShadow: `0 0 8px ${DOCK_TOKENS.glow}`,
   },
   minimized: {
     background: `${CANVAS.bgElevated}99`,
@@ -162,6 +162,8 @@ const PILL_STATES: Record<DockPillState, React.CSSProperties> = {
   },
 };
 
+const FOCUS_VISIBLE_SHADOW = `0 0 0 2px ${STATUS.accent}`;
+
 function DockPill({
   pill,
   onClick,
@@ -169,17 +171,22 @@ function DockPill({
   pill: DockPillData;
   onClick: () => void;
 }) {
+  const activeGlow = pill.state === 'active' ? `0 0 8px ${DOCK_TOKENS.glow}` : 'none';
   return (
     <button
       onClick={onClick}
+      aria-pressed={pill.state === 'active'}
+      aria-label={`${pill.label} — ${pill.state}`}
       style={{
         ...PILL_BASE,
         ...PILL_STATES[pill.state],
         ...(pill.isActive ? { animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : {}),
       }}
       title={pill.tooltip ?? `${pill.label} (${pill.state})`}
+      onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
+      onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = activeGlow; }}
     >
-      <span style={{ fontSize: 14 }}>{pill.icon}</span>
+      <span style={{ fontSize: 14 }} aria-hidden="true">{pill.icon}</span>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>{pill.label}</span>
       {pill.badgeCount > 0 && (
         <span
@@ -197,8 +204,8 @@ function DockPill({
             paddingLeft: BADGE.paddingX,
             paddingRight: BADGE.paddingX,
             fontSize: BADGE.fontSize,
-            backgroundColor: pill.badgeStyle?.bg ?? STATUS.danger,
-            color: pill.badgeStyle?.text ?? '#fff',
+            backgroundColor: pill.badgeStyle?.bg ?? DOCK_TOKENS.badgeBg,
+            color: pill.badgeStyle?.text ?? DOCK_TOKENS.badgeText,
           }}
         >
           {pill.badgeCount > 99 ? '99+' : pill.badgeCount}
