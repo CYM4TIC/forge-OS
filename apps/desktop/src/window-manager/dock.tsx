@@ -9,7 +9,7 @@ import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
 import { getFindingCounts, getServiceStatus } from '../lib/tauri';
 import type { HudSeverityCounts, ServiceHealth } from '../lib/tauri';
-import { STATUS, CANVAS, TIMING, DOCK as DOCK_TOKENS } from '@forge-os/canvas-components';
+import { CANVAS, TIMING, DOCK as DOCK_TOKENS, BADGE_COLORS } from '@forge-os/canvas-components';
 
 interface DockBarProps {
   panels: PanelInstance[];
@@ -41,38 +41,49 @@ interface DockPillData {
   badgeCount: number;
   badgeStyle: BadgeStyle | null;
   badgePosition: BadgePosition;
+  badgeGlyph: string;
   isActive: boolean;
   tooltip: string | null;
 }
 
-/** Determine badge colors from severity counts. Returns bg + text for WCAG contrast. */
+/** Determine badge colors from severity counts. Uses unified BADGE_COLORS (R-DS-05). */
 function findingsBadgeColors(counts: HudSeverityCounts | null): { bg: string; text: string } | null {
   if (!counts || counts.total === 0) return null;
-  if (counts.critical > 0) return { bg: STATUS.danger, text: '#fff' };
-  if (counts.high > 0) return { bg: STATUS.critical, text: '#fff' };
-  // Warning (amber) needs dark text — white on #f59e0b is only 2.1:1 contrast
-  return { bg: STATUS.warning, text: CANVAS.bg };
+  if (counts.critical > 0) return BADGE_COLORS.danger;
+  if (counts.high > 0) return BADGE_COLORS.critical;
+  return BADGE_COLORS.warning;
 }
 
 /** Compute aggregate connectivity status for the dock pill badge.
  *  Two-tier color model: danger (unreachable) or warning (degraded).
  *  No STATUS.critical — that's reserved for findings severity. */
-function connectivityBadge(services: ServiceHealth[]): { count: number; style: BadgeStyle | null; tooltip: string } {
+/** Shape glyphs for colorblind accessibility (R-DS-03: WCAG 1.4.1).
+ * Color alone must not be the sole indicator of status. */
+const STATUS_SHAPE = {
+  unreachable: '\u2715',  // ✕ (X mark)
+  degraded: '\u26A0',     // ⚠ (warning triangle)
+  healthy: '\u2713',      // ✓ (checkmark)
+} as const;
+
+function connectivityBadge(services: ServiceHealth[]): { count: number; style: BadgeStyle | null; tooltip: string; glyph: string } {
   const configured = services.filter((s) => s.status !== 'unconfigured');
-  if (configured.length === 0) return { count: 0, style: null, tooltip: 'No services configured' };
+  if (configured.length === 0) return { count: 0, style: null, tooltip: 'No services configured', glyph: '' };
   const unreachable = configured.filter((s) => s.status === 'unreachable');
   const degraded = configured.filter((s) => s.status === 'degraded');
   const unhealthyCount = unreachable.length + degraded.length;
-  if (unhealthyCount === 0) return { count: 0, style: null, tooltip: 'All systems operational' };
-  // R-DS-01: white on amber is 2.1:1 contrast. Use dark text on warning, same as findingsBadgeColors.
+  if (unhealthyCount === 0) return { count: 0, style: null, tooltip: 'All systems operational', glyph: STATUS_SHAPE.healthy };
+  // R-DS-05: unified badge colors for WCAG contrast compliance.
   const style: BadgeStyle = unreachable.length > 0
-    ? { bg: STATUS.danger, text: '#fff' }
-    : { bg: STATUS.warning, text: CANVAS.bg };
+    ? BADGE_COLORS.danger
+    : BADGE_COLORS.warning;
+  // R-DS-03: shape glyph alongside color for colorblind users
+  const glyph = unreachable.length > 0 ? STATUS_SHAPE.unreachable : STATUS_SHAPE.degraded;
   const noun = unhealthyCount === 1 ? 'service' : 'services';
   return {
     count: unhealthyCount,
     style,
     tooltip: `${unhealthyCount} ${noun} unhealthy`,
+    glyph,
   };
 }
 
@@ -102,6 +113,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
         badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
         isActive: isFindings && findingsLoading ? true : false,
         badgePosition: isConnectivity ? 'top-left' : 'top-right',
+        badgeGlyph: isConnectivity ? (cBadge?.glyph ?? '') : '',
         tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
       });
     } else {
@@ -116,6 +128,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
           badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
           isActive: inst.isActive,
           badgePosition: isConnectivity ? 'top-left' : 'top-right',
+          badgeGlyph: isConnectivity ? (cBadge?.glyph ?? '') : '',
           tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
         });
       }
@@ -162,8 +175,6 @@ const PILL_STATES: Record<DockPillState, React.CSSProperties> = {
   },
 };
 
-const FOCUS_VISIBLE_SHADOW = `0 0 0 2px ${STATUS.accent}`;
-
 function DockPill({
   pill,
   onClick,
@@ -171,7 +182,6 @@ function DockPill({
   pill: DockPillData;
   onClick: () => void;
 }) {
-  const activeGlow = pill.state === 'active' ? `0 0 8px ${DOCK_TOKENS.glow}` : 'none';
   return (
     <button
       onClick={onClick}
@@ -183,8 +193,6 @@ function DockPill({
         ...(pill.isActive ? { animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : {}),
       }}
       title={pill.tooltip ?? `${pill.label} (${pill.state})`}
-      onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-      onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = activeGlow; }}
     >
       <span style={{ fontSize: 14 }} aria-hidden="true">{pill.icon}</span>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>{pill.label}</span>
@@ -208,6 +216,7 @@ function DockPill({
             color: pill.badgeStyle?.text ?? DOCK_TOKENS.badgeText,
           }}
         >
+          {pill.badgeGlyph && <span aria-hidden="true" style={{ marginRight: 1 }}>{pill.badgeGlyph}</span>}
           {pill.badgeCount > 99 ? '99+' : pill.badgeCount}
         </span>
       )}

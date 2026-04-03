@@ -285,8 +285,6 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
               cursor: 'pointer',
               outline: 'none',
             }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}`; }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
             aria-label={isReplaying ? `Stop replay (${replayIndexRef.current}/${replayHistory.length})` : `Replay ${replayHistory.length} dispatch events`}
           >
             {isReplaying ? '⏹' : '⏵'} {replayHistory.length}
@@ -307,8 +305,6 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
               cursor: 'pointer',
               outline: 'none',
             }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 2px ${STATUS.accent}`; }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
             aria-label={visible ? 'Hide flow overlay' : 'Show flow overlay'}
             aria-pressed={visible}
           >

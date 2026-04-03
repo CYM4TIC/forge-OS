@@ -30,6 +30,16 @@ function statusToBadge(status: ServiceStatus): BadgeStatus {
   }
 }
 
+/** Shape glyph per status for colorblind accessibility (R-DS-03: WCAG 1.4.1). */
+function statusGlyph(status: ServiceStatus): string | undefined {
+  switch (status) {
+    case 'healthy': return '\u2713';      // ✓
+    case 'degraded': return '\u26A0';     // ⚠
+    case 'unreachable': return '\u2715';  // ✕
+    case 'unconfigured': return undefined;
+  }
+}
+
 function statusLabel(status: ServiceStatus): string {
   switch (status) {
     case 'healthy': return 'Healthy';
@@ -58,6 +68,7 @@ function aggregateStatus(services: ServiceHealth[]): {
   label: string;
   color: string;
   badgeStatus: BadgeStatus;
+  glyph?: string;
 } {
   const configured = services.filter((s) => s.status !== 'unconfigured');
   if (configured.length === 0) {
@@ -66,12 +77,12 @@ function aggregateStatus(services: ServiceHealth[]): {
   const hasUnreachable = configured.some((s) => s.status === 'unreachable');
   const hasDegraded = configured.some((s) => s.status === 'degraded');
   if (hasUnreachable) {
-    return { label: 'Service Disruption', color: STATUS.danger, badgeStatus: 'danger' };
+    return { label: 'Service Disruption', color: STATUS.danger, badgeStatus: 'danger', glyph: '\u2715' };
   }
   if (hasDegraded) {
-    return { label: 'Degraded', color: STATUS.warning, badgeStatus: 'warning' };
+    return { label: 'Degraded', color: STATUS.warning, badgeStatus: 'warning', glyph: '\u26A0' };
   }
-  return { label: 'All Systems Operational', color: STATUS.success, badgeStatus: 'success' };
+  return { label: 'All Systems Operational', color: STATUS.success, badgeStatus: 'success', glyph: '\u2713' };
 }
 
 // ─── Styles (canvas-tokens, no Tailwind — matches PreviewPanel sibling) ───
@@ -218,7 +229,6 @@ const ERROR_BANNER: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const FOCUS_VISIBLE_SHADOW = `0 0 0 2px ${STATUS.accent}`;
 
 // ─── Service Card Component ────────────────────────────────────────
 
@@ -268,8 +278,6 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
         role="region"
         tabIndex={0}
         aria-label={`${service.serviceName} — not configured`}
-        onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-        onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
       >
         <div style={CARD_HEADER}>
           <span style={CARD_ICON} aria-hidden="true">{serviceIcon(service.serviceType)}</span>
@@ -297,8 +305,6 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
       aria-label={`${service.serviceName}: ${statusLabel(service.status)}`}
       onClick={onToggle}
       onKeyDown={handleCardKeyDown}
-      onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-      onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
     >
       <div style={CARD_HEADER}>
         <span style={CARD_ICON} aria-hidden="true">{serviceIcon(service.serviceType)}</span>
@@ -308,6 +314,7 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
           width={20}
           height={20}
           status={statusToBadge(service.status)}
+          glyph={statusGlyph(service.status)}
           pulse={service.status === 'unreachable'}
         />
       </div>
@@ -344,8 +351,6 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
               onClick={handleRecheck as React.MouseEventHandler}
               onKeyDown={handleRecheckKeyDown}
               aria-label={`Re-check ${service.serviceName}`}
-              onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-              onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
             >
               {rechecking ? 'Checking\u2026' : 'Re-check'}
             </button>
@@ -415,8 +420,6 @@ export default function ConnectivityPanel() {
           style={BTN_PRIMARY}
           onClick={refresh}
           autoFocus
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-          onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
         >
           Retry
         </button>
@@ -458,7 +461,7 @@ export default function ConnectivityPanel() {
 
       {/* Summary header */}
       <div style={HEADER}>
-        <StatusBadge width={18} height={18} status={agg.badgeStatus} pulse={agg.badgeStatus === 'danger'} />
+        <StatusBadge width={18} height={18} status={agg.badgeStatus} glyph={agg.glyph} pulse={agg.badgeStatus === 'danger'} />
         <span style={{ fontSize: 13, fontWeight: 600, color: agg.color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {agg.label}
         </span>
@@ -471,8 +474,6 @@ export default function ConnectivityPanel() {
           onClick={refresh}
           disabled={loading}
           aria-label="Refresh all services"
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_VISIBLE_SHADOW; }}
-          onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
         >
           {loading ? '\u231B' : '\u21BB'}
         </button>

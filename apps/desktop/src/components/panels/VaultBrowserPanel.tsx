@@ -130,13 +130,17 @@ interface TreeNodeProps {
   node: VaultTreeNode;
   depth: number;
   selectedPath: string | null;
+  focusedPath: string | null;
+  expandedPaths: Set<string>;
   filter: string;
   vaultRoot: string;
   onSelect: (node: VaultTreeNode) => void;
+  onToggleExpand: (path: string) => void;
 }
 
-function TreeNode({ node, depth, selectedPath, filter, vaultRoot, onSelect }: TreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth < 1);
+function TreeNode({ node, depth, selectedPath, focusedPath, expandedPaths, filter, vaultRoot, onSelect, onToggleExpand }: TreeNodeProps) {
+  const expanded = expandedPaths.has(node.path);
+  const itemRef = useRef<HTMLDivElement>(null);
 
   // Filter: show node if name matches or any descendant matches
   const matchesFilter = useMemo(() => {
@@ -146,6 +150,14 @@ function TreeNode({ node, depth, selectedPath, filter, vaultRoot, onSelect }: Tr
     if (node.is_dir) return hasMatchingDescendant(node, lower);
     return false;
   }, [node, filter]);
+
+  // Auto-focus when this node becomes the roving focus target
+  const isFocused = focusedPath === node.path;
+  useEffect(() => {
+    if (isFocused && itemRef.current) {
+      itemRef.current.focus({ preventScroll: false });
+    }
+  }, [isFocused]);
 
   if (!matchesFilter) return null;
 
@@ -161,7 +173,7 @@ function TreeNode({ node, depth, selectedPath, filter, vaultRoot, onSelect }: Tr
 
   const handleClick = () => {
     if (node.is_dir) {
-      setExpanded((e) => !e);
+      onToggleExpand(node.path);
     } else {
       onSelect(node);
     }
@@ -170,27 +182,22 @@ function TreeNode({ node, depth, selectedPath, filter, vaultRoot, onSelect }: Tr
   return (
     <>
       <div
-        role={node.is_dir ? 'treeitem' : 'treeitem'}
+        ref={itemRef}
+        role="treeitem"
         aria-expanded={node.is_dir ? expanded : undefined}
         aria-selected={isSelected}
-        tabIndex={0}
+        tabIndex={isFocused ? 0 : -1}
+        data-path={node.path}
         style={nodeStyle}
         onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); }
-          if (e.key === 'ArrowRight' && node.is_dir && !expanded) setExpanded(true);
-          if (e.key === 'ArrowLeft' && node.is_dir && expanded) setExpanded(false);
-        }}
-        onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 1px ${STATUS.accent}`; }}
-        onBlur={(e) => { e.currentTarget.style.boxShadow = ''; }}
       >
         {node.is_dir && (
-          <span style={{ fontSize: 10, color: CANVAS.muted, width: 12, textAlign: 'center' }}>
-            {expanded ? '▼' : '▶'}
+          <span style={{ fontSize: 10, color: CANVAS.muted, width: 12, textAlign: 'center' }} aria-hidden="true">
+            {expanded ? '\u25BC' : '\u25B6'}
           </span>
         )}
         {!node.is_dir && <span style={{ width: 12 }} />}
-        <span>{icon}</span>
+        <span aria-hidden="true">{icon}</span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name}</span>
       </div>
       {node.is_dir && expanded && (
@@ -201,9 +208,12 @@ function TreeNode({ node, depth, selectedPath, filter, vaultRoot, onSelect }: Tr
               node={child}
               depth={depth + 1}
               selectedPath={selectedPath}
+              focusedPath={focusedPath}
+              expandedPaths={expandedPaths}
               filter={filter}
               vaultRoot={vaultRoot}
               onSelect={onSelect}
+              onToggleExpand={onToggleExpand}
             />
           ))}
         </div>
@@ -218,6 +228,49 @@ function hasMatchingDescendant(node: VaultTreeNode, filter: string): boolean {
     if (child.is_dir && hasMatchingDescendant(child, filter)) return true;
   }
   return false;
+}
+
+/** Flatten visible nodes in DOM order for roving tabIndex navigation (M-1 HIGH).
+ * Only includes nodes whose ancestors are expanded and that match the filter. */
+function flattenVisible(
+  nodes: VaultTreeNode[],
+  expandedPaths: Set<string>,
+  filter: string,
+): VaultTreeNode[] {
+  const result: VaultTreeNode[] = [];
+  const lower = filter.toLowerCase();
+
+  function walk(list: VaultTreeNode[]) {
+    for (const node of list) {
+      // Check filter match
+      if (lower) {
+        const nameMatch = node.name.toLowerCase().includes(lower);
+        const descendantMatch = node.is_dir && hasMatchingDescendant(node, lower);
+        if (!nameMatch && !descendantMatch) continue;
+      }
+      result.push(node);
+      if (node.is_dir && expandedPaths.has(node.path)) {
+        walk(node.children);
+      }
+    }
+  }
+  walk(nodes);
+  return result;
+}
+
+/** Find the parent path of a node in the tree. */
+function findParentPath(nodes: VaultTreeNode[], targetPath: string): string | null {
+  function search(list: VaultTreeNode[], parentPath: string | null): string | null {
+    for (const node of list) {
+      if (node.path === targetPath) return parentPath;
+      if (node.is_dir) {
+        const found = search(node.children, node.path);
+        if (found !== undefined && found !== null) return found;
+      }
+    }
+    return null;
+  }
+  return search(nodes, null);
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -237,6 +290,12 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [contentLoading, setContentLoading] = useState(false);
+
+  // M-1 HIGH: Roving tabIndex state — lifted to parent for flat navigation
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const [focusedPath, setFocusedPath] = useState<string | null>(null);
+  const typeAheadRef = useRef('');
+  const typeAheadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Responsive sizing
   useEffect(() => {
@@ -277,6 +336,105 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
       .then((content) => { setFileContent(content); setContentLoading(false); })
       .catch((e) => { setFileContent(`Error: ${e}`); setContentLoading(false); });
   }, [vaultPath]);
+
+  // M-1 HIGH: Auto-expand root-level dirs on initial load
+  useEffect(() => {
+    if (tree.length > 0 && expandedPaths.size === 0) {
+      const rootDirs = tree.filter((n) => n.is_dir).map((n) => n.path);
+      setExpandedPaths(new Set(rootDirs));
+    }
+  }, [tree]);
+
+  const toggleExpand = useCallback((path: string) => {
+    setExpandedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      return next;
+    });
+  }, []);
+
+  // Flat visible nodes for keyboard navigation
+  const visibleNodes = useMemo(() => flattenVisible(tree, expandedPaths, filter), [tree, expandedPaths, filter]);
+
+  // M-1 HIGH: Roving tabIndex keyboard handler for tree navigation
+  const handleTreeKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (visibleNodes.length === 0) return;
+
+    const currentIndex = focusedPath ? visibleNodes.findIndex((n) => n.path === focusedPath) : -1;
+    const current = currentIndex >= 0 ? visibleNodes[currentIndex] : null;
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const next = Math.min(currentIndex + 1, visibleNodes.length - 1);
+        setFocusedPath(visibleNodes[next].path);
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prev = Math.max(currentIndex - 1, 0);
+        setFocusedPath(visibleNodes[prev].path);
+        break;
+      }
+      case 'ArrowRight': {
+        e.preventDefault();
+        if (current?.is_dir) {
+          if (!expandedPaths.has(current.path)) {
+            // Expand closed directory
+            toggleExpand(current.path);
+          } else if (current.children.length > 0) {
+            // Move to first child
+            const firstChild = visibleNodes[currentIndex + 1];
+            if (firstChild) setFocusedPath(firstChild.path);
+          }
+        }
+        break;
+      }
+      case 'ArrowLeft': {
+        e.preventDefault();
+        if (current?.is_dir && expandedPaths.has(current.path)) {
+          // Collapse open directory
+          toggleExpand(current.path);
+        } else if (current) {
+          // Move to parent
+          const parentPath = findParentPath(tree, current.path);
+          if (parentPath) setFocusedPath(parentPath);
+        }
+        break;
+      }
+      case 'Home': {
+        e.preventDefault();
+        if (visibleNodes.length > 0) setFocusedPath(visibleNodes[0].path);
+        break;
+      }
+      case 'End': {
+        e.preventDefault();
+        if (visibleNodes.length > 0) setFocusedPath(visibleNodes[visibleNodes.length - 1].path);
+        break;
+      }
+      case 'Enter':
+      case ' ': {
+        e.preventDefault();
+        if (current) {
+          if (current.is_dir) toggleExpand(current.path);
+          else handleSelect(current);
+        }
+        break;
+      }
+      default: {
+        // Type-ahead: printable single characters focus first matching node
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          if (typeAheadTimerRef.current) clearTimeout(typeAheadTimerRef.current);
+          typeAheadRef.current += e.key.toLowerCase();
+          const search = typeAheadRef.current;
+          const match = visibleNodes.find((n) => n.name.toLowerCase().startsWith(search));
+          if (match) setFocusedPath(match.path);
+          typeAheadTimerRef.current = setTimeout(() => { typeAheadRef.current = ''; }, 500);
+        }
+        break;
+      }
+    }
+  }, [visibleNodes, focusedPath, expandedPaths, tree, toggleExpand, handleSelect]);
 
   // Tree pane width: 35% of container, min 180px, max 320px
   const isNarrow = dimensions.width > 0 && dimensions.width < NARROW_THRESHOLD;
@@ -328,7 +486,18 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
           style={SEARCH_INPUT}
           aria-label="Filter vault files"
         />
-        <div style={TREE_SCROLL} role="tree" aria-label="Vault file tree">
+        <div
+          style={TREE_SCROLL}
+          role="tree"
+          aria-label="Vault file tree"
+          onKeyDown={handleTreeKeyDown}
+          onFocus={() => {
+            // On first focus into tree, focus the first visible node
+            if (!focusedPath && visibleNodes.length > 0) {
+              setFocusedPath(visibleNodes[0].path);
+            }
+          }}
+        >
           {tree.length === 0 ? (
             <div style={{ ...CENTER_STATE, height: 'auto', padding: 16 }}>Empty vault</div>
           ) : (
@@ -338,9 +507,12 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
                 node={node}
                 depth={0}
                 selectedPath={selectedFile?.path ?? null}
+                focusedPath={focusedPath}
+                expandedPaths={expandedPaths}
                 filter={filter}
                 vaultRoot={vaultPath}
                 onSelect={handleSelect}
+                onToggleExpand={toggleExpand}
               />
             ))
           )}

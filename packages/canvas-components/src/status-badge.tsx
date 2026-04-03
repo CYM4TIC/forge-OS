@@ -32,6 +32,9 @@ export interface StatusBadgeProps {
   status: BadgeStatus;
   /** Optional label rendered next to the dot */
   label?: string;
+  /** Optional shape glyph rendered inside the dot for colorblind accessibility (R-DS-03: WCAG 1.4.1).
+   * Examples: '\u2713' (checkmark), '\u26A0' (warning), '\u2715' (X mark). */
+  glyph?: string;
   /** Enable pulse animation for active/danger states. Default: true for active/danger */
   pulse?: boolean;
   className?: string;
@@ -54,6 +57,7 @@ export function StatusBadge({
   height,
   status,
   label,
+  glyph,
   pulse,
   className,
   style: styleProp,
@@ -102,6 +106,17 @@ export function StatusBadge({
     ctx.fillStyle = HIGHLIGHT.medium;
     ctx.fill();
 
+    // Glyph inside dot for colorblind accessibility (R-DS-03)
+    if (glyph) {
+      const glyphSize = Math.max(Math.floor(dotRadius * 0.9), 6 * dpr);
+      ctx.font = `700 ${glyphSize}px ${FONT.system}`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(glyph, dotX, dotY + 1 * dpr);
+      ctx.textAlign = 'start'; // reset
+    }
+
     // Label text
     if (label) {
       const fontSize = Math.min(Math.floor(height * 0.35), 13) * dpr;
@@ -110,7 +125,7 @@ export function StatusBadge({
       ctx.textBaseline = 'middle';
       ctx.fillText(label, dotX + dotRadius + 6 * dpr, dotY);
     }
-  }, [width, height, color, label, shouldPulse]);
+  }, [width, height, color, label, glyph, shouldPulse]);
 
   useEffect(() => {
     if (!shouldPulse) {

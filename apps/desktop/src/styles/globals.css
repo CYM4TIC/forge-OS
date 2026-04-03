@@ -22,6 +22,21 @@
   --color-danger: #ef4444;           /* = STATUS.danger */
 }
 
+/* R-DS-02: CSS-native focus ring for keyboard navigation.
+ * Replaces per-component JS onFocus/onBlur handlers.
+ * accent = --color-accent (#6366f1) from @theme above. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="treeitem"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
 body {
   margin: 0;
   background-color: var(--color-bg-primary);

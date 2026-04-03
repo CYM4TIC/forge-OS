@@ -91,6 +91,20 @@ export const TINT = {
   neutral: 'rgba(90, 90, 110, 0.15)',
 } as const;
 
+/** Unified badge colors — single source for all severity/status badge rendering.
+ * R-DS-05: Replaces divergent badge color definitions across dock, panels, and canvas.
+ * bg = fill color, text = foreground for WCAG contrast (4.5:1 min on text, 3:1 non-text).
+ * Rule: dark text on amber/warning (white on #f59e0b is only 2.1:1). */
+export const BADGE_COLORS = {
+  success:  { bg: STATUS.success,  text: '#ffffff' },
+  warning:  { bg: STATUS.warning,  text: CANVAS.bg },      // dark text — WCAG contrast
+  danger:   { bg: STATUS.danger,   text: '#ffffff' },
+  critical: { bg: STATUS.critical, text: '#ffffff' },
+  neutral:  { bg: STATUS.neutral,  text: '#ffffff' },
+  accent:   { bg: STATUS.accent,   text: '#ffffff' },
+  info:     { bg: STATUS.accent,   text: '#ffffff' },
+} as const;
+
 /** Pipeline stage colors (Hyperdrive build loop) */
 export const PIPELINE = {
   scout: STATUS.accent,    // indigo — Nyx dispatches
