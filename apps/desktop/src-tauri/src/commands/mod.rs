@@ -19,3 +19,4 @@ pub mod connectivity;
 pub mod registry;
 pub mod capabilities;
 pub mod confirmation;
+pub mod proposals;

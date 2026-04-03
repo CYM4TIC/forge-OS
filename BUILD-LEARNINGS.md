@@ -210,3 +210,11 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Prevention:** Any async "wait for external response" path needs a timeout. Apply to all future oneshot/channel patterns.
 
 ---
+
+### `[rust]` SQLite `?N` Parameters Are Global Across UNION ALL
+**Batch:** P7-I | **Caught:** Self-review during gate wait
+**Problem:** In a `UNION ALL` query with shared `WHERE` clauses, `?1` in branch 2 binds to the same value as `?1` in branch 1 — parameters are global to the prepared statement, not per-branch. Tripling params caused LIMIT/OFFSET to bind to wrong values.
+**Solution:** Pass filter params once, then append LIMIT/OFFSET at the correct indices.
+**Prevention:** When writing UNION ALL with shared filters, always pass params once. `?N` is statement-global.
+
+---

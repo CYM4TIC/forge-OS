@@ -386,3 +386,58 @@ CREATE TABLE IF NOT EXISTS service_configs (
 );
 COMMIT;
 "#;
+
+/// Phase 7 schema v13: Proposal Store + Decisions.
+/// Persistent governance data model for proposal lifecycle, evaluation, and decisions.
+pub const SCHEMA_V13: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS proposals (
+    id TEXT PRIMARY KEY NOT NULL,
+    author TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('persona', 'automated', 'consortium')),
+    proposal_type TEXT NOT NULL CHECK (proposal_type IN ('optimization', 'pattern', 'rule', 'architecture', 'skill', 'policy')),
+    scope TEXT NOT NULL,
+    target TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    evidence TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'evaluating', 'accepted', 'rejected')),
+    evaluators TEXT NOT NULL DEFAULT '[]',
+    preconditions TEXT NOT NULL DEFAULT '[]',
+    verification_steps TEXT NOT NULL DEFAULT '[]',
+    fulfills TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    resolved_at TEXT,
+    decision_trace_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposals_author ON proposals(author);
+CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status);
+CREATE INDEX IF NOT EXISTS idx_proposals_created_at ON proposals(created_at);
+CREATE INDEX IF NOT EXISTS idx_proposals_author_status ON proposals(author, status);
+
+CREATE TABLE IF NOT EXISTS proposal_responses (
+    id TEXT PRIMARY KEY NOT NULL,
+    proposal_id TEXT NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
+    author TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_proposal_responses_proposal_id ON proposal_responses(proposal_id);
+
+CREATE TABLE IF NOT EXISTS decisions (
+    id TEXT PRIMARY KEY NOT NULL,
+    proposal_id TEXT NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
+    resolution TEXT NOT NULL,
+    rationale TEXT NOT NULL,
+    implementing_batch TEXT,
+    outcome_tracking TEXT,
+    outcome TEXT CHECK (outcome IS NULL OR outcome IN ('success', 'partial', 'failure')),
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_decisions_proposal_id ON decisions(proposal_id);
+COMMIT;
+"#;

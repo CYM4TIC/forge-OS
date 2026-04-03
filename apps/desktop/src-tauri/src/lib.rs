@@ -11,6 +11,7 @@ mod dispatch;
 pub mod hud;
 #[allow(dead_code)]
 mod memory;
+mod proposals;
 #[allow(dead_code)]
 mod providers;
 #[allow(dead_code)]
@@ -22,6 +23,7 @@ use std::sync::Arc;
 use commands::confirmation::{ConfirmationRouter, ConfirmationRouterState};
 use commands::connectivity::HealthCheckManager;
 use commands::devserver::DevServerManager;
+use commands::proposals::{MissionStateHolder, MissionStateState};
 use commands::registry::{AgentRegistry, RegistryState};
 use database::Database;
 use dispatch::AgentDispatcher;
@@ -197,6 +199,10 @@ pub fn run() {
             let confirmation_router: ConfirmationRouterState =
                 Arc::new(Mutex::new(ConfirmationRouter::new()));
 
+            // Mission state — session-scoped, drives orchestration lifecycle
+            let mission_state: MissionStateState =
+                Arc::new(Mutex::new(MissionStateHolder::default()));
+
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
@@ -204,6 +210,7 @@ pub fn run() {
             app.manage(health_mgr);
             app.manage(agent_registry);
             app.manage(confirmation_router);
+            app.manage(mission_state);
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -327,6 +334,11 @@ pub fn run() {
             commands::confirmation::respond_to_confirmation,
             commands::confirmation::check_confirmation_required,
             commands::confirmation::get_pending_confirmation_count,
+            commands::proposals::file_proposal,
+            commands::proposals::list_proposals,
+            commands::proposals::get_proposal_feed,
+            commands::proposals::get_mission_state,
+            commands::proposals::update_mission_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
