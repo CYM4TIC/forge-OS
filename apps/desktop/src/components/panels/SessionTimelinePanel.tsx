@@ -488,8 +488,6 @@ function SessionTimelinePanel() {
           flex: 1,
           position: 'relative',
           overflow: 'hidden',
-          outline: isFocused ? `2px solid ${STATUS.accent}` : 'none',
-          outlineOffset: -2,
         }}
         onWheel={handleWheel}
         role="list"

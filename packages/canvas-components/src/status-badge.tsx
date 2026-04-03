@@ -11,16 +11,6 @@ import { HIGHLIGHT } from './canvas-tokens.js';
 
 import { CANVAS, STATUS, FONT } from './canvas-tokens';
 
-const COLORS = {
-  success: STATUS.success,
-  warning: STATUS.warning,
-  danger: STATUS.danger,
-  neutral: STATUS.neutral,
-  accent: STATUS.accent,
-  text: CANVAS.text,
-  label: CANVAS.label,
-};
-
 export type BadgeStatus = 'success' | 'warning' | 'danger' | 'neutral' | 'active';
 
 export interface StatusBadgeProps {
@@ -44,11 +34,11 @@ export interface StatusBadgeProps {
 
 function statusColor(status: BadgeStatus): string {
   switch (status) {
-    case 'success': return COLORS.success;
-    case 'warning': return COLORS.warning;
-    case 'danger': return COLORS.danger;
-    case 'active': return COLORS.accent;
-    case 'neutral': return COLORS.neutral;
+    case 'success': return STATUS.success;
+    case 'warning': return STATUS.warning;
+    case 'danger': return STATUS.danger;
+    case 'active': return STATUS.accent;
+    case 'neutral': return STATUS.neutral;
   }
 }
 
@@ -107,8 +97,9 @@ export function StatusBadge({
     ctx.fill();
 
     // Glyph inside dot for colorblind accessibility (R-DS-03)
+    // Capped to dotRadius * 1.4 to stay within dot boundary
     if (glyph) {
-      const glyphSize = Math.max(Math.floor(dotRadius * 0.9), 6 * dpr);
+      const glyphSize = Math.min(Math.floor(dotRadius * 1.4), Math.max(Math.floor(dotRadius * 0.9), 6 * dpr));
       ctx.font = `700 ${glyphSize}px ${FONT.system}`;
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
@@ -121,7 +112,7 @@ export function StatusBadge({
     if (label) {
       const fontSize = Math.min(Math.floor(height * 0.35), 13) * dpr;
       ctx.font = `600 ${fontSize}px ${FONT.system}`;
-      ctx.fillStyle = COLORS.label;
+      ctx.fillStyle = CANVAS.label;
       ctx.textBaseline = 'middle';
       ctx.fillText(label, dotX + dotRadius + 6 * dpr, dotY);
     }

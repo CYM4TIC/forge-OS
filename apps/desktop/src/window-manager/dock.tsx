@@ -153,7 +153,6 @@ const PILL_BASE: React.CSSProperties = {
   fontWeight: 500,
   transition: `all ${TIMING.fast}`,
   cursor: 'pointer',
-  outline: 'none',
 };
 
 const PILL_STATES: Record<DockPillState, React.CSSProperties> = {
@@ -186,7 +185,7 @@ function DockPill({
     <button
       onClick={onClick}
       aria-pressed={pill.state === 'active'}
-      aria-label={`${pill.label} — ${pill.state}`}
+      aria-label={`${pill.label} — ${pill.state}${pill.badgeCount > 0 ? `, ${pill.badgeCount} ${pill.tooltip ?? 'items'}` : ''}`}
       style={{
         ...PILL_BASE,
         ...PILL_STATES[pill.state],

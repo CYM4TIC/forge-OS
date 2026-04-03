@@ -33,7 +33,7 @@ textarea:focus-visible,
 [tabindex]:focus-visible,
 [role="button"]:focus-visible,
 [role="treeitem"]:focus-visible {
-  outline: none;
+  outline: 2px solid transparent; /* visible in Windows forced-colors mode */
   box-shadow: 0 0 0 2px var(--color-accent);
 }
 

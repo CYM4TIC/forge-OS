@@ -46,7 +46,6 @@ const SEARCH_INPUT: React.CSSProperties = {
   fontSize: 12,
   padding: '4px 8px',
   margin: 8,
-  outline: 'none',
   width: 'calc(100% - 16px)',
 };
 
@@ -95,14 +94,14 @@ const TREE_ITEM_BASE: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 4,
-  padding: '2px 4px',
+  padding: '4px 4px',
+  minHeight: 28,
   cursor: 'pointer',
   borderRadius: 3,
   fontSize: 12,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  outline: 'none',
 };
 
 const NARROW_THRESHOLD = 500;
@@ -185,6 +184,8 @@ function TreeNode({ node, depth, selectedPath, focusedPath, firstVisiblePath, ex
       <div
         ref={itemRef}
         role="treeitem"
+        aria-label={node.name}
+        aria-level={depth + 1}
         aria-expanded={node.is_dir ? expanded : undefined}
         aria-selected={isSelected}
         tabIndex={isFocused ? 0 : -1}
@@ -446,7 +447,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
 
   if (loading) {
     return (
-      <div ref={containerRef} style={{ ...PANEL_SHELL, ...CENTER_STATE }}>
+      <div ref={containerRef} style={{ ...PANEL_SHELL, ...CENTER_STATE }} role="status" aria-busy="true">
         <span>Loading vault...</span>
       </div>
     );

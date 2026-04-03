@@ -89,7 +89,6 @@ const INPUT: React.CSSProperties = {
   color: CANVAS.text,
   fontSize: 12,
   padding: '4px 8px',
-  outline: 'none',
   lineHeight: '18px',
   flex: 1,
   minWidth: 0,
@@ -102,7 +101,6 @@ const SELECT: React.CSSProperties = {
   color: CANVAS.text,
   fontSize: 12,
   padding: '4px 8px',
-  outline: 'none',
   lineHeight: '18px',
   cursor: 'pointer',
 };
@@ -190,7 +188,6 @@ const DIM_INPUT: React.CSSProperties = {
   width: 52,
   textAlign: 'center' as const,
   lineHeight: '16px',
-  outline: 'none',
 };
 
 /** Read saved viewport preset from localStorage for a given server. */

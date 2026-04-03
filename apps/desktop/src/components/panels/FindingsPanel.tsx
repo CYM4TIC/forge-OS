@@ -50,7 +50,6 @@ const SELECT_STYLE: React.CSSProperties = {
   background: CANVAS.bgElevated,
   color: CANVAS.text,
   border: `1px solid ${CANVAS.border}`,
-  outline: 'none',
   cursor: 'pointer',
 };
 

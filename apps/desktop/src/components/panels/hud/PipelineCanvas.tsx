@@ -240,7 +240,6 @@ export function PipelineCanvas({ stages, width, height, onStageClick }: Pipeline
               width: rect.width,
               height: rect.height,
               cursor: isClickable ? 'pointer' : undefined,
-              outline: 'none',
               borderRadius: 10,
               transition: prefersReducedMotion ? undefined : 'top 0.3s ease-out',
             }}

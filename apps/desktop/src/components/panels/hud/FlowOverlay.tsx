@@ -283,7 +283,6 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
               fontSize: 10,
               padding: '2px 6px',
               cursor: 'pointer',
-              outline: 'none',
             }}
             aria-label={isReplaying ? `Stop replay (${replayIndexRef.current}/${replayHistory.length})` : `Replay ${replayHistory.length} dispatch events`}
           >
@@ -303,7 +302,6 @@ export function FlowOverlay({ nodes, width, height, visible = true, onToggle }: 
               fontSize: 10,
               padding: '2px 6px',
               cursor: 'pointer',
-              outline: 'none',
             }}
             aria-label={visible ? 'Hide flow overlay' : 'Show flow overlay'}
             aria-pressed={visible}

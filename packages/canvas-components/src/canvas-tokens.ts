@@ -99,7 +99,7 @@ export const BADGE_COLORS = {
   success:  { bg: STATUS.success,  text: '#ffffff' },
   warning:  { bg: STATUS.warning,  text: CANVAS.bg },      // dark text — WCAG contrast
   danger:   { bg: STATUS.danger,   text: '#ffffff' },
-  critical: { bg: STATUS.critical, text: '#ffffff' },
+  critical: { bg: STATUS.critical, text: CANVAS.bg },    // dark text — white on #f97316 is only 3.2:1
   neutral:  { bg: STATUS.neutral,  text: '#ffffff' },
   accent:   { bg: STATUS.accent,   text: '#ffffff' },
   info:     { bg: STATUS.accent,   text: '#ffffff' },
