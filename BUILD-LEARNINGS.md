@@ -40,6 +40,7 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-014 | `[design-system]` `[frontend]` | gotcha | WCAG contrast fix already existed in sibling function (findingsBadgeColors) but connectivityBadge copied the bug, not the fix. |
 | OS-BL-015 | `[design-system]` `[frontend]` | gotcha | Removing JS focus ring handlers is half the migration — `outline: 'none'` inline styles in the same components silently defeat the CSS `:focus-visible` replacement. When migrating focus management to CSS, grep for BOTH the handler AND the suppression. P7-A: 11 instances across 7 files survived the initial removal pass. |
 | OS-BL-016 | `[design-system]` `[canvas]` | gotcha | StatusBadge glyph at 20x20px: dot radius is only 4px at 1x DPR. Glyph size formula must cap to dot boundary (`dotRadius * 1.4`), not grow independently. Small canvas components need size-aware rendering, not fixed minimums. |
+| OS-BL-017 | `[frontend]` `[design-system]` | pattern | WAI-ARIA Tabs require roving tabindex (tabIndex 0/-1 + arrow keys + Home/End + all panels rendered). TeamPanel is the canonical template. Copy this pattern for all future tabbed panels. |
 
 ---
 
@@ -154,6 +155,15 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Problem:** findingsBadgeColors had a comment noting white on #f59e0b is 2.1:1 contrast and used dark text. connectivityBadge, written 50 lines below in the same file, made the exact same mistake and used '#fff'. The fix was already in the same file but the copy-paste divergence wasn't caught during build.
 **Solution:** Matched connectivityBadge warning text to CANVAS.bg (dark). Added comment cross-referencing the contrast requirement.
 **Prevention:** When creating a new function that parallels an existing one in the same file, read the existing function's comments and edge case handling. The fix you need may already be documented in the sibling function.
+
+### OS-BL-017: WAI-ARIA Tabs Require Roving Tabindex — First Tab Template
+**Discovered:** 2026-04-03 | **Domain:** frontend, design-system | **Severity:** pattern | **Tag:** [FORGE-OS] `[frontend]` `[design-system]`
+**Context:** P7-E TeamPanel is the first tabbed panel in Forge OS. Mara's gate flagged M-CRIT-1: tablist with no arrow key navigation is a WAI-ARIA violation.
+**Problem:** Standard button tabs (each with tabIndex=0) create multiple tab stops where the WAI-ARIA Tabs Pattern requires a single tab stop with arrow key navigation (roving tabindex). All panels rendered, inactive hidden with display:none, so aria-controls resolves.
+**Solution:** TabButton gets `tabIndex={active ? 0 : -1}`, `aria-controls` only on active tab, `buttonRef` for programmatic focus. Parent tablist handles `onKeyDown` for ArrowLeft/Right/Up/Down/Home/End. All tabpanels rendered simultaneously with `display: activeTab === 'x' ? 'flex' : 'none'`.
+**Prevention:** This is now the canonical tab pattern for Forge OS. Any future tabbed panel must copy this template from TeamPanel — TabButton component + handleTablistKeyDown handler + tabRefs + all-panels-rendered.
+
+---
 
 ### OS-BL-013: "Pre-Existing" Is Not an Exemption — Rule 43 Structural Gate
 **Discovered:** 2026-04-02 | **Domain:** governance | **Severity:** process-failure | **Tag:** [FORGE-OS]
