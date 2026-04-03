@@ -314,6 +314,7 @@ pub fn run() {
             commands::registry::get_agent_content,
             commands::registry::refresh_registry,
             commands::registry::get_command_registry,
+            commands::registry::dispatch_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -87,10 +87,15 @@ impl AgentContext {
     }
 
     /// Create a child context for a sub-agent dispatch.
-    /// Child inherits parent's capabilities (principle of least privilege preserved).
+    /// Child capabilities are intersected with parent's grants — a child
+    /// can never exceed the parent's privilege level.
     pub fn child_context(&self, dispatch_id: &str, capabilities: Vec<CapabilityFamily>) -> Self {
+        let bounded: Vec<CapabilityFamily> = capabilities
+            .into_iter()
+            .filter(|c| self.granted_capabilities.contains(c))
+            .collect();
         Self::from_capabilities(
-            capabilities,
+            bounded,
             Some(dispatch_id.to_string()),
             self.depth + 1,
         )

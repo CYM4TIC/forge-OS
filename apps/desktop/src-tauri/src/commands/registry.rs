@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use tokio::sync::Mutex;
 
 // ---------------------------------------------------------------------------
@@ -20,6 +20,51 @@ pub enum AgentCategory {
     Command,
 }
 
+/// Agent reasoning effort — feeds thinking token allocation in grimoire.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReasoningEffort {
+    Low,
+    Medium,
+    High,
+}
+
+impl Default for ReasoningEffort {
+    fn default() -> Self {
+        Self::Medium
+    }
+}
+
+/// Model class — feeds provider routing decisions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelClass {
+    Frontier,
+    Standard,
+    Fast,
+}
+
+impl Default for ModelClass {
+    fn default() -> Self {
+        Self::Standard
+    }
+}
+
+/// Routing role — feeds dispatch pipeline priority.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RoutingRole {
+    Leader,
+    Specialist,
+    Executor,
+}
+
+impl Default for RoutingRole {
+    fn default() -> Self {
+        Self::Specialist
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct RegistryEntry {
     pub slug: String,
@@ -31,6 +76,9 @@ pub struct RegistryEntry {
     pub file_path: String,
     pub user_invocable: bool,
     pub model: Option<String>,
+    pub reasoning_effort: ReasoningEffort,
+    pub model_class: ModelClass,
+    pub routing_role: RoutingRole,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -71,11 +119,181 @@ pub struct CommandRegistry {
     pub commands: Vec<CommandDef>,
 }
 
+// ---------------------------------------------------------------------------
+// Lazy handler loading — OnceCell-based deferred initialization
+// ---------------------------------------------------------------------------
+
+/// Lazy handler: metadata registered at scan time, content loaded on first dispatch.
+/// Uses OnceLock to cache the file content (not a closure) — read once, serve many.
+pub struct LazyHandler {
+    /// Path to the source file (used to load content on first call).
+    source_path: String,
+    /// Cached markdown body — initialized on first dispatch, immutable after.
+    content: OnceLock<Result<String, String>>,
+}
+
+impl LazyHandler {
+    pub fn new(source_path: String) -> Self {
+        Self {
+            source_path,
+            content: OnceLock::new(),
+        }
+    }
+
+    /// Get the cached content or load it from disk on first call.
+    /// The content is read once and cached for all subsequent dispatches.
+    pub fn get_or_init(&self) -> Result<String, String> {
+        let result = self.content.get_or_init(|| {
+            match fs::read_to_string(&self.source_path) {
+                Ok(raw) => Ok(extract_body(&raw)),
+                Err(e) => Err(format!("Failed to read handler source '{}': {}", self.source_path, e)),
+            }
+        });
+        result.clone()
+    }
+}
+
+impl std::fmt::Debug for LazyHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LazyHandler")
+            .field("source_path", &self.source_path)
+            .field("initialized", &self.content.get().is_some())
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Dual adapter registration — YAML declarative + Rust fn implementations
+// ---------------------------------------------------------------------------
+
+/// Source type for a command definition: either YAML declarative (simple
+/// read-only operations) or a Rust function (complex dispatch logic).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CommandSource {
+    /// Command defined declaratively in a YAML/markdown file.
+    Yaml { file_path: String },
+    /// Command defined as a Rust handler function.
+    RustFn { handler_name: String },
+    /// Built-in command (hardcoded, no external source).
+    Builtin,
+}
+
+/// Trait for registering commands from either YAML or Rust sources.
+/// Both register into the same CommandRegistry via a unified interface.
+pub trait RegisterCommand {
+    /// Create a CommandDef from a YAML declarative source file.
+    fn from_yaml(slug: &str, entry: &RegistryEntry) -> CommandDef;
+    /// Create a CommandDef from a Rust function handler.
+    fn from_fn(
+        slug: &str,
+        name: &str,
+        description: &str,
+        category: CommandCategory,
+        handler_name: &str,
+    ) -> CommandDef;
+}
+
+impl RegisterCommand for CommandDef {
+    fn from_yaml(slug: &str, entry: &RegistryEntry) -> CommandDef {
+        let (category, dispatch_target) = classify_command(slug);
+        CommandDef {
+            slug: slug.to_string(),
+            name: entry.name.clone(),
+            description: entry.description.clone(),
+            category,
+            aliases: aliases_for_command(slug),
+            dispatch_target,
+            available_when: availability_for_command(slug),
+            keyboard_shortcut: None,
+        }
+    }
+
+    fn from_fn(
+        slug: &str,
+        name: &str,
+        description: &str,
+        category: CommandCategory,
+        handler_name: &str,
+    ) -> CommandDef {
+        CommandDef {
+            slug: slug.to_string(),
+            name: name.to_string(),
+            description: description.to_string(),
+            category,
+            aliases: aliases_for_command(slug),
+            dispatch_target: handler_name.to_string(),
+            available_when: availability_for_command(slug),
+            keyboard_shortcut: None,
+        }
+    }
+}
+
+/// Register a built-in command that skips IPC — for low-latency in-process
+/// operations like vault reads, sigil scans, and registry queries.
+///
+/// Usage: `register_builtin!(commands, "help", "Show available commands", Operations)`
+#[macro_export]
+macro_rules! register_builtin {
+    ($commands:expr, $slug:literal, $desc:literal, $category:ident) => {
+        $commands.push(CommandDef {
+            slug: $slug.into(),
+            name: $slug.into(),
+            description: $desc.into(),
+            category: CommandCategory::$category,
+            aliases: aliases_for_command($slug),
+            dispatch_target: $slug.into(),
+            available_when: Some(AvailabilityCheck::Always),
+            keyboard_shortcut: None,
+        });
+    };
+    ($commands:expr, $slug:literal, $name:literal, $desc:literal, $category:ident) => {
+        $commands.push(CommandDef {
+            slug: $slug.into(),
+            name: $name.into(),
+            description: $desc.into(),
+            category: CommandCategory::$category,
+            aliases: aliases_for_command($slug),
+            dispatch_target: $slug.into(),
+            available_when: Some(AvailabilityCheck::Always),
+            keyboard_shortcut: None,
+        });
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Lazy handler store — maps command slugs to lazy handlers
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Default)]
+pub struct HandlerStore {
+    handlers: HashMap<String, Arc<LazyHandler>>,
+}
+
+impl HandlerStore {
+    pub fn register(&mut self, slug: String, source_path: String) {
+        self.handlers.insert(slug, Arc::new(LazyHandler::new(source_path)));
+    }
+
+    /// Get a cloned Arc to the handler for the given slug.
+    /// Used to clone the handler out of the mutex before invoking it.
+    pub fn get_handler(&self, slug: &str) -> Option<Arc<LazyHandler>> {
+        self.handlers.get(slug).cloned()
+    }
+
+    pub fn dispatch(&self, slug: &str) -> Result<String, String> {
+        let handler = self.handlers.get(slug)
+            .ok_or_else(|| format!("No handler registered for command '{}'", slug))?;
+        handler.get_or_init()
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AgentRegistry {
     pub entries: HashMap<String, RegistryEntry>,
     pub orchestrator_members: HashMap<String, Vec<String>>,
     pub command_registry: CommandRegistry,
+    pub handler_store: HandlerStore,
     initialized: bool,
 }
 
@@ -189,7 +407,7 @@ fn availability_for_command(slug: &str) -> Option<AvailabilityCheck> {
 fn aliases_for_command(slug: &str) -> Vec<String> {
     match slug {
         "next-batch" => vec!["nb".into()],
-        "batch-status" => vec!["bs".into(), "status".into()],
+        "batch-status" => vec!["bs".into()],
         "gate" => vec!["g".into()],
         "red-team" => vec!["rt".into()],
         "council" => vec!["c".into()],
@@ -197,66 +415,37 @@ fn aliases_for_command(slug: &str) -> Vec<String> {
         "findings" => vec!["f".into()],
         "adversarial" => vec!["adv".into()],
         "launch-check" => vec!["lc".into()],
+        "help" => vec!["h".into(), "?".into()],
+        "status" => vec!["s".into()],
         _ => Vec::new(),
     }
 }
 
 /// Build CommandDefs from already-scanned command entries in the AgentRegistry,
-/// plus hardcoded built-in commands.
-fn build_command_registry(entries: &HashMap<String, RegistryEntry>) -> CommandRegistry {
+/// plus hardcoded built-in commands. Also populates the HandlerStore with
+/// lazy handlers for each command.
+fn build_command_registry(
+    entries: &HashMap<String, RegistryEntry>,
+    handler_store: &mut HandlerStore,
+) -> CommandRegistry {
     let mut commands = Vec::new();
 
-    // Populate from scanned command files
+    // Populate from scanned command files via dual adapter (YAML source)
     for (slug, entry) in entries {
         if entry.category != AgentCategory::Command {
             continue;
         }
 
-        let (category, dispatch_target) = classify_command(slug);
+        commands.push(CommandDef::from_yaml(slug, entry));
 
-        commands.push(CommandDef {
-            slug: slug.clone(),
-            name: entry.name.clone(),
-            description: entry.description.clone(),
-            category,
-            aliases: aliases_for_command(slug),
-            dispatch_target,
-            available_when: availability_for_command(slug),
-            keyboard_shortcut: None,
-        });
+        // Register lazy handler — file content loaded on first dispatch
+        handler_store.register(slug.clone(), entry.file_path.clone());
     }
 
-    // Hardcoded built-in commands (not backed by .md files)
-    commands.push(CommandDef {
-        slug: "help".into(),
-        name: "help".into(),
-        description: "Show available commands and usage".into(),
-        category: CommandCategory::Operations,
-        aliases: vec!["h".into(), "?".into()],
-        dispatch_target: "help".into(),
-        available_when: Some(AvailabilityCheck::Always),
-        keyboard_shortcut: None,
-    });
-    commands.push(CommandDef {
-        slug: "status".into(),
-        name: "status".into(),
-        description: "Show current build state, context usage, and active agents".into(),
-        category: CommandCategory::Build,
-        aliases: vec!["s".into()],
-        dispatch_target: "status".into(),
-        available_when: Some(AvailabilityCheck::Always),
-        keyboard_shortcut: None,
-    });
-    commands.push(CommandDef {
-        slug: "cancel".into(),
-        name: "cancel".into(),
-        description: "Cancel a running agent by dispatch ID".into(),
-        category: CommandCategory::Operations,
-        aliases: Vec::new(),
-        dispatch_target: "cancel".into(),
-        available_when: Some(AvailabilityCheck::Always),
-        keyboard_shortcut: None,
-    });
+    // Built-in commands via register_builtin! macro (skip IPC, in-process)
+    register_builtin!(commands, "help", "Show available commands and usage", Operations);
+    register_builtin!(commands, "status", "Show current build state, context usage, and active agents", Build);
+    register_builtin!(commands, "cancel", "Cancel a running agent by dispatch ID", Operations);
 
     commands.sort_by(|a, b| a.slug.cmp(&b.slug));
     CommandRegistry { commands }
@@ -272,6 +461,9 @@ struct ParsedFrontmatter {
     model: Option<String>,
     tools: Vec<String>,
     user_invocable: bool,
+    reasoning_effort: Option<ReasoningEffort>,
+    model_class: Option<ModelClass>,
+    routing_role: Option<RoutingRole>,
 }
 
 fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
@@ -288,6 +480,9 @@ fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
     let mut model = None;
     let mut tools = Vec::new();
     let mut user_invocable = false;
+    let mut reasoning_effort = None;
+    let mut model_class = None;
+    let mut routing_role = None;
 
     for line in fm_block.lines() {
         let line = line.trim();
@@ -309,6 +504,24 @@ fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
                 .collect();
         } else if let Some(val) = line.strip_prefix("user_invocable:") {
             user_invocable = val.trim() == "true";
+        } else if let Some(val) = line.strip_prefix("reasoning_effort:") {
+            reasoning_effort = match val.trim().to_lowercase().as_str() {
+                "low" => Some(ReasoningEffort::Low),
+                "high" => Some(ReasoningEffort::High),
+                _ => Some(ReasoningEffort::Medium),
+            };
+        } else if let Some(val) = line.strip_prefix("model_class:") {
+            model_class = match val.trim().to_lowercase().as_str() {
+                "frontier" => Some(ModelClass::Frontier),
+                "fast" => Some(ModelClass::Fast),
+                _ => Some(ModelClass::Standard),
+            };
+        } else if let Some(val) = line.strip_prefix("routing_role:") {
+            routing_role = match val.trim().to_lowercase().as_str() {
+                "leader" => Some(RoutingRole::Leader),
+                "executor" => Some(RoutingRole::Executor),
+                _ => Some(RoutingRole::Specialist),
+            };
         }
     }
 
@@ -318,6 +531,9 @@ fn parse_frontmatter(content: &str) -> Option<ParsedFrontmatter> {
         model,
         tools,
         user_invocable,
+        reasoning_effort,
+        model_class,
+        routing_role,
     })
 }
 
@@ -446,6 +662,15 @@ fn scan_directory(
             user_invocable: fm.as_ref()
                 .map(|f| f.user_invocable)
                 .unwrap_or(false),
+            reasoning_effort: fm.as_ref()
+                .and_then(|f| f.reasoning_effort)
+                .unwrap_or_default(),
+            model_class: fm.as_ref()
+                .and_then(|f| f.model_class)
+                .unwrap_or_default(),
+            routing_role: fm.as_ref()
+                .and_then(|f| f.routing_role)
+                .unwrap_or_default(),
             category: resolved_category,
             parent_agent,
             file_path: canonical.to_string_lossy().to_string(),
@@ -477,15 +702,25 @@ pub fn scan_agents(base_path: &Path) -> AgentRegistry {
 
     let mut entries = HashMap::new();
     for entry in all_entries {
+        if let Some(existing) = entries.get(&entry.slug) {
+            let existing: &RegistryEntry = existing;
+            eprintln!(
+                "[registry] WARNING: slug collision '{}' — '{}' ({:?}) overwrites '{}' ({:?})",
+                entry.slug, entry.file_path, entry.category,
+                existing.file_path, existing.category
+            );
+        }
         entries.insert(entry.slug.clone(), entry);
     }
 
-    let command_registry = build_command_registry(&entries);
+    let mut handler_store = HandlerStore::default();
+    let command_registry = build_command_registry(&entries, &mut handler_store);
 
     AgentRegistry {
         entries,
         orchestrator_members: build_orchestrator_members(),
         command_registry,
+        handler_store,
         initialized: true,
     }
 }
@@ -527,19 +762,23 @@ pub async fn get_agent_registry(
 }
 
 /// Returns the full markdown body (after frontmatter) for a given agent slug.
-/// Used for system prompt construction.
+/// Used for system prompt construction. Clones file_path out of lock before I/O.
 #[tauri::command]
 pub async fn get_agent_content(
     slug: String,
     registry: tauri::State<'_, RegistryState>,
 ) -> Result<String, String> {
     ensure_initialized(&registry).await;
-    let reg = registry.lock().await;
 
-    let entry = reg.entries.get(&slug)
-        .ok_or_else(|| format!("Agent '{}' not found in registry", slug))?;
+    // Clone path out of lock — never hold mutex during file I/O
+    let file_path = {
+        let reg = registry.lock().await;
+        let entry = reg.entries.get(&slug)
+            .ok_or_else(|| format!("Agent '{}' not found in registry", slug))?;
+        entry.file_path.clone()
+    }; // lock released here
 
-    let content = fs::read_to_string(&entry.file_path)
+    let content = fs::read_to_string(&file_path)
         .map_err(|e| format!("Failed to read agent file: {}", e))?;
 
     Ok(extract_body(&content))
@@ -567,4 +806,32 @@ pub async fn get_command_registry(
     ensure_initialized(&registry).await;
     let reg = registry.lock().await;
     Ok(reg.command_registry.commands.clone())
+}
+
+/// Built-in command slugs handled in-process (not via handler store).
+const BUILTIN_SLUGS: &[&str] = &["help", "status", "cancel"];
+
+/// Dispatch a command by slug via lazy handler. Handler is loaded from
+/// the source file on first invocation and cached for subsequent calls.
+/// Built-in commands are routed in-process without handler store lookup.
+#[tauri::command]
+pub async fn dispatch_command(
+    slug: String,
+    registry: tauri::State<'_, RegistryState>,
+) -> Result<String, String> {
+    ensure_initialized(&registry).await;
+
+    // Built-in commands are handled in-process — no handler store lookup
+    if BUILTIN_SLUGS.contains(&slug.as_str()) {
+        return Ok(format!("__builtin:{}", slug));
+    }
+
+    // Clone handler Arc out of lock — OnceLock inside is thread-safe
+    let handler = {
+        let reg = registry.lock().await;
+        reg.handler_store.get_handler(&slug)
+            .ok_or_else(|| format!("No handler registered for command '{}'", slug))?
+    }; // lock released here
+
+    handler.get_or_init()
 }
