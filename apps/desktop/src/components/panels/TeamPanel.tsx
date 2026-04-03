@@ -2,11 +2,12 @@
 // P7-E rewrite: 3 tabs (Team, Dispatch, Actions).
 // Team tab: grouped agent cards with PersonaGlyph + live working state.
 // Dispatch tab: existing AgentStatusPanel + MessageFeed.
-// Actions tab: placeholder for P7-G Action Palette.
+// Actions tab: ActionPalette (P7-G).
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import AgentStatusPanel from '../team/AgentStatusPanel';
 import AgentPresence from '../team/AgentPresence';
+import ActionPalette from '../team/ActionPalette';
 import MessageFeed from '../team/MessageFeed';
 import MailboxBadge from '../team/MailboxBadge';
 import PermissionModal from '../team/PermissionModal';
@@ -14,6 +15,7 @@ import { useSwarmMessages } from '../../hooks/useSwarmMessages';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useAgentRegistry } from '../../hooks/useAgentRegistry';
 import { usePersonaSelection } from '../../hooks/usePersonaSelection';
+import { useActionPalette } from '../../hooks/useActionPalette';
 import type { RegistryEntry, AgentCategory } from '../../lib/tauri';
 import type { AgentStateMap } from '../../hooks/useAgentRegistry';
 import { PersonaGlyph, CANVAS, STATUS, RADIUS, TIMING, FONT, TINT, CONTAINMENT, StatusBadge } from '@forge-os/canvas-components';
@@ -563,7 +565,8 @@ export default function TeamPanel() {
   const { messages, unreadCount, markRead } = useSwarmMessages('nyx');
   const { pending, approve, deny } = usePermissions('nyx');
   const { grouped, agentStates, loading: regLoading, error: regError, refresh } = useAgentRegistry();
-  const { toggle, isSelected, selectedCount } = usePersonaSelection();
+  const { toggle, isSelected, selectedCount, selectedArray } = usePersonaSelection();
+  const palette = useActionPalette(selectedArray);
 
   // Refs for roving tabindex (M-CRIT-1)
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ team: null, dispatch: null, actions: null });
@@ -706,19 +709,9 @@ export default function TeamPanel() {
         role="tabpanel"
         id="panel-actions"
         aria-labelledby="tab-actions"
-        style={{ flex: 1, minHeight: 0, display: activeTab === 'actions' ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center' }}
+        style={{ flex: 1, minHeight: 0, display: activeTab === 'actions' ? 'flex' : 'none', flexDirection: 'column' }}
       >
-        <div style={{ textAlign: 'center', padding: 24 }}>
-          <span style={{ fontSize: 32, display: 'block', marginBottom: 8 }} aria-hidden="true">{'\u2697\uFE0F'}</span>
-          <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>
-            Invocation Palette
-          </span>
-          <span style={{ color: CANVAS.muted, fontSize: 11, lineHeight: '16px' }}>
-            {selectedCount === 0
-              ? 'Select personas above to browse actions.'
-              : `${selectedCount} persona${selectedCount === 1 ? '' : 's'} selected. Action Palette wired in P7-G.`}
-          </span>
-        </div>
+        <ActionPalette palette={palette} selectedCount={selectedCount} />
       </div>
     </div>
   );

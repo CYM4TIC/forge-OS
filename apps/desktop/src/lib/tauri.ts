@@ -141,6 +141,7 @@ export interface DispatchRequest {
 // ── Dispatch commands ──
 
 export function dispatchAgent(request: DispatchRequest): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('dev-mode-stub');
   return invoke('dispatch_agent', { request });
 }
 
@@ -1098,6 +1099,17 @@ export function getPaletteActions(selectedSlugs: string[]): Promise<PaletteRespo
 export function smartReviewRouting(diffSummary: string): Promise<string[]> {
   if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('smart_review_routing', { diffSummary });
+}
+
+/** Specification check result — well-specified or underspecified with suggestion. */
+export type SpecificationResult =
+  | { status: 'specified' }
+  | { status: 'underspecified'; suggestion: string };
+
+/** Check if a dispatch input is well-specified enough to proceed (P7-G underspecification gating). */
+export function checkSpecification(input: string): Promise<SpecificationResult> {
+  if (!isTauriRuntime) return Promise.resolve({ status: 'specified' });
+  return invoke('check_specification', { input });
 }
 
 /** Force-rescan the agent registry (triggers file walk), then return fresh entries. */

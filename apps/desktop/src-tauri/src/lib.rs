@@ -317,6 +317,7 @@ pub fn run() {
             commands::registry::dispatch_command,
             commands::registry::get_palette_actions,
             commands::registry::smart_review_routing,
+            commands::registry::check_specification,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

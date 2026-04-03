@@ -1190,3 +1190,74 @@ pub async fn smart_review_routing(
     result.sort();
     Ok(result)
 }
+
+// ---------------------------------------------------------------------------
+// Underspecification gating (P7-G)
+// ---------------------------------------------------------------------------
+
+/// Result of specification check — either well-specified or underspecified with a suggestion.
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum SpecificationResult {
+    Specified,
+    Underspecified { suggestion: String },
+}
+
+/// Signals that heuristically indicate a well-specified request.
+/// P-MED-2: bare "/" removed — slash commands need a scope argument to be well-specified.
+const SPECIFICATION_SIGNALS: &[&str] = &[
+    "src/",   // File path fragment (with separator)
+    "src\\",  // Windows path fragment
+    ".rs",    // Rust file
+    ".tsx",   // React file
+    ".ts ",   // TypeScript file (trailing space to avoid matching inside words)
+    ".md",    // Markdown file
+    "P7-",    // Batch ID
+    "P8-",
+    "P9-",
+    "```",    // Code block
+    "1.",     // Numbered steps
+    "2.",
+    "- ",     // Bullet list
+];
+
+/// Check if a dispatch input is well-specified enough to proceed.
+/// Heuristic: <15 effective words AND no specification signals → underspecified.
+/// P7-G: prevents vague orchestrator dispatches that waste resources.
+#[tauri::command]
+pub async fn check_specification(input: String) -> Result<SpecificationResult, String> {
+    let trimmed = input.trim();
+
+    // Empty or extremely short input is always underspecified
+    if trimmed.is_empty() {
+        return Ok(SpecificationResult::Underspecified {
+            suggestion: "Provide a task description. Try: `/review src-tauri/src/commands/` or `/gate P7-G`".to_string(),
+        });
+    }
+
+    // Count effective words (filter out single-char tokens and common filler)
+    let effective_words: usize = trimmed
+        .split_whitespace()
+        .filter(|w| w.len() > 1)
+        .count();
+
+    // Check for specification signals
+    let has_signal = SPECIFICATION_SIGNALS.iter().any(|signal| trimmed.contains(signal));
+
+    // P-MED-2: slash command with scope (e.g., "/review src-tauri/") is well-specified,
+    // but bare "/review" (no scope argument) is not.
+    let has_scoped_slash = trimmed.starts_with('/')
+        && trimmed.split_whitespace().count() >= 2;
+
+    // Well-specified: has signals, scoped slash command, or enough descriptive words
+    if has_signal || has_scoped_slash || effective_words >= 15 {
+        return Ok(SpecificationResult::Specified);
+    }
+
+    // Underspecified: short input with no well-defined target
+    Ok(SpecificationResult::Underspecified {
+        suggestion: format!(
+            "Can you be more specific? Try: `/review src-tauri/src/commands/` or `/gate P7-G`"
+        ),
+    })
+}
