@@ -256,6 +256,8 @@ export default function GraphViewerPanel() {
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
   const prefersReducedMotion = useRef(false);
+  // Force React re-render when layout node positions change (persona glyph overlays are DOM)
+  const [layoutTick, setLayoutTick] = useState(0);
 
   // Check reduced motion preference
   useEffect(() => {
@@ -310,6 +312,8 @@ export default function GraphViewerPanel() {
     if (!ctxVal || dimensions.width <= 0 || dimensions.height <= 0) return;
     const ctx: CanvasRenderingContext2D = ctxVal;
 
+    let frameCount = 0;
+
     function animate() {
       const layout = layoutRef.current;
       if (!layout) return; // Don't spin rAF with no data (PIERCE-01)
@@ -322,8 +326,15 @@ export default function GraphViewerPanel() {
             tickLayout(layout, dimensions.width, dimensions.height);
             if (layout.stabilized) break;
           }
+          // Force re-render so persona glyph overlays sync to final positions
+          setLayoutTick((t) => t + 1);
         } else {
           tickLayout(layout, dimensions.width, dimensions.height);
+          frameCount++;
+          // Update React overlay positions every 4 frames during simulation
+          if (frameCount % 4 === 0 || layout.stabilized) {
+            setLayoutTick((t) => t + 1);
+          }
         }
       }
 
@@ -345,6 +356,7 @@ export default function GraphViewerPanel() {
 
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- layoutTick intentionally excluded to avoid restart loops
   }, [dimensions, view, selectedNode, hoveredNodeId]);
 
   // ─── Interaction handlers ───────────────────────────────────────────────
@@ -468,6 +480,8 @@ export default function GraphViewerPanel() {
 
   // ─── Persona glyph overlays ─────────────────────────────────────────────
 
+  // layoutTick triggers re-render so persona overlays read fresh node positions from layoutRef
+  void layoutTick;
   const personaOverlays = layoutRef.current?.nodes
     .filter((n) => n.data.type === 'persona' && n.data.persona)
     .map((node) => {
