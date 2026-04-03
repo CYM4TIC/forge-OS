@@ -260,6 +260,9 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
   const [customHeight, setCustomHeight] = useState(800);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
+  // MARA-LOW-1: Screen reader announcement when agent reads DOM
+  const [domReadAnnouncement, setDomReadAnnouncement] = useState('');
+
   const { server, logs, start, stop, restart, loading, error } = useDevServer(selectedServerId);
 
   // ── Load saved viewport preset when server changes ──
@@ -389,6 +392,9 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
             html,
             error: null,
           });
+          // MARA-LOW-1: Announce DOM read to screen readers
+          setDomReadAnnouncement('Agent reading preview DOM');
+          setTimeout(() => setDomReadAnnouncement(''), 2000);
         } catch {
           await respondPreviewDom({
             requestId: payload.requestId,
@@ -902,6 +908,11 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
       <div style={SR_ONLY} aria-live="polite">
         {statusLabel}
       </div>
+      {domReadAnnouncement && (
+        <div style={SR_ONLY} aria-live="polite" role="status">
+          {domReadAnnouncement}
+        </div>
+      )}
 
       {/* Main toolbar: status dot + URL input + refresh + stop */}
       <div style={TOOLBAR}>

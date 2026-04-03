@@ -633,6 +633,9 @@ pub fn spawn_health_poller(
     db_path: std::path::PathBuf,
 ) {
     tauri::async_runtime::spawn(async move {
+        // TANAKA-LOW-2: Open connection once, reuse across cycles. Reconnect on error.
+        let mut conn: Option<rusqlite::Connection> = None;
+
         loop {
             let interval = {
                 let i = check_interval.lock().await;
@@ -640,34 +643,51 @@ pub fn spawn_health_poller(
             };
             tokio::time::sleep(interval).await;
 
-            // Load configs from a fresh read-only connection (background task)
-            let configs = {
-                let conn = match rusqlite::Connection::open(&db_path) {
-                    Ok(c) => c,
-                    Err(_) => continue,
-                };
-                let _ = conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");
-                let mut stmt = match conn.prepare(
-                    "SELECT service_type, config_json FROM service_configs WHERE enabled = 1",
-                ) {
-                    Ok(s) => s,
-                    Err(_) => continue,
-                };
-                let rows = match stmt.query_map([], |row| {
-                    let stype: String = row.get(0)?;
-                    let json: String = row.get(1)?;
-                    Ok((stype, json))
-                }) {
-                    Ok(r) => r,
-                    Err(_) => continue,
-                };
-                let mut configs = Vec::new();
-                for row in rows.flatten() {
-                    let map: HashMap<String, String> =
-                        serde_json::from_str(&row.1).unwrap_or_default();
-                    configs.push((row.0, map));
+            // Ensure we have a valid connection (open or reconnect)
+            if conn.is_none() {
+                match rusqlite::Connection::open(&db_path) {
+                    Ok(c) => {
+                        let _ = c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");
+                        conn = Some(c);
+                    }
+                    Err(e) => {
+                        // TANAKA-LOW-1: Log errors instead of silently swallowing
+                        eprintln!("[connectivity-poller] Failed to open database: {e}");
+                        continue;
+                    }
                 }
-                configs
+            }
+
+            // Load configs from the reused connection
+            let configs = {
+                let c = conn.as_ref().unwrap();
+                let result = (|| -> Result<Vec<(String, HashMap<String, String>)>, rusqlite::Error> {
+                    let mut stmt = c.prepare(
+                        "SELECT service_type, config_json FROM service_configs WHERE enabled = 1",
+                    )?;
+                    let rows = stmt.query_map([], |row| {
+                        let stype: String = row.get(0)?;
+                        let json: String = row.get(1)?;
+                        Ok((stype, json))
+                    })?;
+                    let mut configs = Vec::new();
+                    for row in rows {
+                        let (stype, json) = row?;
+                        let map: HashMap<String, String> =
+                            serde_json::from_str(&json).unwrap_or_default();
+                        configs.push((stype, map));
+                    }
+                    Ok(configs)
+                })();
+
+                match result {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("[connectivity-poller] Query error (will reconnect): {e}");
+                        conn = None; // Force reconnect on next cycle
+                        continue;
+                    }
+                }
             };
 
             for (stype, config) in &configs {
