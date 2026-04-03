@@ -96,6 +96,25 @@ The base palette below remains the structural foundation. The visual direction a
 | The Forge | Build system / app | Status messages | "Build system status" |
 | Transmutation | Build transformation | Batch completion | "Build batch complete" |
 
+**Panel Name Registry (canonical — shipped 2026-04-02):**
+
+| Panel Type | Name | Icon | Old Name |
+|---|---|---|---|
+| chat | Crucible | ⚗️ | Chat |
+| canvas_hud | Furnace | 🔥 | Canvas |
+| team | Magi | 🧙 | Team |
+| preview | Orb | 🔮 | Preview |
+| connectivity | Scrying | 👁️ | Services |
+| findings | Echoes | 🌀 | Findings |
+| agent_board | Grimoire | 📜 | Agents |
+| session_timeline | Chronicle | ⏳ | Timeline |
+| vault_browser | Vault | 🗝️ | Vault |
+| graph_viewer | Ley Lines | ✨ | Graph |
+| context_meter | Vessel | 🏺 | Context |
+| action_palette (P7-F) | Invocation | TBD | — |
+
+Grammar: places are bare nouns (Crucible, Furnace, Magi, Orb, Vault). Phenomena are bare nouns (Echoes, Scrying, Ley Lines). No "The" prefix — sleeker.
+
 **What NOT to rename:**
 - Gate verdicts: "PASS" / "FAIL" stay literal
 - Severity levels: CRIT/HIGH/MED/LOW/INFO stay literal
@@ -112,7 +131,7 @@ The Prompt-Surfer/obsidian-jarvis-ui Iron Man aesthetic validates the containmen
 Every frontend surface must pass ALL items before completion:
 
 ```
-[ ] No emojis as icons (use SVG: Heroicons, Lucide, or project icon library)
+[ ] No emojis as icons in panel content (use SVG: Heroicons, Lucide, or project icon library). Exception: dock pill icons use fantasy emoji per Panel Name Registry.
 [ ] cursor-pointer on all clickable elements
 [ ] Hover states with smooth transitions (150-300ms)
 [ ] Text contrast 4.5:1 minimum (WCAG AA)
