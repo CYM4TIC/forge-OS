@@ -39,14 +39,15 @@ export interface GraphLayout {
 
 /* ── Constants ─────────────────────────────────────────────────── */
 
-const REPULSION_STRENGTH = 800;
-const ATTRACTION_STRENGTH = 0.005;
-const GRAVITY_STRENGTH = 0.02;
+const REPULSION_STRENGTH = 4000;
+const ATTRACTION_STRENGTH = 0.003;
+const EDGE_REST_LENGTH = 120;       // edges target this distance, not zero
+const GRAVITY_STRENGTH = 0.008;
 const DAMPING = 0.85;
-const MIN_DISTANCE = 30;
+const MIN_DISTANCE = 50;
 const VELOCITY_THRESHOLD = 0.1;
 const MAX_VELOCITY = 15;
-const STABILIZE_AFTER = 120;
+const STABILIZE_AFTER = 150;
 
 const NODE_RADIUS_PERSONA = 24;
 const NODE_RADIUS_CONCEPT = 18;
@@ -76,7 +77,7 @@ export function initLayout(
 ): GraphLayout {
   const cx = width / 2;
   const cy = height / 2;
-  const radius = Math.min(width, height) * 0.3;
+  const radius = Math.min(width, height) * 0.35;
 
   const layoutNodes: LayoutNode[] = nodes.map((node, i) => {
     const angle = (2 * Math.PI * i) / nodes.length;
@@ -149,14 +150,16 @@ export function tickLayout(
     }
   }
 
-  // Attraction: along edges
+  // Attraction: along edges with rest length
+  // Positive displacement = attract (too far), negative = repel (too close)
   for (const edge of edges) {
     const dx = edge.target.x - edge.source.x;
     const dy = edge.target.y - edge.source.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 1) continue;
 
-    const force = dist * ATTRACTION_STRENGTH * edge.data.weight;
+    const displacement = dist - EDGE_REST_LENGTH;
+    const force = displacement * ATTRACTION_STRENGTH * edge.data.weight;
     const fx = (dx / dist) * force;
     const fy = (dy / dist) * force;
 
