@@ -134,11 +134,12 @@ interface TreeNodeProps {
   expandedPaths: Set<string>;
   filter: string;
   vaultRoot: string;
+  firstVisiblePath: string | null;
   onSelect: (node: VaultTreeNode) => void;
   onToggleExpand: (path: string) => void;
 }
 
-function TreeNode({ node, depth, selectedPath, focusedPath, expandedPaths, filter, vaultRoot, onSelect, onToggleExpand }: TreeNodeProps) {
+function TreeNode({ node, depth, selectedPath, focusedPath, firstVisiblePath, expandedPaths, filter, vaultRoot, onSelect, onToggleExpand }: TreeNodeProps) {
   const expanded = expandedPaths.has(node.path);
   const itemRef = useRef<HTMLDivElement>(null);
 
@@ -151,8 +152,8 @@ function TreeNode({ node, depth, selectedPath, focusedPath, expandedPaths, filte
     return false;
   }, [node, filter]);
 
-  // Auto-focus when this node becomes the roving focus target
-  const isFocused = focusedPath === node.path;
+  // Roving tabIndex: focused node gets 0, first visible gets 0 as fallback, rest get -1
+  const isFocused = focusedPath === node.path || (!focusedPath && firstVisiblePath === node.path);
   useEffect(() => {
     if (isFocused && itemRef.current) {
       itemRef.current.focus({ preventScroll: false });
@@ -209,6 +210,7 @@ function TreeNode({ node, depth, selectedPath, focusedPath, expandedPaths, filte
               depth={depth + 1}
               selectedPath={selectedPath}
               focusedPath={focusedPath}
+              firstVisiblePath={firstVisiblePath}
               expandedPaths={expandedPaths}
               filter={filter}
               vaultRoot={vaultRoot}
@@ -491,9 +493,12 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
           role="tree"
           aria-label="Vault file tree"
           onKeyDown={handleTreeKeyDown}
-          onFocus={() => {
-            // On first focus into tree, focus the first visible node
-            if (!focusedPath && visibleNodes.length > 0) {
+          onFocus={(e) => {
+            // On focus into tree, sync focusedPath from the focused treeitem
+            const path = (e.target as HTMLElement).dataset?.path;
+            if (path) {
+              setFocusedPath(path);
+            } else if (!focusedPath && visibleNodes.length > 0) {
               setFocusedPath(visibleNodes[0].path);
             }
           }}
@@ -508,6 +513,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
                 depth={0}
                 selectedPath={selectedFile?.path ?? null}
                 focusedPath={focusedPath}
+                firstVisiblePath={visibleNodes[0]?.path ?? null}
                 expandedPaths={expandedPaths}
                 filter={filter}
                 vaultRoot={vaultPath}
