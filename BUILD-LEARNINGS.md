@@ -183,3 +183,30 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Prevention:** Behavioral rules fail when the builder has incentive to skip them (completion gravity, FM-7). Structural gates can't be skipped — the build literally doesn't close. Convert critical behavioral rules to structural gates when violations occur.
 
 ---
+
+### OS-BL-014: CANVAS.bg As Inverse Text Is Dark-Theme-Only
+**Discovered:** 2026-04-03 | **Domain:** frontend | **Severity:** carried-risk | **Tag:** [FORGE-OS]
+**Context:** P7-H — replacing raw `#fff` on accent-background buttons and user bubbles. Used `CANVAS.bg` (near-black) as text color on `STATUS.accent` and `STATUS.danger` backgrounds.
+**Problem:** `CANVAS.bg` only works as "inverse text" because the Forge OS theme is dark-only. If a light theme ships, `CANVAS.bg` becomes near-white on bright background — invisible.
+**Solution:** Acceptable for now. When light theme work begins, add a `CANVAS.textInverse` token. Grep `color: CANVAS.bg` to find all instances.
+**Prevention:** Track in design-system token audit. Don't assume single-theme forever.
+
+---
+
+### OS-BL-015: Focus Trap Pattern — Extract to useFocusTrap Hook
+**Discovered:** 2026-04-03 | **Domain:** frontend | **Severity:** pattern | **Tag:** [FORGE-OS]
+**Context:** P7-H — ConfirmationModal is the first true modal. Built inline focus trap (~30 lines: Tab/Shift+Tab cycling, focus-on-mount, focus-restore-on-unmount).
+**Problem:** Next modal will duplicate this code. Copy-paste invites divergence.
+**Solution:** Extract `useFocusTrap(dialogRef)` hook at second modal usage. ConfirmationModal is the reference implementation.
+**Prevention:** Don't extract preemptively. Do extract at second usage.
+
+---
+
+### OS-BL-016: Oneshot Channel Confirmation — Reaper Is Mandatory
+**Discovered:** 2026-04-03 | **Domain:** rust | **Severity:** architecture | **Tag:** [FORGE-OS]
+**Context:** P7-H — ConfirmationRouter uses oneshot channels for async confirmation. Kehinde flagged stale entry leak if frontend never responds.
+**Problem:** Without a reaper, pending oneshot senders accumulate. Each blocks an async task awaiting the receiver. Task leak under long sessions.
+**Solution:** Added 60s TTL reaper (`reap_stale`) that auto-cancels stale entries. Also wire into the 30s maintenance loop for background cleanup.
+**Prevention:** Any async "wait for external response" path needs a timeout. Apply to all future oneshot/channel patterns.
+
+---
