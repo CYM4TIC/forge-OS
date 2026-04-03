@@ -458,7 +458,7 @@ function SessionTimelinePanel() {
             <button
               onClick={handlePopOut}
               title="Pop out"
-              aria-label="Pop out session timeline"
+              aria-label="Pop out chronicle"
               style={{
                 background: 'transparent',
                 border: 'none',

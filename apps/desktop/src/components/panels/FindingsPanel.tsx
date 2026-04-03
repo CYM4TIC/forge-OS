@@ -360,7 +360,7 @@ export default function FindingsPanel() {
         {isTauriRuntime && (
           <button
             onClick={handlePopOut}
-            aria-label="Pop out findings feed"
+            aria-label="Pop out echoes"
             style={{ background: 'transparent', border: 'none', color: CANVAS.muted, cursor: 'pointer', fontSize: 13, padding: '2px 4px', borderRadius: RADIUS.pill, lineHeight: 1, minWidth: 32, minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Pop out"
           >

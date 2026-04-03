@@ -456,7 +456,7 @@ export default function AgentBoardPanel() {
         {isTauriRuntime && (
           <button
             onClick={handlePopOut}
-            aria-label="Pop out agent board"
+            aria-label="Pop out grimoire"
             style={{
               background: 'transparent',
               border: 'none',

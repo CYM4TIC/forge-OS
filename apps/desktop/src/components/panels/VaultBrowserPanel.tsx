@@ -476,7 +476,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
     <div
       ref={containerRef}
       role="region"
-      aria-label="Vault browser"
+      aria-label="Vault"
       style={PANEL_SHELL}
     >
       {/* Tree Pane */}
@@ -492,7 +492,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
         <div
           style={TREE_SCROLL}
           role="tree"
-          aria-label="Vault file tree"
+          aria-label="Vault contents"
           onKeyDown={handleTreeKeyDown}
           onFocus={(e) => {
             // On focus into tree, sync focusedPath from the focused treeitem

@@ -586,9 +586,9 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
         <div style={SR_ONLY} aria-live="polite">
           {statusLabel}
         </div>
-        <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 500 }}>Dev Server Preview</span>
+        <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 500 }}>Ponder an Orb</span>
         <span style={{ color: CANVAS.muted, fontSize: 11 }}>
-          Select a running server or start a new one to preview
+          Select a running server or conjure a new one
         </span>
 
         {servers.length > 0 && (
@@ -615,7 +615,7 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
           onClick={() => setShowStartForm(true)}
           aria-label="Start a new dev server"
         >
-          Start New Server
+          Conjure Server
         </button>
       </div>
     );
@@ -846,10 +846,10 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
             gap: 8,
           }}
         >
-          <span style={{ color: CANVAS.muted, fontSize: 13 }}>Server stopped</span>
+          <span style={{ color: CANVAS.muted, fontSize: 13 }}>The orb has gone dark</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" style={BTN_PRIMARY} onClick={handleRestart}>
-              Restart
+              Rekindle
             </button>
             <button type="button" style={BTN} onClick={() => setSelectedServerId(null)}>
               Choose Another
