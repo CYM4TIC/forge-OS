@@ -947,3 +947,61 @@ export function onDevServerStatusChanged(
   if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<StatusChangedEvent>('devserver:status-changed', (e) => callback(e.payload));
 }
+
+// ── Connectivity Types (P6-H) ──
+
+export type ServiceType = 'github' | 'supabase' | 'cloudflare' | 'stripe' | 'typesense' | 'custom';
+
+export type ServiceStatus = 'healthy' | 'degraded' | 'unreachable' | 'unconfigured';
+
+export interface ServiceHealth {
+  serviceName: string;
+  serviceType: string;
+  status: ServiceStatus;
+  lastChecked: string | null;
+  latencyMs: number | null;
+  details: Record<string, string>;
+}
+
+export interface ConnectivityChangedEvent {
+  serviceType: string;
+  status: ServiceStatus;
+}
+
+// ── Connectivity Commands (P6-H) ──
+
+/** Check a single service (live network call, 5s cooldown). */
+export function checkService(serviceType: string): Promise<ServiceHealth> {
+  if (!isTauriRuntime) return Promise.resolve({
+    serviceName: serviceType, serviceType, status: 'unconfigured',
+    lastChecked: null, latencyMs: null, details: {},
+  });
+  return invoke('check_service', { serviceType });
+}
+
+/** Check all enabled services (live network calls). */
+export function checkAllServices(): Promise<ServiceHealth[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('check_all_services');
+}
+
+/** Get cached service status (no network call). */
+export function getServiceStatus(): Promise<ServiceHealth[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_service_status');
+}
+
+/** Update the background polling interval (10-3600 seconds). */
+export function setCheckInterval(seconds: number): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
+  return invoke('set_check_interval', { seconds });
+}
+
+// ── Connectivity Event Listeners (P6-H) ──
+
+export function onConnectivityChanged(
+  callback: (event: ConnectivityChangedEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<ConnectivityChangedEvent>('connectivity:status-changed', (e) => callback(e.payload));
+}
