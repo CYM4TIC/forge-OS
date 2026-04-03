@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::commands::capabilities::CapabilityFamily;
 
 /// Request to dispatch a forked agent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,6 +20,10 @@ pub struct AgentRequest {
     pub provider_id: Option<String>,
     /// Timeout in milliseconds (defaults to AGENT_BACKGROUND_TIMEOUT_MS).
     pub timeout_ms: Option<u64>,
+    /// Capability families granted for this dispatch.
+    /// Defaults to ReadOnly if not specified.
+    #[serde(default)]
+    pub granted_capabilities: Vec<CapabilityFamily>,
 }
 
 /// A message in an agent conversation.

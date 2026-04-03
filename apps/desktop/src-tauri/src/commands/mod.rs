@@ -17,3 +17,4 @@ pub mod devserver;
 pub mod devserver_patterns;
 pub mod connectivity;
 pub mod registry;
+pub mod capabilities;

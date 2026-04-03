@@ -33,10 +33,49 @@ pub struct RegistryEntry {
     pub model: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CommandCategory {
+    Build,
+    Persona,
+    Quality,
+    Analysis,
+    Reporting,
+    Operations,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AvailabilityCheck {
+    GitChanges,
+    McpConnected(String),
+    EnvVarSet(String),
+    ServerRunning,
+    Always,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CommandDef {
+    pub slug: String,
+    pub name: String,
+    pub description: String,
+    pub category: CommandCategory,
+    pub aliases: Vec<String>,
+    pub dispatch_target: String,
+    pub available_when: Option<AvailabilityCheck>,
+    pub keyboard_shortcut: Option<String>,
+}
+
+#[derive(Debug, Default)]
+pub struct CommandRegistry {
+    pub commands: Vec<CommandDef>,
+}
+
 #[derive(Debug, Default)]
 pub struct AgentRegistry {
     pub entries: HashMap<String, RegistryEntry>,
     pub orchestrator_members: HashMap<String, Vec<String>>,
+    pub command_registry: CommandRegistry,
     initialized: bool,
 }
 
@@ -91,6 +130,136 @@ fn build_orchestrator_members() -> HashMap<String, Vec<String>> {
         "riven".into(), "kehinde".into(),
     ]);
     map
+}
+
+// ---------------------------------------------------------------------------
+// Command classification + registry builder
+// ---------------------------------------------------------------------------
+
+/// Map command slug → (CommandCategory, dispatch_target agent slug)
+fn classify_command(slug: &str) -> (CommandCategory, String) {
+    match slug {
+        // Build
+        "next-batch" | "parallel-build" | "scaffold" | "seed" | "batch-status" =>
+            (CommandCategory::Build, slug.to_string()),
+        // Persona
+        "wake" | "council" | "decide" | "customer-lens" =>
+            (CommandCategory::Persona, slug.to_string()),
+        // Quality
+        "gate" => (CommandCategory::Quality, "gate-runner".into()),
+        "adversarial" => (CommandCategory::Quality, "nyx".into()),
+        "audit" => (CommandCategory::Quality, "full-audit".into()),
+        "consistency" => (CommandCategory::Quality, "meridian".into()),
+        "regression" => (CommandCategory::Quality, "sentinel".into()),
+        "verify" | "findings" => (CommandCategory::Quality, slug.to_string()),
+        // Analysis
+        "impact" => (CommandCategory::Analysis, "compass".into()),
+        "perf" => (CommandCategory::Analysis, "kiln".into()),
+        "tech-debt" | "deps" | "env-check" =>
+            (CommandCategory::Analysis, slug.to_string()),
+        // Reporting
+        "changelog" | "demo" | "postmortem" | "retro" |
+        "onboard" | "api-docs" | "launch-check" =>
+            (CommandCategory::Reporting, slug.to_string()),
+        // Operations
+        "launch" => (CommandCategory::Operations, "launch-sequence".into()),
+        "red-team" => (CommandCategory::Operations, "wraith".into()),
+        // Fallback
+        _ => (CommandCategory::Build, slug.to_string()),
+    }
+}
+
+/// Resolve availability check for a command based on its requirements.
+fn availability_for_command(slug: &str) -> Option<AvailabilityCheck> {
+    match slug {
+        // Commands requiring git repo state
+        "adversarial" | "verify" | "changelog" => Some(AvailabilityCheck::GitChanges),
+        // Commands requiring MCP/external connectivity
+        "gate" | "audit" | "regression" | "consistency" =>
+            Some(AvailabilityCheck::McpConnected("provider".into())),
+        "red-team" => Some(AvailabilityCheck::McpConnected("provider".into())),
+        // Commands requiring a running dev server
+        "perf" => Some(AvailabilityCheck::ServerRunning),
+        // Commands that work without preconditions
+        _ => Some(AvailabilityCheck::Always),
+    }
+}
+
+/// Resolve aliases for known commands.
+fn aliases_for_command(slug: &str) -> Vec<String> {
+    match slug {
+        "next-batch" => vec!["nb".into()],
+        "batch-status" => vec!["bs".into(), "status".into()],
+        "gate" => vec!["g".into()],
+        "red-team" => vec!["rt".into()],
+        "council" => vec!["c".into()],
+        "decide" => vec!["d".into()],
+        "findings" => vec!["f".into()],
+        "adversarial" => vec!["adv".into()],
+        "launch-check" => vec!["lc".into()],
+        _ => Vec::new(),
+    }
+}
+
+/// Build CommandDefs from already-scanned command entries in the AgentRegistry,
+/// plus hardcoded built-in commands.
+fn build_command_registry(entries: &HashMap<String, RegistryEntry>) -> CommandRegistry {
+    let mut commands = Vec::new();
+
+    // Populate from scanned command files
+    for (slug, entry) in entries {
+        if entry.category != AgentCategory::Command {
+            continue;
+        }
+
+        let (category, dispatch_target) = classify_command(slug);
+
+        commands.push(CommandDef {
+            slug: slug.clone(),
+            name: entry.name.clone(),
+            description: entry.description.clone(),
+            category,
+            aliases: aliases_for_command(slug),
+            dispatch_target,
+            available_when: availability_for_command(slug),
+            keyboard_shortcut: None,
+        });
+    }
+
+    // Hardcoded built-in commands (not backed by .md files)
+    commands.push(CommandDef {
+        slug: "help".into(),
+        name: "help".into(),
+        description: "Show available commands and usage".into(),
+        category: CommandCategory::Operations,
+        aliases: vec!["h".into(), "?".into()],
+        dispatch_target: "help".into(),
+        available_when: Some(AvailabilityCheck::Always),
+        keyboard_shortcut: None,
+    });
+    commands.push(CommandDef {
+        slug: "status".into(),
+        name: "status".into(),
+        description: "Show current build state, context usage, and active agents".into(),
+        category: CommandCategory::Build,
+        aliases: vec!["s".into()],
+        dispatch_target: "status".into(),
+        available_when: Some(AvailabilityCheck::Always),
+        keyboard_shortcut: None,
+    });
+    commands.push(CommandDef {
+        slug: "cancel".into(),
+        name: "cancel".into(),
+        description: "Cancel a running agent by dispatch ID".into(),
+        category: CommandCategory::Operations,
+        aliases: Vec::new(),
+        dispatch_target: "cancel".into(),
+        available_when: Some(AvailabilityCheck::Always),
+        keyboard_shortcut: None,
+    });
+
+    commands.sort_by(|a, b| a.slug.cmp(&b.slug));
+    CommandRegistry { commands }
 }
 
 // ---------------------------------------------------------------------------
@@ -311,9 +480,12 @@ pub fn scan_agents(base_path: &Path) -> AgentRegistry {
         entries.insert(entry.slug.clone(), entry);
     }
 
+    let command_registry = build_command_registry(&entries);
+
     AgentRegistry {
         entries,
         orchestrator_members: build_orchestrator_members(),
+        command_registry,
         initialized: true,
     }
 }
@@ -385,4 +557,14 @@ pub async fn refresh_registry(
     let mut reg = registry.lock().await;
     *reg = new_reg;
     Ok(count)
+}
+
+/// Returns all slash commands with their current availability state.
+#[tauri::command]
+pub async fn get_command_registry(
+    registry: tauri::State<'_, RegistryState>,
+) -> Result<Vec<CommandDef>, String> {
+    ensure_initialized(&registry).await;
+    let reg = registry.lock().await;
+    Ok(reg.command_registry.commands.clone())
 }

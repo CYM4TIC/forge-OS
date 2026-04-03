@@ -4,6 +4,7 @@ use tauri::State;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use crate::commands::capabilities::{CapabilityFamily, default_capabilities};
 use crate::dispatch::types::{AgentRequest, AgentStatus};
 use crate::dispatch::lifecycle::AgentSummary;
 use crate::dispatch::AgentDispatcher;
@@ -20,6 +21,11 @@ pub struct DispatchRequest {
     pub tier: Option<String>,
     pub provider_id: Option<String>,
     pub timeout_ms: Option<u64>,
+    /// Dispatch context for capability resolution (e.g., "gate_review", "build").
+    /// If not provided, defaults to ReadOnly.
+    pub dispatch_context: Option<String>,
+    /// Explicit capability overrides. If provided, these take precedence over dispatch_context.
+    pub granted_capabilities: Option<Vec<CapabilityFamily>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,6 +48,12 @@ pub async fn dispatch_agent(
     // This ensures high-tier agents (Pierce, Nyx, Tanaka) aren't silently downgraded to medium.
     let resolved_tier = request.tier.or_else(|| lookup_agent_tier(&request.agent_slug));
 
+    // Resolve capabilities: explicit overrides > dispatch_context > ReadOnly default
+    let capabilities = request.granted_capabilities.unwrap_or_else(|| {
+        let ctx = request.dispatch_context.as_deref().unwrap_or("default");
+        default_capabilities(ctx)
+    });
+
     let agent_request = AgentRequest {
         dispatch_id: dispatch_id.clone(),
         agent_slug: request.agent_slug,
@@ -59,6 +71,7 @@ pub async fn dispatch_agent(
         tier: resolved_tier,
         provider_id: request.provider_id,
         timeout_ms: request.timeout_ms,
+        granted_capabilities: capabilities,
     };
 
     let slug = agent_request.agent_slug.clone();

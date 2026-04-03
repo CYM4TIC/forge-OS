@@ -60,8 +60,12 @@ impl AgentDispatcher {
         }
 
         let dispatch_id = request.dispatch_id.clone();
-        let is_writable = false; // Agents are read-only by default
-        let context = AgentContext::new(is_writable, None, 0);
+        // Derive context from granted capabilities (P7-C: capability enforcement)
+        let context = AgentContext::from_capabilities(
+            request.granted_capabilities.clone(),
+            None,
+            0,
+        );
 
         let cancel_rx = {
             let mut lifecycle = self.lifecycle.lock().await;
