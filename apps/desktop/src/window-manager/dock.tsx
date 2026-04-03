@@ -120,7 +120,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
       for (const inst of instances) {
         pills.push({
           type: inst.type,
-          label: inst.title,
+          label: typeInfo.label,
           icon: typeInfo.icon,
           state: inst.state === 'minimized' ? 'minimized' : 'active',
           panelId: inst.id,

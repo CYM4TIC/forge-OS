@@ -53,6 +53,11 @@ export class LayoutPersistence {
       }
 
       const panels: PanelInstance[] = JSON.parse(saved.panels_json);
+      // Refresh panel titles from registry — persisted titles may be stale after renames
+      for (const panel of panels) {
+        const typeInfo = ForgeWindowManager.getPanelTypeInfo(panel.type);
+        if (typeInfo) panel.title = typeInfo.label;
+      }
       const tabGroups: TabGroup[] = saved.tab_groups_json
         ? JSON.parse(saved.tab_groups_json)
         : [];
