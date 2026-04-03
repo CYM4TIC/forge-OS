@@ -48,9 +48,9 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
   }],
   ['connectivity', {
     type: 'connectivity', label: 'Services', icon: '🔗',
-    defaultConstraints: { minWidth: 200, minHeight: 150 },
+    defaultConstraints: { minWidth: 260, minHeight: 200 },
     allowMultiple: false,
-    defaultSize: { width: 400, height: 200 },
+    defaultSize: { width: 420, height: 360 },
   }],
   ['findings', {
     type: 'findings', label: 'Findings', icon: '🔍',
@@ -144,6 +144,17 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
       { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 600 }, tabGroupId: null, tabOrder: 0 },
       { type: 'graph_viewer', state: 'docked', position: { x: 500, y: 0 }, size: { width: 500, height: 300 }, tabGroupId: null, tabOrder: 0 },
       { type: 'vault_browser', state: 'docked', position: { x: 500, y: 300 }, size: { width: 500, height: 300 }, tabGroupId: null, tabOrder: 0 },
+    ],
+  },
+  {
+    id: 'dev',
+    name: 'Dev Mode',
+    description: 'Chat + Preview + Connectivity for active development',
+    isBuiltIn: true,
+    panels: [
+      { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'preview', state: 'docked', position: { x: 320, y: 0 }, size: { width: 560, height: 400 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'connectivity', state: 'docked', position: { x: 320, y: 400 }, size: { width: 560, height: 200 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
 ];

@@ -7,8 +7,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { PanelInstance, PanelType } from './types';
 import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
-import { getFindingCounts } from '../lib/tauri';
-import type { HudSeverityCounts } from '../lib/tauri';
+import { getFindingCounts, getServiceStatus } from '../lib/tauri';
+import type { HudSeverityCounts, ServiceHealth } from '../lib/tauri';
 import { STATUS, CANVAS, GLOW, TINT, TIMING } from '@forge-os/canvas-components';
 
 interface DockBarProps {
@@ -39,6 +39,7 @@ interface DockPillData {
   badgeCount: number;
   badgeStyle: BadgeStyle | null;
   isActive: boolean;
+  tooltip: string | null;
 }
 
 /** Determine badge colors from severity counts. Returns bg + text for WCAG contrast. */
@@ -50,17 +51,34 @@ function findingsBadgeColors(counts: HudSeverityCounts | null): { bg: string; te
   return { bg: STATUS.warning, text: CANVAS.bg };
 }
 
-function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCounts | null, findingsLoading: boolean): DockPillData[] {
+/** Compute aggregate connectivity status for the dock pill badge. */
+function connectivityBadge(services: ServiceHealth[]): { count: number; style: BadgeStyle | null; tooltip: string } {
+  const configured = services.filter((s) => s.status !== 'unconfigured');
+  if (configured.length === 0) return { count: 0, style: null, tooltip: 'No services configured' };
+  const unhealthy = configured.filter((s) => s.status !== 'healthy');
+  if (unhealthy.length === 0) return { count: 0, style: null, tooltip: 'All systems operational' };
+  const hasUnreachable = unhealthy.some((s) => s.status === 'unreachable');
+  return {
+    count: unhealthy.length,
+    style: { bg: hasUnreachable ? STATUS.danger : STATUS.warning, text: '#fff' },
+    tooltip: `${configured.length - unhealthy.length}/${configured.length} services healthy`,
+  };
+}
+
+function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCounts | null, findingsLoading: boolean, connectivityServices: ServiceHealth[]): DockPillData[] {
   const allTypes = ForgeWindowManager.getAllPanelTypes();
   const pills: DockPillData[] = [];
 
   for (const typeInfo of allTypes) {
     const instances = panels.filter((p) => p.type === typeInfo.type);
 
-    // For findings pills: override badge with severity counts
+    // Badge overrides for special pill types
     const isFindings = typeInfo.type === 'findings';
     const fBadgeCount = isFindings && findingsCounts ? findingsCounts.total : 0;
     const fBadgeStyle = isFindings ? findingsBadgeColors(findingsCounts) : null;
+
+    const isConnectivity = typeInfo.type === 'connectivity';
+    const cBadge = isConnectivity ? connectivityBadge(connectivityServices) : null;
 
     if (instances.length === 0) {
       pills.push({
@@ -69,9 +87,10 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
         icon: typeInfo.icon,
         state: 'closed',
         panelId: null,
-        badgeCount: isFindings ? fBadgeCount : 0,
-        badgeStyle: fBadgeStyle,
+        badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : 0,
+        badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
         isActive: isFindings && findingsLoading ? true : false,
+        tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
       });
     } else {
       for (const inst of instances) {
@@ -81,9 +100,10 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
           icon: typeInfo.icon,
           state: inst.state === 'minimized' ? 'minimized' : 'active',
           panelId: inst.id,
-          badgeCount: isFindings ? fBadgeCount : inst.badgeCount,
-          badgeStyle: isFindings ? fBadgeStyle : null,
+          badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : inst.badgeCount,
+          badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
           isActive: inst.isActive,
+          tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
         });
       }
     }
@@ -144,7 +164,7 @@ function DockPill({
         ...PILL_STATES[pill.state],
         ...(pill.isActive ? { animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : {}),
       }}
-      title={`${pill.label} (${pill.state})`}
+      title={pill.tooltip ?? `${pill.label} (${pill.state})`}
     >
       <span style={{ fontSize: 14 }}>{pill.icon}</span>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>{pill.label}</span>
@@ -197,11 +217,25 @@ export function DockBar({
       });
     };
     poll();
-    const interval = setInterval(poll, 5000); // refresh every 5s
+    const interval = setInterval(poll, 5000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
-  const pills = buildDockPills(panels, findingsCounts, findingsLoading);
+  // Poll service status for connectivity dock pill badge
+  const [connectivityServices, setConnectivityServices] = useState<ServiceHealth[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      getServiceStatus().then((services) => {
+        if (!cancelled) setConnectivityServices(services);
+      }).catch(() => {});
+    };
+    poll();
+    const interval = setInterval(poll, 10000); // 10s — lighter than findings, backend already polls
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  const pills = buildDockPills(panels, findingsCounts, findingsLoading, connectivityServices);
 
   const handlePillClick = useCallback(
     (pill: DockPillData) => {
