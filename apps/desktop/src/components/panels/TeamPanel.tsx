@@ -15,7 +15,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useAgentRegistry } from '../../hooks/useAgentRegistry';
 import type { RegistryEntry, AgentCategory } from '../../lib/tauri';
 import type { AgentStateMap } from '../../hooks/useAgentRegistry';
-import { PersonaGlyph, CANVAS, STATUS, RADIUS, TIMING, FONT, TINT, StatusBadge } from '@forge-os/canvas-components';
+import { PersonaGlyph, CANVAS, STATUS, RADIUS, TIMING, FONT, TINT, CONTAINMENT, StatusBadge } from '@forge-os/canvas-components';
 import type { GlyphState, PersonaSlug, BadgeStatus } from '@forge-os/canvas-components';
 import { isPersonaSlug, PERSONA_DOMAINS, PERSONA_COLORS } from '@forge-os/shared';
 
@@ -107,6 +107,7 @@ const PANEL_SHELL: React.CSSProperties = {
   background: CANVAS.bg,
   borderRadius: RADIUS.card,
   border: `1px solid ${CANVAS.border}`,
+  boxShadow: CONTAINMENT.glow,
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
@@ -137,7 +138,7 @@ const HEADER: React.CSSProperties = {
 
 const CARDS_GRID: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
   gap: '8px',
   padding: '10px',
 };
@@ -149,6 +150,7 @@ const CARD: React.CSSProperties = {
   padding: '10px 12px',
   cursor: 'pointer',
   transition: `border-color ${TIMING.fast}, box-shadow ${TIMING.fast}`,
+  minHeight: 36,
 };
 
 const CARD_HEADER: React.CSSProperties = {
@@ -171,6 +173,10 @@ const CARD_DOMAIN: React.CSSProperties = {
   fontSize: 11,
   color: CANVAS.label,
   fontFamily: FONT.mono,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: 80,
 };
 
 const CARD_DESC: React.CSSProperties = {
@@ -342,8 +348,8 @@ function AgentCard({ agent, workingState, expanded, onToggle }: AgentCardProps) 
           <span style={CARD_DOMAIN}>{PERSONA_DOMAINS[agent.slug as PersonaSlug]}</span>
         )}
         <StatusBadge
-          width={18}
-          height={18}
+          width={20}
+          height={20}
           status={modelClassBadge(agent.model_class)}
           glyph={modelClassLabel(agent.model_class).charAt(0)}
         />
