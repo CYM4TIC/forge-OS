@@ -95,6 +95,8 @@ export const TINT = {
   accent: 'rgba(99, 102, 241, 0.15)',
   warning: 'rgba(245, 158, 11, 0.15)',
   neutral: 'rgba(90, 90, 110, 0.15)',
+  /** Ultra-subtle white overlay for pill/card backgrounds (R-F-01). */
+  subtle: 'rgba(255, 255, 255, 0.04)',
 } as const;
 
 /** Unified badge colors — single source for all severity/status badge rendering.

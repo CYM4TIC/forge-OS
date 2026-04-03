@@ -440,7 +440,7 @@ fn classify_agent(slug: &str) -> AgentCategory {
 
 fn build_orchestrator_members() -> HashMap<String, Vec<String>> {
     let mut map = HashMap::new();
-    // Build Triad (P7-F manifest: pierce + mara + kehinde)
+    // Build Triad — slug is "triad" (from agents/triad.md), not "build-triad"
     map.insert("triad".into(), vec!["pierce".into(), "mara".into(), "kehinde".into()]);
     // Systems Triad (kehinde + tanaka + vane)
     map.insert("systems-triad".into(), vec!["kehinde".into(), "tanaka".into(), "vane".into()]);
@@ -1061,7 +1061,9 @@ pub async fn get_palette_actions(
                 }
             }
         }
-        // Sort: specific orchestrators first (member count desc), open-match (0) last
+        // Sort: specific orchestrators first (highest member count = most precise match),
+        // open-match (0 members = any 2+) last. Descending by design — "most specific"
+        // means the orchestrator whose full membership was exactly matched.
         orchestrator_data.sort_by(|a, b| {
             let a_open = if a.3 == 0 { 1u8 } else { 0 };
             let b_open = if b.3 == 0 { 1u8 } else { 0 };

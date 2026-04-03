@@ -1,5 +1,5 @@
 import { useAgentDispatch } from '../../hooks/useAgentDispatch';
-import { PersonaGlyph, CANVAS, RADIUS, TIMING } from '@forge-os/canvas-components';
+import { PersonaGlyph, CANVAS, RADIUS, TIMING, TINT } from '@forge-os/canvas-components';
 import type { GlyphState } from '@forge-os/canvas-components';
 import { PERSONA_SHORT, PERSONA_COLORS } from '@forge-os/shared';
 import type { PersonaSlug } from '@forge-os/shared';
@@ -46,7 +46,7 @@ const PILL_BASE: React.CSSProperties = {
   gap: 4,
   padding: '2px 6px',
   borderRadius: RADIUS.pill,
-  background: 'rgba(255,255,255,0.04)',
+  background: TINT.subtle,
   border: '1px solid transparent',
   cursor: 'pointer',
   transition: `border-color ${TIMING.fast}, box-shadow ${TIMING.fast}`,

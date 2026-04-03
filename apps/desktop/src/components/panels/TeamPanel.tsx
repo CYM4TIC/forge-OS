@@ -666,7 +666,11 @@ export default function TeamPanel() {
           buttonRef={(el) => { tabRefs.current.actions = el; }}
         >
           <span aria-hidden="true">{'\u26A1'}</span> Actions
-          {selectedCount > 0 && <MailboxBadge count={selectedCount} />}
+          {selectedCount > 0 && (
+            <span aria-label={`${selectedCount} persona${selectedCount === 1 ? '' : 's'} selected`}>
+              <MailboxBadge count={selectedCount} />
+            </span>
+          )}
         </TabButton>
       </div>
 

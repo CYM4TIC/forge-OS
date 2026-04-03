@@ -2,7 +2,7 @@
 // P7-F: clickable persona pills → orchestrator recognition.
 // Not persisted — resets on app restart. Emits custom event for Action Palette debounce.
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 export interface UsePersonaSelectionReturn {
   /** Currently selected persona slugs. */
@@ -35,20 +35,21 @@ export function usePersonaSelection(): UsePersonaSelectionReturn {
       } else {
         next.add(slug);
       }
-      // Emit custom event for subscribers (Action Palette debounce)
-      window.dispatchEvent(new CustomEvent('persona:selection-changed', {
-        detail: { selected: Array.from(next) },
-      }));
       return next;
     });
   }, []);
 
   const clear = useCallback(() => {
     setSelected(new Set());
-    window.dispatchEvent(new CustomEvent('persona:selection-changed', {
-      detail: { selected: [] },
-    }));
   }, []);
+
+  // K-MED-1: emit event AFTER React commits state (not inside setState callback)
+  // Listeners can trust both the event payload AND reading hook state.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('persona:selection-changed', {
+      detail: { selected: Array.from(selected) },
+    }));
+  }, [selected]);
 
   const isSelected = useCallback((slug: string) => selected.has(slug), [selected]);
 
