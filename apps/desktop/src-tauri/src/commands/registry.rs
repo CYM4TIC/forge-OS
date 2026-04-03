@@ -65,6 +65,83 @@ impl Default for RoutingRole {
     }
 }
 
+/// Per-agent turn-level lifecycle state (from Factory-AI DroidWorkingState).
+/// Drives UI: spinners during Streaming, confirmation modal during
+/// WaitingForConfirmation, compaction indicator during Compacting.
+/// SEPARATED from MissionState (P7-I) — turn-level vs mission-level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentWorkingState {
+    /// Agent is idle — no active turn.
+    Idle,
+    /// Agent is generating a response (tokens flowing).
+    Streaming,
+    /// Agent needs operator confirmation before proceeding.
+    WaitingForConfirmation,
+    /// Agent is executing a tool call.
+    ExecutingTool,
+    /// Agent is compacting context (auto-compress).
+    Compacting,
+}
+
+impl Default for AgentWorkingState {
+    fn default() -> Self {
+        Self::Idle
+    }
+}
+
+/// Interaction mode — orthogonal to CapabilityFamily.
+/// Mode controls structural access; family controls per-action capability.
+/// Combined gate: mode × family determines effective permissions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InteractionMode {
+    /// Read-only. Only ReadOnly capability valid regardless of grants.
+    Spec,
+    /// Standard execution. Capabilities as granted by dispatch context.
+    Auto,
+    /// Mission decomposition with workers. Enables mission features
+    /// (worker spawn, feature decomposition, MissionState transitions).
+    Orchestrator,
+}
+
+impl Default for InteractionMode {
+    fn default() -> Self {
+        Self::Auto
+    }
+}
+
+/// Apply the 2-axis gate: InteractionMode × CapabilityFamily.
+/// Returns the effective capabilities after mode filtering.
+pub fn apply_mode_gate(
+    mode: InteractionMode,
+    granted: &[crate::commands::capabilities::CapabilityFamily],
+) -> Vec<crate::commands::capabilities::CapabilityFamily> {
+    use crate::commands::capabilities::CapabilityFamily;
+    match mode {
+        InteractionMode::Spec => {
+            // Spec mode: only ReadOnly, regardless of grants
+            vec![CapabilityFamily::ReadOnly]
+        }
+        InteractionMode::Auto => {
+            // Auto mode: capabilities as granted
+            granted.to_vec()
+        }
+        InteractionMode::Orchestrator => {
+            // Orchestrator mode: full grants (mission features enabled at dispatch layer)
+            granted.to_vec()
+        }
+    }
+}
+
+/// Payload for `agent:working-state-changed` Tauri event.
+#[derive(Debug, Clone, Serialize)]
+pub struct AgentWorkingStateEvent {
+    pub agent_slug: String,
+    pub state: AgentWorkingState,
+    pub dispatch_id: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct RegistryEntry {
     pub slug: String,
@@ -114,13 +191,41 @@ pub struct CommandDef {
     pub keyboard_shortcut: Option<String>,
 }
 
+/// Action type for palette entries.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PaletteActionType {
+    Command,
+    SubAgent,
+    Orchestrator,
+}
+
+/// A single action available in the Action Palette.
+#[derive(Debug, Clone, Serialize)]
+pub struct PaletteAction {
+    pub slug: String,
+    pub name: String,
+    pub description: String,
+    pub action_type: PaletteActionType,
+    pub dispatch_target_slug: String,
+}
+
+/// Response from get_palette_actions — resolved actions for the current selection.
+#[derive(Debug, Clone, Serialize)]
+pub struct PaletteResponse {
+    /// Individual persona/intelligence actions.
+    pub individual_actions: Vec<PaletteAction>,
+    /// Matched orchestrator actions (e.g., Build Triad when all 3 members selected).
+    pub orchestrator_actions: Vec<PaletteAction>,
+}
+
 #[derive(Debug, Default)]
 pub struct CommandRegistry {
     pub commands: Vec<CommandDef>,
 }
 
 // ---------------------------------------------------------------------------
-// Lazy handler loading — OnceCell-based deferred initialization
+// Lazy handler loading — OnceLock-based deferred initialization
 // ---------------------------------------------------------------------------
 
 /// Lazy handler: metadata registered at scan time, content loaded on first dispatch.
@@ -335,7 +440,7 @@ fn classify_agent(slug: &str) -> AgentCategory {
 
 fn build_orchestrator_members() -> HashMap<String, Vec<String>> {
     let mut map = HashMap::new();
-    map.insert("triad".into(), vec!["pierce".into(), "mara".into(), "riven".into()]);
+    map.insert("triad".into(), vec!["pierce".into(), "mara".into(), "kehinde".into()]);
     map.insert("systems-triad".into(), vec!["kehinde".into(), "tanaka".into(), "kiln".into()]);
     map.insert("strategy-triad".into(), vec!["calloway".into(), "vane".into(), "voss".into()]);
     map.insert("council".into(), PERSONA_SLUGS.iter().map(|s| s.to_string()).collect());
@@ -834,4 +939,226 @@ pub async fn dispatch_command(
     }; // lock released here
 
     handler.get_or_init()
+}
+
+// ---------------------------------------------------------------------------
+// Availability checking
+// ---------------------------------------------------------------------------
+
+/// Check whether an availability condition is currently met.
+/// Queries HealthCheckManager for MCP connectivity, checks env vars, checks git.
+pub async fn check_availability(
+    check: &AvailabilityCheck,
+    health_cache: &tokio::sync::Mutex<HashMap<String, crate::commands::connectivity::ServiceHealth>>,
+) -> bool {
+    match check {
+        AvailabilityCheck::Always => true,
+        AvailabilityCheck::GitChanges => {
+            // Check if git repo has uncommitted changes
+            std::process::Command::new("git")
+                .args(["status", "--porcelain"])
+                .output()
+                .map(|out| !out.stdout.is_empty())
+                .unwrap_or(false)
+        }
+        AvailabilityCheck::McpConnected(service) => {
+            let cache = health_cache.lock().await;
+            cache.get(service.as_str())
+                .map(|h| h.status == crate::commands::connectivity::ServiceStatus::Healthy
+                    || h.status == crate::commands::connectivity::ServiceStatus::Degraded)
+                .unwrap_or(false)
+        }
+        AvailabilityCheck::EnvVarSet(var) => {
+            std::env::var(var).is_ok()
+        }
+        AvailabilityCheck::ServerRunning => {
+            // Check if any dev server is running (by checking devserver state)
+            // Lightweight check — just sees if the port detection env hint exists
+            std::env::var("FORGE_DEV_SERVER_PORT").is_ok()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Palette action resolution
+// ---------------------------------------------------------------------------
+
+/// Map AgentCategory to PaletteActionType for correct frontend rendering.
+fn action_type_for_category(cat: &AgentCategory) -> PaletteActionType {
+    match cat {
+        AgentCategory::Orchestrator => PaletteActionType::Orchestrator,
+        AgentCategory::Command => PaletteActionType::Command,
+        _ => PaletteActionType::SubAgent,
+    }
+}
+
+/// Resolve available actions for a set of selected persona slugs.
+/// Returns individual actions per persona + matched orchestrators.
+/// Clones data out of registry lock before doing async availability checks.
+#[tauri::command]
+pub async fn get_palette_actions(
+    selected_slugs: Vec<String>,
+    registry: tauri::State<'_, RegistryState>,
+    health_manager: tauri::State<'_, crate::commands::connectivity::HealthCheckManager>,
+) -> Result<PaletteResponse, String> {
+    ensure_initialized(&registry).await;
+
+    // Phase 1: Clone all needed data out of the registry lock
+    let (persona_data, orchestrator_data, command_data) = {
+        let reg = registry.lock().await;
+
+        // Collect persona + sub-agent data for selected slugs
+        let mut persona_data: Vec<(String, String, String, AgentCategory)> = Vec::new();
+        for slug in &selected_slugs {
+            if let Some(entry) = reg.entries.get(slug.as_str()) {
+                persona_data.push((
+                    slug.clone(), entry.name.clone(),
+                    entry.description.clone(), entry.category.clone(),
+                ));
+                // Sub-agents
+                for e in reg.entries.values() {
+                    if e.parent_agent.as_deref() == Some(slug.as_str()) {
+                        persona_data.push((
+                            e.slug.clone(), e.name.clone(),
+                            e.description.clone(), e.category.clone(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Collect orchestrator matches
+        let selected_set: std::collections::HashSet<&str> =
+            selected_slugs.iter().map(|s| s.as_str()).collect();
+        let mut orchestrator_data: Vec<(String, String, String)> = Vec::new();
+        for (orch_slug, members) in &reg.orchestrator_members {
+            let all_present = members.iter().all(|m| selected_set.contains(m.as_str()));
+            if all_present {
+                if let Some(entry) = reg.entries.get(orch_slug.as_str()) {
+                    orchestrator_data.push((
+                        orch_slug.clone(), entry.name.clone(), entry.description.clone(),
+                    ));
+                }
+            }
+        }
+
+        // Clone command data for availability checking outside the lock
+        let command_data: Vec<(String, String, String, String, Option<AvailabilityCheck>)> =
+            reg.command_registry.commands.iter().map(|cmd| (
+                cmd.slug.clone(), cmd.name.clone(),
+                cmd.description.clone(), cmd.dispatch_target.clone(),
+                cmd.available_when.clone(),
+            )).collect();
+
+        (persona_data, orchestrator_data, command_data)
+    }; // registry lock released here
+
+    // Phase 2: Build response without holding any locks
+    let mut individual_actions: Vec<PaletteAction> = persona_data.into_iter()
+        .map(|(slug, name, desc, cat)| PaletteAction {
+            dispatch_target_slug: slug.clone(),
+            action_type: action_type_for_category(&cat),
+            slug, name, description: desc,
+        })
+        .collect();
+
+    let orchestrator_actions: Vec<PaletteAction> = orchestrator_data.into_iter()
+        .map(|(slug, name, desc)| PaletteAction {
+            dispatch_target_slug: slug.clone(),
+            action_type: PaletteActionType::Orchestrator,
+            slug, name, description: desc,
+        })
+        .collect();
+
+    // Phase 3: Availability checks (async, no locks held)
+    for (slug, name, desc, target, check) in command_data {
+        if let Some(ref check) = check {
+            let available = check_availability(check, &health_manager.cache).await;
+            if !available {
+                continue;
+            }
+        }
+        individual_actions.push(PaletteAction {
+            slug, name, description: desc,
+            action_type: PaletteActionType::Command,
+            dispatch_target_slug: target,
+        });
+    }
+
+    Ok(PaletteResponse {
+        individual_actions,
+        orchestrator_actions,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Smart Review routing
+// ---------------------------------------------------------------------------
+
+/// Static routing table: file patterns → persona slugs.
+struct RouteRule {
+    /// Glob-like patterns (checked via simple contains/extension match).
+    patterns: &'static [&'static str],
+    /// Persona slugs to assign when matched.
+    personas: &'static [&'static str],
+    /// If true, match against full path. If false, match against filename only.
+    match_path: bool,
+}
+
+const SMART_REVIEW_ROUTES: &[RouteRule] = &[
+    RouteRule { patterns: &[".rs"], personas: &["kehinde"], match_path: false },
+    RouteRule { patterns: &["src-tauri/"], personas: &["kehinde"], match_path: true },
+    RouteRule { patterns: &[".tsx", ".css", ".html"], personas: &["mara", "riven"], match_path: false },
+    RouteRule { patterns: &[".sql"], personas: &["tanaka", "kehinde"], match_path: false },
+    RouteRule { patterns: &["migrations/"], personas: &["tanaka", "kehinde"], match_path: true },
+    RouteRule { patterns: &["auth", "permission", "rls"], personas: &["tanaka"], match_path: true },
+    RouteRule { patterns: &["price", "rate", "payment"], personas: &["vane"], match_path: true },
+    RouteRule { patterns: &["tos", "privacy", "consent"], personas: &["voss"], match_path: true },
+    // Specs, ADL, and markdown docs → Pierce
+    RouteRule { patterns: &["specs/", "adl/", "ADL"], personas: &["pierce"], match_path: true },
+    RouteRule { patterns: &[".md"], personas: &["pierce"], match_path: false },
+];
+
+/// Parse file paths from a diff summary and map to persona slugs via routing table.
+#[tauri::command]
+pub async fn smart_review_routing(
+    diff_summary: String,
+) -> Result<Vec<String>, String> {
+    let mut matched: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    // Parse file paths from diff summary (one per line, or from git diff --stat format)
+    for line in diff_summary.lines() {
+        let path = line.trim();
+        // Handle git diff --stat format: "file.rs | 5 ++-"
+        let path = path.split('|').next().unwrap_or(path).trim();
+        if path.is_empty() {
+            continue;
+        }
+
+        for rule in SMART_REVIEW_ROUTES {
+            // match_path: true → match against full path (contains)
+            // match_path: false → match against filename only (ends_with)
+            let target = if rule.match_path {
+                path
+            } else {
+                path.rsplit('/').next().unwrap_or(path)
+            };
+            for pattern in rule.patterns {
+                let matches = if rule.match_path {
+                    target.contains(pattern)
+                } else {
+                    target.ends_with(pattern)
+                };
+                if matches {
+                    for persona in rule.personas {
+                        matched.insert(persona.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    let mut result: Vec<String> = matched.into_iter().collect();
+    result.sort();
+    Ok(result)
 }
