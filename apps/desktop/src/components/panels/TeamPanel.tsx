@@ -13,6 +13,7 @@ import PermissionModal from '../team/PermissionModal';
 import { useSwarmMessages } from '../../hooks/useSwarmMessages';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useAgentRegistry } from '../../hooks/useAgentRegistry';
+import { usePersonaSelection } from '../../hooks/usePersonaSelection';
 import type { RegistryEntry, AgentCategory } from '../../lib/tauri';
 import type { AgentStateMap } from '../../hooks/useAgentRegistry';
 import { PersonaGlyph, CANVAS, STATUS, RADIUS, TIMING, FONT, TINT, CONTAINMENT, StatusBadge } from '@forge-os/canvas-components';
@@ -562,6 +563,7 @@ export default function TeamPanel() {
   const { messages, unreadCount, markRead } = useSwarmMessages('nyx');
   const { pending, approve, deny } = usePermissions('nyx');
   const { grouped, agentStates, loading: regLoading, error: regError, refresh } = useAgentRegistry();
+  const { toggle, isSelected, selectedCount } = usePersonaSelection();
 
   // Refs for roving tabindex (M-CRIT-1)
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ team: null, dispatch: null, actions: null });
@@ -611,9 +613,9 @@ export default function TeamPanel() {
       {/* M-HIGH-3: live region for SR agent state announcements */}
       <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" style={SR_ONLY} />
 
-      {/* Presence bar */}
+      {/* Presence bar — P7-F: pills are clickable toggles */}
       <div style={{ padding: '8px 12px 4px', flexShrink: 0 }}>
-        <AgentPresence />
+        <AgentPresence onToggle={toggle} isSelected={isSelected} />
       </div>
 
       {/* Permission requests (always visible when pending) */}
@@ -664,6 +666,7 @@ export default function TeamPanel() {
           buttonRef={(el) => { tabRefs.current.actions = el; }}
         >
           <span aria-hidden="true">{'\u26A1'}</span> Actions
+          {selectedCount > 0 && <MailboxBadge count={selectedCount} />}
         </TabButton>
       </div>
 
@@ -707,7 +710,9 @@ export default function TeamPanel() {
             Invocation Palette
           </span>
           <span style={{ color: CANVAS.muted, fontSize: 11, lineHeight: '16px' }}>
-            Select personas in the Team tab to unlock orchestrator actions.
+            {selectedCount === 0
+              ? 'Select personas above to browse actions.'
+              : `${selectedCount} persona${selectedCount === 1 ? '' : 's'} selected. Action Palette wired in P7-G.`}
           </span>
         </div>
       </div>

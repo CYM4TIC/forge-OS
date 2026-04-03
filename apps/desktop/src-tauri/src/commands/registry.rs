@@ -440,18 +440,31 @@ fn classify_agent(slug: &str) -> AgentCategory {
 
 fn build_orchestrator_members() -> HashMap<String, Vec<String>> {
     let mut map = HashMap::new();
+    // Build Triad (P7-F manifest: pierce + mara + kehinde)
     map.insert("triad".into(), vec!["pierce".into(), "mara".into(), "kehinde".into()]);
-    map.insert("systems-triad".into(), vec!["kehinde".into(), "tanaka".into(), "kiln".into()]);
-    map.insert("strategy-triad".into(), vec!["calloway".into(), "vane".into(), "voss".into()]);
-    map.insert("council".into(), PERSONA_SLUGS.iter().map(|s| s.to_string()).collect());
-    map.insert("decision-council".into(), vec![
-        "pierce".into(), "kehinde".into(), "tanaka".into(),
-        "mara".into(), "arbiter".into(),
-    ]);
+    // Systems Triad (kehinde + tanaka + vane)
+    map.insert("systems-triad".into(), vec!["kehinde".into(), "tanaka".into(), "vane".into()]);
+    // Strategy Triad (calloway + voss + sable)
+    map.insert("strategy-triad".into(), vec!["calloway".into(), "voss".into(), "sable".into()]);
+    // Full Audit (pierce + mara + kehinde + tanaka + vane + wraith + sentinel + meridian)
     map.insert("full-audit".into(), vec![
-        "pierce".into(), "tanaka".into(), "mara".into(),
-        "riven".into(), "kehinde".into(),
+        "pierce".into(), "mara".into(), "kehinde".into(), "tanaka".into(),
+        "vane".into(), "wraith".into(), "sentinel".into(), "meridian".into(),
     ]);
+    // Launch Sequence (calloway + voss + sable + wraith)
+    map.insert("launch-sequence".into(), vec![
+        "calloway".into(), "voss".into(), "sable".into(), "wraith".into(),
+    ]);
+    // Council (all 10 personas)
+    map.insert("council".into(), PERSONA_SLUGS.iter().map(|s| s.to_string()).collect());
+    // Gate Runner (pierce + mara + kehinde — same as triad)
+    map.insert("gate-runner".into(), vec!["pierce".into(), "mara".into(), "kehinde".into()]);
+    // Postmortem (chronicle + domain personas — empty for now, treated as 2+ match)
+    map.insert("postmortem".into(), vec!["chronicle".into()]);
+    // Debate (any 2+ — empty member list signals open matching)
+    map.insert("debate".into(), vec![]);
+    // Decision Council (any 2+ — empty member list signals open matching)
+    map.insert("decision-council".into(), vec![]);
     map
 }
 
@@ -1027,20 +1040,33 @@ pub async fn get_palette_actions(
             }
         }
 
-        // Collect orchestrator matches
+        // Collect orchestrator matches (P7-F: empty members = any 2+, sorted by member count asc)
         let selected_set: std::collections::HashSet<&str> =
             selected_slugs.iter().map(|s| s.as_str()).collect();
-        let mut orchestrator_data: Vec<(String, String, String)> = Vec::new();
+        let mut orchestrator_data: Vec<(String, String, String, usize)> = Vec::new();
         for (orch_slug, members) in &reg.orchestrator_members {
-            let all_present = members.iter().all(|m| selected_set.contains(m.as_str()));
-            if all_present {
+            let matches = if members.is_empty() {
+                // Empty member list = matches when 2+ personas selected (debate, decision-council)
+                selected_slugs.len() >= 2
+            } else {
+                // Specific members = selected set must be a superset
+                members.iter().all(|m| selected_set.contains(m.as_str()))
+            };
+            if matches {
                 if let Some(entry) = reg.entries.get(orch_slug.as_str()) {
                     orchestrator_data.push((
                         orch_slug.clone(), entry.name.clone(), entry.description.clone(),
+                        members.len(),
                     ));
                 }
             }
         }
+        // Sort: specific orchestrators first (member count desc), open-match (0) last
+        orchestrator_data.sort_by(|a, b| {
+            let a_open = if a.3 == 0 { 1u8 } else { 0 };
+            let b_open = if b.3 == 0 { 1u8 } else { 0 };
+            a_open.cmp(&b_open).then_with(|| b.3.cmp(&a.3))
+        });
 
         // Clone command data for availability checking outside the lock
         let command_data: Vec<(String, String, String, String, Option<AvailabilityCheck>)> =
@@ -1063,7 +1089,7 @@ pub async fn get_palette_actions(
         .collect();
 
     let orchestrator_actions: Vec<PaletteAction> = orchestrator_data.into_iter()
-        .map(|(slug, name, desc)| PaletteAction {
+        .map(|(slug, name, desc, _count)| PaletteAction {
             dispatch_target_slug: slug.clone(),
             action_type: PaletteActionType::Orchestrator,
             slug, name, description: desc,
