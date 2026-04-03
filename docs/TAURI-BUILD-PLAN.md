@@ -372,7 +372,7 @@ Prevents two dispatched agents from working on the same finding during parallel 
 - `packages/document-gen/` — dual-output from single content, Pretext-powered editorial layout
   - `pdf.ts` — page-break calculator: given content blocks + page dimensions, compute per-page. Render to canvas, export as PDF blob.
   - `editorial.ts` — multi-column flow via `multiColumnText()` for body content, obstacle routing via `flowAroundObstacles()` for text around charts/images, pull quotes as positioned obstacles that text routes around, drop caps via Pretext `fitToContainer()` for section headers
-  - Gate report template: title, **persona glyph attribution per finding**, findings table (severity/persona/description/evidence/fix), summary stats, **multi-column body text flowing around severity distribution charts**, **pull quotes from Pierce/Mara/Riven findings**
+  - Gate report template: title, **persona glyph attribution per finding**, findings table (severity/persona/description/evidence/fix), summary stats, **multi-column body text flowing around severity distribution charts**, **pull quotes from Pierce/Mara/Kehinde findings**
   - Project brief template: project name, architecture decisions, batch plan, persona assignments, **persona glyphs in team roster**, **editorial two-column layout**
   - Build report template: batch progress, findings resolved, risks, token usage, **text-density timeline showing session activity**
   - Retrospective template: timeline, learnings, failure modes, recommendations, **persona glyph attribution on each learning**
@@ -427,10 +427,10 @@ Prevents two dispatched agents from working on the same finding during parallel 
 - Semi-transparent overlay on the Canvas HUD panel
 - When agents dispatch/communicate, **persona glyphs streak across the canvas as particle trails:**
   - Scout glyph → Nyx bolt (pre-build intel delivery)
-  - Nyx bolt → Build Triad glyphs: crosshair + eye + grid (gate dispatch — three glyphs streak in formation)
+  - Nyx bolt → Build Triad glyphs: crosshair + eye + nested-brackets (gate dispatch — three glyphs streak in formation)
   - Triad glyphs → Nyx bolt (findings return — severity-colored trail)
   - Wraith probe paths hitting system surfaces
-- **Dispatch is visible as motion:** dispatching the Build Triad shows three glyphs (Pierce crosshair + Mara eye + Riven grid) accelerating along bezier paths toward the target surface. The personas are characters in the visualization, not just labels.
+- **Dispatch is visible as motion:** dispatching the Build Triad shows three glyphs (Pierce crosshair + Mara eye + Kehinde nested-brackets) accelerating along bezier paths toward the target surface. The personas are characters in the visualization, not just labels.
 - Bezier curves with moving particles, color-coded by type (dispatch=blue, findings=orange/red, context=green)
 - Triggered by real dispatch events from the orchestration engine
 - Toggleable visibility, replayable from session history
@@ -498,7 +498,7 @@ Prevents two dispatched agents from working on the same finding during parallel 
 
 ---
 
-## Phase 7: Team Panel + Agent Presence + Action Palette (3 sessions) — WAS PHASE 6
+## Phase 7: Team Panel + Agent Presence + Action Palette + Proposals (3 sessions, 14 batches) — WAS PHASE 6
 
 **Goal:** Personas as first-class visible entities with state, direct dispatch, and a contextual action palette that surfaces available commands based on persona selection. Multi-select personas to discover orchestrator combinations. The Team Panel is a window-manager panel type — floatable, pop-outable, can be tabbed with other panels.
 
@@ -530,6 +530,33 @@ Each `RegistryEntry` has an optional `availability_check` — a runtime conditio
 | Vane's Stripe tools | Stripe env vars set | Tools don't appear |
 
 Checks run on registry refresh (called on mount + when connectivity panel detects changes). Failed checks don't error — tools/agents silently disappear or dim. No config file edits needed.
+
+**Dispatch-Scoped Capability Grants (from Excalibur spellbook model)**
+
+Tool availability gating (above) is layer 1 — binary connectivity checks. Dispatch scoping is layer 2 — even when a tool is technically available, the dispatch may restrict it for this specific run.
+
+Each `DispatchRequest` includes a `granted_capabilities: Vec<CapabilityFamily>` field:
+
+```rust
+enum CapabilityFamily {
+    ReadOnly,       // file reads, schema queries, grep — always granted
+    WriteCode,      // file edits, new files — build dispatches only
+    WriteVault,     // vault articles, BUILD-LEARNINGS, ADL — compile/consolidation
+    Database,       // migrations, DML — requires explicit grant
+    External,       // web search, API calls — mana-costed
+    Destructive,    // delete, drop, red-team — requires explicit operator grant
+}
+```
+
+- Gate review dispatches get `ReadOnly` only — personas find, Nyx fixes
+- Build dispatches get `ReadOnly + WriteCode`
+- Dreamtime ritual gets `ReadOnly + WriteVault`
+- Red-team (Wraith) gets `ReadOnly + Destructive` only with operator approval
+- The dispatch audit trail records which capabilities were granted per run
+
+**Two-layer capability control:**
+1. **Connectivity gating** (existing): Is the MCP connected? Binary.
+2. **Dispatch scoping** (new): Is this capability *granted for this run*? Per-dispatch.
 
 **Single Command Registry (from Hermes `CommandDef` pattern)**
 
@@ -587,12 +614,26 @@ New orchestrator agent file: `agents/smart-review.md`. Reads `git diff`, maps fi
 
 The routing table is defined here as a static mapping. Phase 8.2 upgrades it with full pipeline intelligence (enforcement, blocking, audit trail, diff-aware gate routing — enforcement point #4). Until then, Smart Review provides immediate value as a convenience dispatch.
 
-Five Tauri commands:
+**Agent Working State (from Factory-AI DroidWorkingState — 5-state turn-level lifecycle)**
+
+`AgentWorkingState` enum: Idle, Streaming, WaitingForConfirmation, ExecutingTool, Compacting. Per-agent turn-level state. Emitted via Tauri events (`agent:working-state-changed`). This is the TURN-LEVEL state machine — it drives the React UI (show spinner during Streaming, show confirmation modal during WaitingForConfirmation, show compaction indicator during Compacting). SEPARATED from mission-level MissionState (Session 7.3) — which drives orchestration (dispatch queue, milestone gates). Two-layer state machine: never collapse these into one enum.
+
+**2-Axis Dispatch Gate (from Factory-AI InteractionMode × AutonomyLevel)**
+
+`InteractionMode` enum: Spec (read-only, no writes), Auto (standard execution), Orchestrator (mission decomposition with workers). Orthogonal to existing `CapabilityFamily` — mode controls structural access, family controls per-action capability:
+- `Spec` mode → only `ReadOnly` valid, regardless of other grants
+- `Auto` mode → capabilities as granted by dispatch context (existing behavior)
+- `Orchestrator` mode → enables mission features (worker spawn, feature decomposition, MissionState transitions)
+
+This refines P7-C.1's capability gating from single-axis (family) to dual-axis (mode × family). Mode is set per-session. Family is set per-dispatch.
+
+Six Tauri commands:
 - `get_agent_registry()` → full registry (called once on mount, refreshable)
 - `get_agent_content(slug)` → full markdown body for system prompt construction
 - `get_palette_actions(selected_slugs)` → resolved actions for current persona selection (filters by availability)
 - `get_command_registry()` → all commands with current availability state
 - `smart_review_routing(diff_summary)` → resolved persona list from diff analysis (used by smart-review orchestrator)
+- `get_agent_working_state(slug)` → current turn-level state for a specific agent
 
 **Team Panel rebuild** — right sidebar showing all registered agents:
 - Grouped by role: Personas (10), Intelligences (10), Orchestrators (10), Utilities (10)
@@ -613,13 +654,13 @@ Five Tauri commands:
 
 | Selection | Recognized As |
 |-----------|--------------|
-| `{pierce, mara, riven}` | Build Triad |
+| `{pierce, mara, kehinde}` | Build Triad |
 | `{kehinde, tanaka, vane}` | Systems Triad |
 | `{calloway, voss, sable}` | Strategy Triad |
-| `{pierce, mara, riven, kehinde, tanaka, vane, wraith, sentinel, meridian}` | Full Audit |
+| `{pierce, mara, kehinde, tanaka, vane, wraith, sentinel, meridian}` | Full Audit |
 | `{calloway, voss, sable, wraith}` | Launch Sequence |
 | `{all 10 personas}` | The Council |
-| `{pierce, mara, riven}` | Gate Runner (dispatches Triad) |
+| `{pierce, mara, kehinde}` | Gate Runner (dispatches Triad) |
 | `{chronicle}` | Postmortem (+ relevant domain personas) |
 | Any 2+ personas | Debate (context-dependent, always available) |
 | Any 2+ personas | Decision Council (cognitive-lens, always available) |
@@ -639,6 +680,18 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 3. Calls existing `dispatch_agent` Tauri command
 4. Agent appears in Dispatch tab with status tracking
 
+**Tool Confirmation Router (from Goose + Agent Browser + Factory-AI ToolConfirmation system).** Destructive tool calls (file delete, SQL DROP, credential access) require operator confirmation before execution. Implemented via oneshot channels — dispatch pipeline sends confirmation request to frontend, awaits operator response via oneshot `Receiver`, then proceeds or aborts. Non-blocking to the pipeline: other dispatches continue while awaiting confirmation.
+
+**Confirmation taxonomy (from Factory-AI, 9 action types):** `ConfirmationType` enum — FileEdit, FileCreate, ShellExec, ApplyPatch, McpTool, AskUser, ExitSpecMode, ProposeMission, StartMissionRun. Each type carries action-specific detail (FileEdit: path + diff; ShellExec: command; McpTool: server + tool name). Enables the modal to show context-appropriate information.
+
+**Confirmation outcomes (from Factory-AI, 8 response types):** `ConfirmationOutcome` enum — ProceedOnce, ProceedAlways, ProceedAutoLow, ProceedAutoMedium, ProceedAutoHigh, ProceedEdit, Cancel. `ProceedAlways` whitelists the tool for the session. `ProceedAuto*` maps to AutonomyLevel — at `ProceedAutoHigh`, all future calls of this type auto-approve. `ProceedEdit` allows the operator to modify the action before execution. Router tracks `auto_approved: HashSet<ConfirmationType>` — once whitelisted, future requests for that type skip the modal.
+
+(Goose: ToolConfirmationRouter with oneshot channels) **(Agent Browser: 3rd validation — Action Policy with Allow/Deny/Confirm trichotomy. Policy precedence: deny > confirm > allow > default. Maps to CapabilityFamily: `Destructive` → RequiresConfirmation, `ReadOnly` → Allow, blocked tools → Deny.)**
+
+**AST Transform Plugin Pipeline (from just-bash) — DEFERRED TO PHASE 8.2.** Before any dispatch executes tool calls, the action passes through a transform pipeline. Each transform is a pure function: `fn transform(action: &ToolCall, ctx: &DispatchContext) -> TransformResult` (Pass/Block/Modify). Pipeline stages: (1) capability gate — reject tools not in persona's allow-list, (2) injection scan — flag suspicious patterns in arguments, (3) audit log — file echo for every tool call before execution. Transforms are composable — intelligences register new stages without modifying the core pipeline. Phase 7 delivers the Tool Confirmation Router (critical safety gate); Phase 8.2 adds the full composable transform pipeline alongside the orchestration engine. (just-bash: AST transform plugin pipeline for action audit)
+
+**Underspecification Gating (from oh-my-codex + AiDesigner dual-lane routing).** When an operator types a vague command (e.g., bare `/review` or `/audit` without scope), detect underspecification before dispatching heavy orchestrators. Heuristic: <15 effective words AND no well-specified signals (file paths, code blocks, numbered steps) → redirect to planning prompt instead of dispatch. Two-layer gating: (1) `AvailabilityCheck` — is the command available? (2) `SpecificationCheck` — is the request specified enough? Both pass before Action Palette dispatches. **(AiDesigner: dual-lane routing with automatic complexity escalation — don't just block underspecified requests, route them: simple/well-scoped → single-persona lightweight review (Quick Lane), complex/multi-surface → full triad orchestration (Complex Lane). Same output format from both paths. No manual switching — complexity detection is automatic.)** (oh-my-codex: underspecification gate with 15-word + signal-detection heuristic)
+
 **React files:**
 - `src/hooks/usePersonaSelection.ts` — toggle/clear/isSelected over `Set<string>`
 - `src/hooks/useActionPalette.ts` — fetches palette on selection change (150ms debounce), exposes `dispatch(action)` handler
@@ -649,8 +702,11 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 
 **Dispatch Queue:**
 - **Dispatch Queue** — **separate panel type.** What's pending, what's running. Can float alongside Canvas HUD or pop out.
+- **Priority queue model (from ByteRover ToolInvocationQueue).** 4 tiers: Critical/High/Normal/Low. Dispatches sorted by priority first, FIFO within tier. Configurable concurrency limit (default 3 for triad, 1 for sequential stages). Returns execution statistics (count, duration, failures).
+- **Internal dispatch tracking (from Agent Browser WebSocket multiplexer).** ID-correlated oneshot pattern — each dispatch gets unique ID, completion resolves via oneshot sender. Multiple dispatches in-flight concurrently. 60s timeout with cleanup of pending entries.
 - Parallel execution indicator (e.g., "3 Triad agents running")
 - Gate status display (pass/fail/in-progress per gate)
+- **Checkpoint validation (from AiDesigner).** Before batch advancement, explicit checkpoint: progress recap + numbered options for next direction. `canAdvance` gates on: Triad dispatched + zero open findings + checkpoint acknowledged.
 - Session timeline (horizontal, shows BOOT.md handoffs as milestones)
 - "Export Report" button → generates PDF via document generation engine
 - **Protocol enforcement point #1:** Gate dispatch is a pipeline stage, not an option. The dispatch queue refuses to advance a batch past "Build" until Triad agents have been dispatched and the findings table (P5-G) shows zero open items. No silent skipping.
@@ -661,7 +717,7 @@ The OS has a formalized internal communication system where personas propose cha
 
 **Rust backend:** `src-tauri/src/proposals/`
 
-- `store.rs` — CRUD for proposals. Schema:
+- `store.rs` — CRUD for proposals. Schema enhanced with Factory-AI MissionFeature patterns:
   ```rust
   struct Proposal {
       id: Ulid,
@@ -674,6 +730,9 @@ The OS has a formalized internal communication system where personas propose cha
       title: String,
       body: String,             // full proposal with evidence
       evidence: Vec<String>,    // links to traces, findings, build learnings
+      preconditions: Vec<String>,      // (Factory-AI MissionFeature) conditions that must be true before implementation
+      verification_steps: Vec<String>, // (Factory-AI MissionFeature) how to verify completion
+      fulfills: Option<Vec<String>>,   // (Factory-AI MissionFeature) higher-level requirements this satisfies
       status: ProposalStatus,   // Open | Evaluating | Accepted | Rejected
       evaluators: Vec<String>,  // persona slugs assigned to evaluate
       responses: Vec<ProposalResponse>, // threaded evaluation responses
@@ -682,8 +741,14 @@ The OS has a formalized internal communication system where personas propose cha
       decision_trace_id: Option<Ulid>, // links to context graph trace on resolution
   }
   ```
-- `triage.rs` — auto-routes proposals to scope-appropriate personas for evaluation. Security proposal → Tanaka evaluates. UX proposal → Mara evaluates. Architecture → Kehinde. Cross-cutting → Council. Uses Agent Registry (7.1) for persona→domain mapping. Proposals can also be manually assigned.
-- `decisions.rs` — accepted proposals become decisions in `.forge/decisions/`. Rejected proposals preserve reasoning (why not). Both indexed by LightRAG (Phase 8.3) when available. Decision schema mirrors proposal but adds: resolution rationale, implementing batch, outcome tracking.
+
+  **`MissionState` enum (from Factory-AI, 6-state mission-level lifecycle):** AwaitingInput → Initializing → Running → Paused → OrchestratorTurn → Completed. This is the MISSION-LEVEL state machine — it drives the Dispatch Queue (P7-L) and orchestration flow. SEPARATED from `AgentWorkingState` (Session 7.1) which drives turn-level UI. Mission state emits `mission:state-changed` Tauri events.
+
+  **`ProposalOutcome` enum (from Factory-AI FeatureSuccessState):** Success, Partial, Failure. Stored on decision resolution — `Partial` means accepted and partially implemented (verification incomplete). Enables outcome quality tracking over time.
+- `triage.rs` — auto-routes proposals to scope-appropriate personas for evaluation. Security proposal → Tanaka evaluates. UX proposal → Mara evaluates. Architecture → Kehinde. Cross-cutting → Council. Uses Agent Registry (7.1) for persona→domain mapping. Proposals can also be manually assigned. **(ByteRover: Policy Engine with first-match-wins rule evaluation informs the triage mechanism — ordered rules route proposals by scope pattern, first match determines evaluator assignment.)**
+- `decisions.rs` — accepted proposals become decisions in `.forge/decisions/`. Rejected proposals preserve reasoning (why not). Both indexed by LightRAG (Phase 8.3) when available. Decision schema mirrors proposal but adds: resolution rationale, implementing batch, outcome tracking, **`outcome: ProposalOutcome`** (Success/Partial/Failure from Factory-AI FeatureSuccessState).
+  - **`DismissalRecord` struct (from Factory-AI DismissalRecord pattern):** `{ dismissal_type: DismissalType, source_proposal_id, summary, justification }`. `DismissalType` enum: DiscoveredIssue, CriticalContext, IncompleteWork. When a proposal is dismissed rather than resolved, the dismissal is recorded with explicit justification. No silent drops — every dismissed item has a paper trail. Dismissals are distinct from rejections: rejection = "evaluated and declined"; dismissal = "acknowledged but deprioritized with documented reasoning." Dismissals visible in the Proposal Feed with distinct visual treatment.
+  - Tauri command: `dismiss_proposal(id, dismissal_type, justification) -> DismissalRecord`
 - `feed.rs` — aggregates proposals + responses + decisions into a chronological feed. Supports pagination, filtering, search. Emits Tauri events on new activity.
 - Rate limit enforcement: 3 proposals per persona per session (per ADL-005). Automated proposals (Phase 8.3b policy evolution) are exempt from rate limit but tagged `source: Automated`.
 - SQLite migration: `proposals` table, `proposal_responses` table, `decisions` table.
@@ -703,7 +768,15 @@ The OS has a formalized internal communication system where personas propose cha
 - **Pop-out friendly** — great for monitoring during builds. Dock pill shows unresolved proposal count badge.
 - Canvas-rendered cards with Pretext text measurement for zero-waste layouts
 
-**New panel types registered in this phase:** Team Panel (rebuilt), Action Palette, Dispatch Queue, Proposal Feed (4 new, total ~18)
+**New panel types registered in this phase:** Team Panel (rebuilt, with Action Palette as internal tab), Dispatch Queue, Proposal Feed (3 net new panel types, total ~18)
+
+**Factory-AI Integration Summary (Session 7.3):**
+- `MissionState` (6-state orchestrator lifecycle) drives Dispatch Queue and overall build orchestration
+- `ProposalOutcome` (Success/Partial/Failure) tracks implementation quality on decision resolution
+- `DismissalRecord` with `DismissalType` + justification — no silent drops of proposals or findings
+- `MissionFeature`-inspired fields on proposals: `preconditions`, `verification_steps`, `fulfills`
+- `FeedEntry` enum extended with `ProposalDismissed` variant for feed visibility
+- Tauri commands: `dismiss_proposal`, `get_mission_state`, `update_mission_state`
 
 **Depends on:** Phase 4 (window manager + canvas), Phase 1 (chat), Phase 3 (agent runtime + document gen for export)
 
@@ -722,6 +795,7 @@ The OS has a formalized internal communication system where personas propose cha
 - Rust `notify` crate for filesystem watching
   - Watch BOOT.md, BUILD-LEARNINGS.md, agent files, INTROSPECTION.md files
   - Parse BOOT.md YAML frontmatter → emit state updates
+  - **(AiDesigner: phase detection via filesystem state — watcher verifies BOOT.md phase claims against expected artifacts. If BOOT.md says "Phase 7" but Phase 7 artifact directories don't exist, flag integrity error.)**
 - Build state aggregator (combines vault state + SQLite metrics)
 - Session management (create, resume, archive)
 - **Auto-memory extraction (Mem0-inspired):**
@@ -731,6 +805,26 @@ The OS has a formalized internal communication system where personas propose cha
     - Implicit architecture decisions → document in ADL
     - Reusable patterns → BUILD-LEARNINGS.md
   - Failure mode evaluation: persona-inherent (propagate globally) vs. project-specific (stay local)
+
+- **Mana Economy (from Excalibur + Meta-Harness Pareto research)**
+  - Every dispatch run has a mana budget. Mana governs how much expansion (tool calls, emanations, depth reads) the run can perform.
+  - `src-tauri/src/mana/` — Rust module:
+    - `economy.rs` — `ManaEconomy` struct: load grimoire, price lookups, budget allocation
+    - `tracker.rs` — per-run mana tracking: starting budget, current balance, spend log
+    - `grimoire.rs` — parse `GRIMOIRE.md` (repo root) for cost definitions
+  - **Grimoire format** (`GRIMOIRE.md`): single file defining all mana costs (file read=0, artifact write=0, depth read=1, web search=2, doc gen=2, LightRAG=3, emanation=10-20, image gen=3) and run budgets (interactive=120, heartbeat=60, dreamtime=40, scrying=40, automated=60). **(AiDesigner: profile-based environment separation — grimoire supports dev/staging/prod profiles with inheritance. Production profile restricts Destructive capabilities entirely. Profile auto-detected via env vars or git branch.)** **(Agent Browser: hierarchical config merge — 4-tier cascade (per-dispatch > per-persona > project grimoire > system defaults) with additive extension arrays for capability accumulation.)**
+  - **Mana gradient shapes behavior:** Free (local reads, artifact writes) → Low (depth reads) → Medium (external, generation) → High (emanations, LightRAG). Agents self-optimize toward cheap paths.
+  - **Pareto frontier tracking (from Meta-Harness + Lighthouse scoring):**
+    - `pareto.rs` — track mana spent vs finding quality per persona per surface type
+    - Empirical frontier: "At 40 mana, Pierce's gate pass rate is 78%. At 80 mana: 94%. At 120 mana: 96%."
+    - Grimoire exposes operator-selectable operating point: velocity mode (constrained) vs quality mode (full budget)
+    - Canvas HUD: mana allocation sparkline with Pareto frontier overlay
+    - **Log-normal scoring (from Lighthouse).** Quality metrics scored on log-normal distribution curves rather than linear thresholds. Two control points define each curve: p10 (median, score=0.5) and p25 (poor, score→0). Control points derived empirically from the project's own history — `finding_density` p10 from project median, p25 from worst quartile. Log-normal weights improvements at the poor end more heavily — going from 8 findings/batch to 4 produces more score improvement than 2 to 1. Control points recalculated by dreamtime as history accumulates. (Lighthouse: log-normal scoring with percentile control points)
+  - **Provider Factory Registry (from Goose + Agent Browser engine abstraction — 5th validation).** Dual registration for AI providers: each provider registers both its capabilities (model list, rate limits, pricing) and a factory function for creating client instances. `ProviderRegistry` maps provider slug → `ProviderFactory`. At dispatch time, the mana economy selects the provider based on the agent's `model_class` metadata and current rate-limit state. Hot-swap via `SharedProvider` double-Arc — provider can be swapped mid-session without dropping active dispatches. (Goose: provider factory registry + SharedProvider double-Arc)
+  - **Recipe System (from Goose).** Recipes are reusable dispatch templates defined in YAML with typed parameters and persona scoping. Example: a "gate-review" recipe specifies which personas to dispatch, in what order, with what capability grants, at what mana budget — all configurable per project. Recipes compose with skills: a recipe references skills by slug, skills provide the procedural knowledge. Recipes live in `vault/recipes/` alongside rituals. (Goose: recipe system with YAML + typed params + scoping)
+  - **Network Allow-List + Header Injection (from just-bash).** External API calls from agent dispatches are gated by a URL allow-list. Each persona's capability grants include a list of allowed domains. Calls to unlisted domains are blocked and logged. For allowed domains, the dispatch pipeline auto-injects required headers (auth tokens, API keys) from the credential store — agents never see raw credentials in their context. (just-bash: network allow-list + header injection for API security)
+  - Tauri commands: `get_mana_balance`, `get_grimoire`, `update_grimoire_entry`, `get_pareto_frontier`
+
 - **Context Graph: Decision Trace Store (v2 addition)**
   - Every meaningful action produces a structured decision trace: `observation → reasoning → action → outcome`. This is the atomic unit of organizational judgment.
   - `src-tauri/src/context_graph/` — Rust module:
@@ -740,6 +834,50 @@ The OS has a formalized internal communication system where personas propose cha
   - Domain-agnostic schema. Development traces ("3 P-CRITs in auth surface") and future business traces ("deal velocity dropped 30%") use the same structure.
   - SQLite migration: `traces` table + FTS5 virtual table + triggers.
   - Tauri commands: `file_trace`, `query_traces`, `get_trace`, `walk_causal_chain`.
+
+- **Echo Ledger (from Meta-Harness + Excalibur daily thread)**
+  - Raw execution traces — echoes — are the highest-fidelity record of what happened. Meta-Harness proved echoes beat LLM-generated summaries by +15.1 accuracy points.
+  - `src-tauri/src/echoes/` — Rust module:
+    - `ledger.rs` — append-only daily JSONL. Path: `vault/echoes/<YYYY-MM-DD>.jsonl`
+    - Each line is a structured echo: `{ timestamp, type, source, data }`
+    - Types: `dispatch`, `finding`, `tool_call`, `checkpoint`, `gate_result`, `operator_query`, `ritual_event`
+    - Never summarized-then-discarded. Retained for full history queries.
+    - `query.rs` — grep-style access: filter by type, source, date range, keyword. Supports the Meta-Harness filesystem-access pattern — agents query echoes selectively, not monolithically.
+  - **Relationship to decision traces:** Decision traces (above) are *structured summaries* of meaningful actions. Echoes are *raw event streams*. The dreamtime ritual reads echoes and *alchemizes* them into decision traces, vault articles, and sigils. Both are retained.
+  - **ATIF Trajectory Serialization (from AutoAgent).** Echo entries follow the ATIF (Action-Thought-Input-Feedback) trajectory format for structured serialization: each echo captures the agent's action (what tool was called), thought (reasoning that led to the call), input (arguments passed), and feedback (result received). This structured format enables downstream pattern mining — the dreamtime ritual can identify recurring action sequences, the reasoning engine can compare trajectories across batches, and the persona evolution engine can detect reasoning drift. (AutoAgent: ATIF trajectory format for echo serialization)
+  - **Page Reconstruction from Chunks (from ChromaFs).** When echo ledger entries or vault articles are stored as indexed chunks (for FTS5 search), reconstruction on read assembles the full document from its chunks. First assembly is cached — subsequent reads return the cached version until the source chunks change. This supports the two-stage query pattern: coarse search over chunk indexes (fast, SQLite FTS5), then fine-grained search over reconstructed full documents (accurate, in-memory grep). (ChromaFs: page reconstruction from chunks for echo/vault assembly)
+  - **(Agent Browser: content boundary markers with cryptographic nonces for prompt injection prevention when agents read external content. AI-friendly error translation — translate Tauri/Rust errors into actionable guidance personas can reason about: "connection refused" → "Check if the dev server is running", "timeout" → "Page may still be loading".)**
+  - Tauri commands: `append_echo`, `query_echoes`, `get_echo_stats`
+
+- **Vault Sigils — Auto-Maintained Indexes (from Karpathy)**
+  - Sigils are compact index files — one-line entries with tags and file references. They serve as the cheap navigation layer that eliminates RAG dependency for structured queries.
+  - Generated by the dreamtime ritual. Never manually edited.
+  - **(ByteRover: persistent context tree validates sigils + KAIROS. 96.1% retrieval accuracy on LoCoMo benchmark provides target for our three-tier access.)**
+  - **Sigil files:** `vault/sigils/BUILD-LEARNINGS-INDEX.md`, `vault/sigils/SKILLS-INDEX.md`, `vault/sigils/ADL-INDEX.md`, `vault/sigils/FINDINGS-INDEX.md`, `vault/sigils/ECHOES-INDEX.md`
+  - **Three-tier knowledge access (mana-aware):**
+    - Sigils: 0 mana — index scan ("what do we know about auth?")
+    - Articles: 1 mana — full article read ("what does ADL-017 say?")
+    - Ley lines (LightRAG): 3 mana — cross-article query ("what connects auth to payments?")
+  - **Three-tier context assembly model (from oh-my-codex, validates KAIROS + enriches dispatch prompts):**
+    - **PRIORITY tier** (replaced per dispatch): kernel + current goal + dispatch grants + capability metadata. Fresh every time — no stale context.
+    - **WORKING tier** (append-only, prunable by dreamtime): echoes + recent findings + active traces + in-flight dispatch state. Grows during session, pruned nightly.
+    - **MANUAL tier** (permanent reference): vault articles + ADL + grimoire + skills. Only changes via explicit operator or ritual action.
+    - Context assembly for each dispatch selects from all three tiers based on the agent's declared `required_artifacts`. The PRIORITY tier is always included. WORKING and MANUAL are filtered by relevance. (oh-my-codex: three-section notepad model — priority/working/manual)
+  - Tauri commands: `get_sigil`, `list_sigils`, `regenerate_sigils`
+
+- **Ritual System (from Excalibur + Karpathy + background-agents lifecycle + ByteRover/Agent Browser daemon validation)**
+  - Rituals are scheduled automated jobs with purpose, mana budgets, and governance. **(ByteRover CLI + Agent Browser: both use persistent daemon architecture for background state — validates our ritual engine's daemon-like model. Idle timeout, crash detection via process monitoring, and session multiplexing patterns apply.)**
+  - `src-tauri/src/rituals/` — Rust module:
+    - `engine.rs` — ritual scheduler. Reads ritual specs from `vault/rituals/`. Manages cron triggers, mana allocation, timeout enforcement. **All scheduling logic implemented as pure decision functions (from background-agents):** `should_fire_ritual(last_run, cron_expr, now)`, `should_pause_ritual(consecutive_failures, threshold)`, `evaluate_circuit_breaker(recent_failures, window, max)`, `evaluate_mana_budget(remaining, required)`. No side effects in decision layer — engine calls decisions, then acts. Fully unit-testable.
+    - `spec.rs` — ritual spec parser (markdown with YAML frontmatter)
+    - `guard.rs` — ritual governance: read-only enforcement (rituals cannot modify their own spec), mana cap enforcement, timeout kill. **Circuit breaker (from background-agents + Agent Browser transient error classification):** 3 consecutive failures within window → circuit opens → ritual auto-pauses with logged reason. Window-based reset — failures older than the window don't count. **Auto-pause threshold:** configurable (default: 3). Successful run resets counter. Manual re-enable resets counter and recalculates next run time. **(Agent Browser: errors classified as transient vs permanent. Transient (connection refused, broken pipe, EAGAIN, EOF, reset) → retry with 200ms exponential backoff, 5 attempts. Permanent → fail immediately. Platform-specific error codes: macOS 35/54/61, Linux 11/104/111, Windows 10061/10054. Only transient failures increment the circuit breaker counter.)**
+    - `warming.rs` — **proactive context warming (from background-agents).** Pre-assembles ritual context before scheduled fire time: 5 minutes before dreamtime → load vault state, sigil indexes, recent echoes. 5 minutes before heartbeat → load BOOT.md state, recent dispatches. Reduces cold-start latency from "load everything" to "context already assembled."
+  - **Three built-in rituals:**
+    - `vault/rituals/heartbeat.md` — hourly (`0 * * * *`), 60 starting mana, 120 cap, 45min timeout, `[ReadOnly, WriteVault]`. Purpose: incremental frontier advances, checkpoint progress, surface urgent findings. **First action: recovery sweep (from background-agents)** — detect dispatches stuck in "running" > timeout → mark failed and file echo, detect rituals stuck in "executing" > timeout → force cancel and increment failure counter, detect stale sigil indexes > 24 hours → flag for dreamtime. The heartbeat IS the recovery mechanism.
+    - `vault/rituals/dreamtime.md` — 2am daily (`0 2 * * *`), 40 starting mana, 80 cap, 90min timeout, `[ReadOnly, WriteVault]`. Purpose: full alchemy pass — read day's echoes, compile vault articles, regenerate sigils, generate ley lines, trigger persona evolution, prune stale knowledge.
+    - `vault/rituals/scrying.md` — 3am Monday (`0 3 * * 1`), 40 starting mana, 80 cap, 60min timeout, `[ReadOnly, WriteVault, External]`. Purpose: vault integrity — find contradictions, stale skills, unvalidated ADL decisions, knowledge gaps. Impute via web search where appropriate.
+  - **Ritual governance:** all disabled by default (operator enables explicitly), read-only during execution, mana-bounded, timeout-guarded, capability-scoped
+  - Tauri commands: `list_rituals`, `enable_ritual`, `disable_ritual`, `get_ritual_status`, `get_ritual_history`
 
 - **Context Graph: Signal Store + Collector (v2 addition)**
   - Signals are numeric time-series extracted from decision traces. Domain-agnostic: just a metric name, value, timestamp, and scope.
@@ -758,7 +896,8 @@ The OS has a formalized internal communication system where personas propose cha
   - Future adapters (operations, support, sales) implement the same trait. Same event bus, same signal store, same forecast engine.
   - **Why domain-agnostic:** TimesFM isn't sized for build metrics — it's sized for running companies at scale. Revenue forecasting, churn prediction, support volume projection, sales pipeline velocity. Build metrics are the training wheels. The sidecar stays the same. The signals multiply.
 
-- **Self-Improving Skills System (from Hermes pattern)**
+- **Self-Improving Skills System (from Hermes pattern + ByteRover Hub & Connectors validation)**
+  - **(ByteRover: Hub & Connectors extensible skill bundles validates our skills marketplace. Their connector abstraction maps to our MCP integration tiers. Dynamic install/enable/compose pattern.)**
   - Skills are markdown files in `skills/` with YAML frontmatter:
     ```yaml
     ---
@@ -778,13 +917,20 @@ The OS has a formalized internal communication system where personas propose cha
   - **Cross-project persistence:** Skills live in the OS directory (not per-project), so patterns learned in DMS carry to the next project.
   - **Atomic skill decomposition (from Block Skills Marketplace pattern):** When auto-crystallization produces a skill exceeding 8 steps, the system proposes splitting it into atomic sub-skills with a composition record linking them. The split proposal files through `.forge/proposals/` (ADL-005 feedback loop, Phase 7.3) as type `Skill`. Operator approves the decomposition or keeps the monolithic skill. Atomic sub-skills are independently versionable and composable — `rpc-discovery` + `rpc-creation` + `rpc-verification` + `rpc-rls-check` instead of one `supabase-rpc-pattern`. Target: hundreds of fine-grained skills, not dozens of large ones.
   - **Skills Browser panel** (registered in Phase 8 panel types): marketplace-style browsable view of all available skills. Filterable by domain, `requires_tools`, `platforms`. Shows usage frequency (how often injected), last-improved date, version history. Agents can browse before builds, not just receive via injection. Search via FTS5 on skill name + description + body.
+  - **Enhancements from Meta-Harness + Excalibur + just-bash + AutoAgent + Goose research:**
+    - **Algorithmic skills, not prompt skills.** Skills describe procedures (retrieve → compare → classify → verify), not personality prompts ("you are an expert at..."). Algorithmic skills generalize across projects. Prompt-based skills overfit. (Meta-Harness: code-space regularization)
+    - **Generalization testing.** When auto-crystallization produces a new skill, verify it works on a different surface/batch before setting `version: 1`. A skill crystallized from a payment RPC batch must also work on an auth RPC batch. (Meta-Harness: held-out model testing)
+    - **Mana cost per skill injection.** Skills injected into agent context consume mana proportional to their token size. The grimoire prices skill injection. Large skills cost more to load — incentivizes atomic decomposition. (Excalibur: charge economy)
+    - **Execution limits per persona.** Hard caps on tool calls, file reads, and output size per dispatch — configurable profiles per persona role. Scout gets tight limits (fast recon). Nyx gets wide limits (full build). Gate personas get read-heavy profiles. (just-bash: 18 configurable execution limits)
+    - **Thinking budget control.** Explicit reasoning token allocation per persona via grimoire. High-reasoning personas (Pierce, Kehinde, Nyx) get larger thinking budgets. Fast-lane personas (Scout, Sable) get minimal thinking allocation. (AutoAgent: thinking token budget parameter)
+    - **Fast model fallback.** When mana is low or the task is lightweight, auto-route to a cheaper/faster model instead of failing. SharedProvider double-Arc enables hot-swapping without dispatch restart. (Goose: fast model fallback + SharedProvider hot-swap)
 
 ### Session 8.2 — Agent Dispatch Pipeline + Goal Ancestry + Injection Scanning
 
 **Protocol enforcement points #1, #3, #4, #5:**
 - **#1 Gate dispatch as pipeline stage:** The orchestration engine enforces Scout → Build → Triad → Sentinel as mandatory stages. The pipeline will not advance past Build until Triad agents have been dispatched and all findings in SQLite are resolved. This is the central enforcement mechanism — the system physically cannot skip gates.
 - **#3 Batch decomposition validation:** Before a phase begins, the pipeline validates that every batch in the manifest has gate assignments. No assignments = phase won't start. Prevents batches shipping without gate coverage.
-- **#4 Diff-aware gate routing:** The pipeline knows what files changed per batch. Rust files → auto-assign Kehinde. TSX/CSS → auto-assign Mara + Riven. SQL/migrations → auto-assign Tanaka. Auth code → auto-assign Tanaka. Gate map partially automated from file diffs.
+- **#4 Diff-aware gate routing:** The pipeline knows what files changed per batch. Rust files → auto-assign Kehinde. TSX/CSS → auto-assign Mara + Riven. SQL/migrations → auto-assign Tanaka. Auth code → auto-assign Tanaka. Gate map partially automated from file diffs. **(AiDesigner: dual-lane routing — simple batches (1-2 files, single domain) get lightweight single-persona review. Complex batches (multi-domain, 5+ files) auto-escalate to full triad. Complexity threshold configurable in grimoire.)**
 - **#5 Read-back verification in audit trail:** The dispatch audit trail verifies that for every file written during a batch, a corresponding read-back occurred. If not, the batch is flagged incomplete before gates can run.
 
 - Orchestration engine in Rust:
@@ -793,9 +939,41 @@ The OS has a formalized internal communication system where personas propose cha
   - Each agent's `model:` frontmatter determines capability tier → routed to configured provider's best model
   - Mixed-provider dispatch: Nyx on Claude Opus, sub-agents on GPT-4, Sentinel on fast local model
   - Gate enforcement: parse findings, determine pass/fail
+  - **Handoff Schema (from Factory-AI).** Workers produce structured completion packets: `Handoff { salientSummary, whatWasImplemented, whatWasLeftUndone, verification{commandsRun[], interactiveChecks[]}, tests{added[], updated[], coverage}, discoveredIssues[], skillFeedback? }`. Stored as structured JSON in SQLite. Parsed at the receiving end by the orchestrator or next worker in chain.
+  - **ProgressLogEntry (from Factory-AI, 11-type append-only audit log).** Every dispatch action appends to an immutable audit log: MissionAccepted, MissionPaused, MissionResumed, MissionRunStarted, WorkerStarted, WorkerSelectedFeature, WorkerCompleted, WorkerFailed, WorkerPaused, HandoffItemsDismissed, MilestoneValidationTriggered. Each entry timestamped. Source of truth for what happened and when. `WorkerCompleted` includes `returnToOrchestrator: bool` — when `false`, the next worker chains directly without an orchestrator turn (chaining optimization). When `true`, the orchestrator reviews the handoff before dispatching next.
+  - **JSONL-over-stdio transport (from Factory-AI).** Agent subprocesses communicate via newline-delimited JSON on stdin/stdout with JSON-RPC 2.0 envelopes. Write serialization via `tokio::sync::Mutex` on `BufWriter<ChildStdin>` prevents byte interleaving. Sticky error propagation: once `AgentError` is set, all subsequent writes fail immediately — no silent message loss after process death. Injectable transport trait enables test mocks and custom IPC.
+  - **Bidirectional JSON-RPC (from Factory-AI).** Server-to-client requests for permission and user input. When an agent needs confirmation, it sends a `request_permission` message with a correlation ID. The Rust backend dispatches to the `ConfirmationRouter` (Phase 7.2), awaits the oneshot response, then writes the response envelope back to the agent's stdin. Non-blocking to the pipeline.
+  - **(Agent Browser: AX tree snapshot as observation model — Mara evaluates structured accessibility tree with deterministic element refs (@e1, @e2) instead of raw outerHTML. Compact mode strips non-interactive lines for token efficiency. RoleNameTracker deduplicates identical elements. Multi-tier resolution: cached ID → role/name re-query → CSS fallback.)**
+  - **Audit Base Class (from Lighthouse).** Each persona's gate check implements a standardized audit contract: `meta` (check ID, description, severity tier, `required_artifacts` list), `audit(artifacts) -> GateResult` (structured output with findings array, pass/fail, confidence). The `required_artifacts` declaration constrains context assembly — the dispatch pipeline only injects what the audit declared, not everything. Enables pre-flight validation: are the required artifacts available before dispatching the persona? Standardized output enables automated aggregation, conflict detection (→ Arbiter CONSORTIUM), and historical comparison. (Lighthouse: audit base class pattern with meta + requiredArtifacts + audit method)
   - Auto-fix loop: findings → Nyx fix → re-verify
+  - **Confound Isolation (from Meta-Harness qualitative analysis)**
+    - When gate findings require fixes, each fix is isolated: one finding → one fix → one verification
+    - Fixes are applied and verified independently before proceeding to the next
+    - If multiple fixes are applied and a regression occurs, the confound is identifiable
+    - Additive modifications (new code) preferred over subtractive (rewriting existing code)
+    - This extends Rule 25 (micro-batches) to the fix level
+    - Meta-Harness empirical evidence: bundled changes created confounds that required 6 iterations to untangle. Isolated changes produced wins on the first attempt.
+- **Pipeline Stage Interface (from oh-my-codex).** The dispatch pipeline is a sequence of typed stages, each implementing a `PipelineStage` trait: `fn name()`, `async fn run(ctx) -> Result<StageResult>`, `fn can_skip(ctx) -> bool`. Stages: Scout → Build → ConsequenceClimb → Gate → Regression → Close. Each stage persists artifacts (findings, echoes, traces) to SQLite. On session restart, resume from last completed stage. `can_skip` enables experienced builders to skip Scout when context is already loaded. Artifacts pass forward via `StageContext`. (oh-my-codex: PipelineStage with checkpoint/resume)
+- **Formal State Machine (from oh-my-codex).** Typed `BuildPhase` enum with enforced transitions: `PreBuild → Build → ConsequenceClimb → Gate → Regression → Close → Complete/Failed/Cancelled`. The Gate → Fix → Re-verify loop (max N attempts, configurable) maps to the `team-fix` pattern. Terminal phases enforce `session.active = false` + BOOT.md handoff. (oh-my-codex: formal state machine with fix loop)
+- **Phase-Based Agent Composition (from oh-my-codex).** `get_phase_agents(phase)` returns recommended personas per build phase: Phase 0 → Scout + Kehinde, Phase 1 → Nyx, Phase 3 → Pierce + Mara + Kehinde + domain-specific, Phase 4 → Sentinel + Meridian, Phase 5 → Nyx. Same file change triggers different personas depending on whether we're in Build vs Gate vs Regression phase. (oh-my-codex: getPhaseAgents)
+- **Worker Allocation Scoring (from oh-my-codex).** When orchestrators assign sub-tasks, score personas across three dimensions: role match (domain alignment), scope overlap (prior findings in this surface area → familiarity), load (remaining mana budget → availability). Highest composite score wins. Prevents over-dispatching to one persona while others idle. (oh-my-codex: three-dimension scoring)
+- **Dispatch Lifecycle Hooks (from OpenCLI + ByteRover plugin architecture).** Extension points: `on_before_dispatch` (inject goal ancestry, check capabilities, validate mana budget), `on_after_dispatch` (file echo, update traces, check for triggered chains). Hooks registered by intelligence modules — Sentinel registers `on_after_dispatch` for regression checks, Beacon registers for signal extraction. **(ByteRover: critical design — before-hooks run SEQUENTIALLY (each can modify args for the next, any can block with `proceed: false`). After-hooks run in PARALLEL (fire-and-forget, errors silenced). Before: capability gate → injection scan → context injection (blocking chain). After: echo logging → state update → notification (non-blocking fan-out).)** Failing before-hook blocks dispatch. Failing after-hook logged but doesn't block. (OpenCLI: lifecycle hooks before/after/startup)
+- **Typed Event Condition Registry (from background-agents).** Formal condition evaluation layer on event subscriptions. Sentinel subscribes to `action.completed` with condition `{ path_glob: "src-tauri/**/*.rs" }` → only triggers on Rust file changes. Beacon subscribes to `signal.threshold` with condition `{ metric: "finding_density", operator: "gt", value: 0.5 }`. Conditions stored as typed JSON in SQLite, evaluated by a registry of condition handlers. (background-agents: typed condition system)
+- **Dispatch Queue with Serial Execution (from background-agents).** One dispatch per persona at a time. If a ritual fires while a dispatch is running, it queues. FIFO queue persisted in SQLite for crash recovery. Status lifecycle: `queued → dispatching → running → completed/failed/cancelled`. (background-agents: SessionMessageQueue)
+- **Strategy Cascade for Capability Grants (from OpenCLI).** When dispatch context is ambiguous, try `ReadOnly` first. If the agent needs to write, escalate to `ReadOnly + WriteCode`. Never start with `Destructive`. Auto-discovers minimum-privilege execution path. (OpenCLI: strategy cascade minimum privilege)
+- **Runtime Overlay Injection (from oh-my-codex + ByteRover session overrides).** Marker-bounded sections in dispatch prompt templates. Base template contains stable sections (kernel, rules, contracts). Per-dispatch context (goal ancestry, findings, capability grants, phase-specific persona recs) injects at marked boundaries. Template stays stable; dispatch-specific content is ephemeral. **(ByteRover: immutable baseline via structuredClone + per-session overrides. Persona kernels are the baseline. Per-dispatch context (grants, mana, ancestry) are session overrides. structuredClone prevents config corruption across concurrent triad dispatches — essential when 3 personas share a kernel.)** Converges with the adapter boundary pattern from AutoAgent. (oh-my-codex: marker-bounded context injection)
+- **Large Response Handler (from Goose).** Context overflow guard for agent responses that exceed expected size. Truncation with structured summary preservation — large outputs are chunked and the dispatch pipeline retains the structured portion (findings, decisions) while truncating verbose reasoning. (Goose: large response handler)
 - Pipeline state emitted to frontend via Tauri events
 - Provider fallback: rate-limit or error → auto-fallback to next provider at same tier (from Hermes/OpenClaw pattern — cooldown tracking per API key profile)
+- **Emanation Mana Semantics (from Excalibur)**
+  - When the dispatch pipeline spawns sub-agents (emanations), each emanation draws mana from the parent run's budget:
+  - Emanation cast cost: 0 (spawning is free)
+  - Emanation mana allocation: drawn from parent (default: 20 per emanation)
+  - Parent's remaining mana decreases by allocation amount
+  - Child's mana budget equals allocation amount
+  - `max_emanation_depth: 2` — no recursive chains beyond 2 levels
+  - **Example:** Triad dispatch at 120 mana. 3 emanations × 20 mana = 60 allocated to children. Orchestrator retains 60 for integration and fix cycles.
+  - Canvas HUD visualization: emanation flows render as mana streams flowing from parent node to child nodes. Stream width proportional to mana allocation.
 - Document generation triggers: auto-generate gate report PDF on gate completion
 - **Goal Ancestry Injection (from Paperclip pattern)**
   - When dispatching any agent, auto-build and inject the "why" chain:
@@ -853,7 +1031,7 @@ The OS has a formalized internal communication system where personas propose cha
   - Tanaka sub-agent `tanaka-injection-scan` wraps this as a dispatchable check
   - Runs automatically in Scout's pre-build recon for every loaded segment file
 
-### Session 8.3 — LightRAG Integration
+### Session 8.3 — LightRAG Integration + Vault as Virtual Filesystem
 - Install LightRAG (`pip install lightrag-hku`) + MCP bridge
 - Configure with Claude API backend
 - `tools/index-vault.py` for batch indexing
@@ -863,6 +1041,19 @@ The OS has a formalized internal communication system where personas propose cha
 - Wire into GraphViewer (Phase 5.3) — LightRAG entities with Pretext-measured labels
 - Auto-index when `/init` or `/link` creates a new vault
 - **Temporal edges (from MiroFish pattern):** relationships in the knowledge graph carry `valid_from` / `valid_until` timestamps. Architecture decisions that get superseded have their edges invalidated rather than deleted. Scout can query "what was true about auth at the time L2 was built" vs "what's true now." Enables historical reasoning.
+- **Ley Line Generation (from Karpathy backlink pattern)**
+  - During LightRAG indexing, generate bidirectional ley lines (backlinks) between vault articles:
+  - When article A references article B, both articles get ley line entries
+  - Ley lines stored in `vault/ley-lines/<article-slug>.json` — array of `{ target, relationship, context }`
+  - Vault browser panel (Phase 5.3) renders ley lines as a "Referenced By" section on each article
+  - Graph Viewer (Phase 5.3) renders ley lines as edges between vault article nodes
+  - Dreamtime regenerates ley lines nightly alongside sigils
+- **Virtual Filesystem over Indexed Content (from ChromaFs + just-bash)**
+  - The vault exposes itself as a virtual filesystem to agents — familiar navigation (ls/cat/grep) backed by SQLite storage with controlled access at the boundary.
+  - **Path tree from sigils (from ChromaFs):** sigil index files ARE the compressed JSON path tree. Zero-cost navigation — agents browse vault structure without loading content.
+  - **Per-persona vault tree pruning (from ChromaFs RBAC):** each persona sees a different vault tree based on domain and capabilities. Tanaka sees auth + security surfaces. Mara sees frontend + UX surfaces. Pruned content doesn't exist in their tree, not "permission denied." (ChromaFs: per-user RBAC at FS level)
+  - **Composable filesystem mounts (from just-bash MountableFs):** vault components (skills, ADL, echoes, sigils) are independently mountable. A read-only gate dispatch mounts skills + ADL but not echoes. A dreamtime ritual mounts everything. Mount composition defined at dispatch time via capability grants.
+  - **Lazy content resolution pointers (from ChromaFs):** large artifacts (PDFs, gate reports, full echo ledgers) stored as lightweight pointer entries in the vault tree. Materialized to full content only on explicit read. Prevents vault browsing from loading multi-MB artifacts into context.
 
 ### Session 8.3b — Predictive Intelligence Layer (v2 addition)
 
@@ -895,6 +1086,12 @@ The OS has a formalized internal communication system where personas propose cha
   - Step 2: Extract reasoning + outcomes from matched traces. Filter for validated outcomes.
   - Step 3: Compose recommendation: forecast data + historical evidence + suggested action + confidence score
   - Step 4: File recommendation to store. Emit `forecast.alert` event.
+  - **Non-Markovian Credit Assignment (from Meta-Harness)**
+    - The reasoning engine queries the full echo history, not just recent traces
+    - When Beacon detects an anomaly, the reasoning engine walks the complete echo ledger for similar patterns across all time
+    - Pattern matching spans the entire project history, not just a sliding window
+    - Cross-project echo queries supported when skills reference patterns from prior projects
+    - Meta-Harness evidence: proposer read 82 files per iteration across 20+ prior candidates. Compressed feedback (recent-only) produced 15 fewer accuracy points.
 
 - **Recommendation store** (`src-tauri/src/predictive/recommendations.rs`):
   - CRUD for pending/resolved recommendations
@@ -925,6 +1122,13 @@ The OS has a formalized internal communication system where personas propose cha
     - Operator dismisses → trace filed with dismissal reasoning. Pattern still tracked — if it recurs with higher confidence, re-proposed.
     - Operator overrides → trace filed. System learns from override pattern (e.g., "operator consistently dismisses low-severity style proposals → increase threshold for style-related policy proposals")
   - **Example flow:** "3 of last 5 gate reviews found auth RPCs without `security_definer`. Pattern confidence: HIGH (60% recurrence rate). Proposing new Tanaka sub-check: verify `security_definer` on all auth-tagged RPCs. Filed as skill `auth-rpc-security-definer-check`."
+  - **Scrying Ritual — Vault-Level Policy Evolution (from Karpathy lint+heal)**
+    - Policy evolution (above) detects recurring *finding* patterns. The scrying ritual extends this to the *knowledge base itself*:
+    - Weekly vault integrity scan (scheduled ritual, see 8.1)
+    - Detects: BUILD-LEARNINGS contradictions, skills referencing removed tools, ADL decisions not validated against current code, knowledge gaps where surfaces exist without vault coverage, stale persona relationship edges
+    - Produces: integrity findings filed through the Proposal Feed (7.3) with `source: Automated`
+    - Can impute missing data via web search (External capability granted)
+    - Files connection candidates as proposals: "Findings from Tanaka and Kehinde on auth RPCs share a root cause — propose linked skill"
   - Surfaces on `RecommendationSurface` alongside forecast recommendations — same panel, different source tag (forecast vs. policy)
   - Tauri commands: `list_policy_proposals`, `get_pattern_history`, `get_policy_evolution_stats`
 
@@ -941,6 +1145,17 @@ The OS has a formalized internal communication system where personas propose cha
   - **Customer Simulator Generator:** Mara auto-generates 3-5 sim-agents from discovered user roles
   - **PDF Project Brief** generated via document engine (dual-output: markdown + PDF)
   - LightRAG auto-indexes new vault
+  - **Mandatory Security Circle (from Excalibur Warden pattern)**
+    - "Configure security audit schedule" — operator sets Tanaka and Wraith dispatch frequency
+    - Default: Tanaka runs on every gate. Wraith runs on high-risk surfaces (auth, payments, PII).
+    - Operator can enable automated Tanaka dispatch as a ritual (weekly security sweep)
+    - No project completes `/init` without explicit security audit configuration — the circle must be closed
+  - **Ritual Configuration (from Excalibur invocation ceremony)**
+    - Present three built-in rituals: heartbeat, dreamtime, scrying
+    - Explain purpose and mana cost of each
+    - Operator enables/disables each explicitly
+    - Disabled rituals can be enabled later via `enable_ritual` command
+    - All ship disabled by default — no accidental autonomous behavior
 - `/link` command: connect existing repo
   - Agent discovery: Scout, Kehinde, Mara, Tanaka scan in parallel
   - Architecture report (canvas-rendered + PDF export)
@@ -960,7 +1175,7 @@ The OS has a formalized internal communication system where personas propose cha
 
 ### Session 8.5 — Persona Evolution Engine
 
-**Goal:** The 10 personas are not static characters — they are living intelligences that genuinely learn, grow, and develop through continuous use. Their personal layers (PERSONALITY.md, INTROSPECTION.md, JOURNAL.md, RELATIONSHIPS.md) evolve automatically with every session, every project, every interaction.
+**Goal:** The 10 personas are not static characters — they are living intelligences that genuinely learn, grow, and develop through continuous use. Their personal layers (PERSONALITY.md, INTROSPECTION.md, JOURNAL.md, RELATIONSHIPS.md) evolve automatically with every session, every project, every interaction. **(AiDesigner: meta-agent ecosystem validates this direction — librarian agent auto-catalogs ENTITY-CATALOG.md as agents evolve, refactor agent proposes improvements to persona definitions based on accumulated patterns, MCP inspector validates connection health for capability-dependent personas. AiDesigner invisible orchestration: selectable methodology visibility — technical operators see full persona/phase detail, non-technical users get a single natural voice with personas working invisibly.)**
 
 **The Three Evolution Layers:**
 
@@ -972,6 +1187,7 @@ After every session where a persona is active (dispatched, gated, consulted), th
 - **What they learned:** new patterns discovered, tool behaviors encountered, domain knowledge gained
 - **What surprised them:** findings that contradicted expectations, edge cases that weren't in their mental model
 - **Confidence calibration:** did their findings hold up? Were they overconfident (false positives) or underconfident (missed real issues)?
+- **Skill deviations (from Factory-AI SkillFeedback + SkillDeviation):** When a persona follows a skill/kernel procedure and deviates from it, the deviation is structured: `{ step, whatIDidInstead, why }`. Workers also report `suggestedChanges` — improvements to the skill based on real-world experience. Deviations feed directly into the hill-climbing loop: if a deviation consistently produces better outcomes, the skill is patched to incorporate it. `SkillFeedback` struct: `{ followedProcedure: bool, deviations: Vec<SkillDeviation>, suggestedChanges: Option<Vec<String>> }`. Filed as part of the dispatch completion event alongside the handoff packet. Over time, skills evolve to match what actually works, not what was originally specified.
 
 Written to `personas/{name}/JOURNAL.md` as timestamped entries. The journal is append-only — experiences accumulate, never deleted.
 
@@ -988,6 +1204,15 @@ The evolution engine monitors persona behavior over time and detects drift:
 | **Domain adaptation** | Persona encounters a new tech stack (e.g., first Rust project after years of TypeScript) | Journal entry + temporary "learning mode" flag that increases verification rigor |
 
 Triggers: layer boundaries, milestone batches (~15-20), project switches, explicit `/introspect` command. The engine builds a structured analysis prompt and updates the persona files.
+
+**Meta-Agent Hill-Climbing Loop (from AutoAgent):**
+- At each evolution trigger, the engine can run a benchmark-driven iteration cycle:
+  1. Snapshot current persona parameters (severity thresholds, checklist weights, expertise descriptions)
+  2. Run persona on a held-out surface from a recent batch (not the surface that triggered evolution)
+  3. Compare findings against ground truth (validated gate results)
+  4. If findings quality improved → keep changes. If degraded → discard and revert snapshot.
+- Gated by dreamtime ritual schedule — hill-climbing only runs during dreamtime's persona evolution phase, not inline during builds. Prevents evolution from consuming build mana.
+- Convergence criterion: 3 consecutive iterations with no improvement → evolution cycle complete for this persona until next trigger.
 
 **Layer 3: Temporal Relationship Graph (from MiroFish pattern)**
 
@@ -1029,6 +1254,19 @@ Relationships feed back into dispatch decisions: when the Triad is dispatched, e
 | Domain-specific knowledge | **Project-local** — `projects/{name}/vault/team-logs/{persona}/` | Stays with the project |
 | Tool/platform quirks | **Global** — `personas/{name}/JOURNAL.md` | "Supabase's apply_migration silently fails on..." |
 | Calibration data | **Global** — `persona_relationships` + INTROSPECTION.md | Confidence trends persist |
+
+**Dreamtime Alchemy (from Excalibur + Karpathy synthesis)**
+
+The dreamtime ritual performs alchemy — transmuting raw echoes into compiled knowledge:
+
+1. **Read day's echoes** — full JSONL ledger, not summaries (Meta-Harness: raw traces beat summaries by +15.1 points)
+2. **Compile vault articles** — new BUILD-LEARNINGS entries, skill crystallizations, ADL updates
+3. **Regenerate sigils** — rebuild all index files from current vault state
+4. **Generate ley lines** — rebuild backlink maps from article cross-references
+5. **Trigger persona evolution** — scan echoes for drift signals, relationship changes, expertise deepening
+6. **Prune stale knowledge** — archive echoes older than retention window, invalidate expired ley lines
+
+This is the "overnight reflection" — the system processes the day's experiences and integrates them into organizational memory. Raw echoes are retained in the archive. Compiled artifacts (vault articles, sigils, ley lines) are regenerated from source truth nightly.
 
 **Dream Consolidation Integration (Phase 3 P3-F):**
 
@@ -1124,11 +1362,108 @@ The persona evolution data feeds the Canvas HUD:
 
 **Depends on:** Phase 4 (window manager), Phase 5 (canvas components), Phase 8.1 (state engine + traces)
 
+### Session 8.8 — Media Generation Pipeline
+
+**Goal:** Personas can generate visual, audio, and diagrammatic media — both for Forge OS internal use (persona portraits, architecture diagrams, ritual sounds, pipeline visualizations) and for project output (mockups, slide decks, branded assets, demo recordings). API-first architecture targeting free-tier providers, with a `MediaProvider` trait mirroring the existing chat provider abstraction.
+
+**Constraints:** Target machine has RTX 3050 4GB — insufficient for local diffusion models. All image/audio generation routes through external APIs. Diagram rendering and video compositing are fully local (Mermaid, FFmpeg).
+
+**Media Provider Architecture:**
+- `src-tauri/src/media/` — Rust module:
+  - `provider.rs` — `MediaProvider` trait:
+    ```rust
+    trait MediaProvider {
+        fn name(&self) -> &str;
+        fn media_type(&self) -> MediaType; // Image, Audio, Diagram, Video
+        fn capabilities(&self) -> Vec<MediaCapability>;
+        async fn generate(&self, request: MediaRequest) -> Result<MediaResult>;
+        fn is_available(&self) -> bool; // API key configured + health check
+    }
+    ```
+  - `registry.rs` — `MediaProviderRegistry`: register providers, select by media type + preference, fallback chain. Same dual-registration pattern as chat providers (factory + capabilities).
+  - `request.rs` — `MediaRequest` struct: prompt/input, dimensions, format, quality, style parameters. `MediaResult`: bytes, format, metadata (generation time, provider used, cost estimate).
+  - `cache.rs` — content-addressed cache (BLAKE3 hash of request → result). Persona portraits generated once, cached indefinitely. Diagrams cached until source changes.
+
+**Tier 1: Diagram Generation (fully local, no API)**
+- `src-tauri/src/media/providers/mermaid.rs` — Mermaid CLI (`mmdc`) for flowcharts, sequence diagrams, ER diagrams, class diagrams, state machines, Gantt charts. Renders to SVG or PNG.
+- `src-tauri/src/media/providers/d2.rs` — D2 for architecture diagrams (better layout engine than Mermaid for complex system diagrams). Renders to SVG.
+- **Auto-generation triggers:**
+  - Kehinde dispatched for architecture review → auto-generates system diagram from code structure
+  - Gate report PDF → architecture diagram embedded via Mermaid
+  - `/init` or `/link` → project architecture diagram generated during discovery
+  - BOOT.md phase transitions → pipeline progress diagram updated
+- **Persona integration:** Kehinde's kernel extended with diagram generation instructions. When Kehinde produces architecture findings, the dispatch pipeline auto-renders any Mermaid/D2 code blocks in the findings to SVG. Embedded in gate reports and Proposal Feed entries.
+- Tauri commands: `generate_diagram(source: String, format: DiagramFormat) -> MediaResult`
+
+**Tier 2: Image Generation (API, free tier)**
+- `src-tauri/src/media/providers/hf_inference.rs` — Hugging Face Inference API: SDXL, Flux. Free tier, no API key required for public models. Rate-limited but sufficient for build-time generation.
+- `src-tauri/src/media/providers/fal.rs` — fal.ai: Flux Pro/Dev. Free credits on signup. Higher quality than HF free tier.
+- `src-tauri/src/media/providers/together.rs` — Together.ai: Flux Schnell. Free credits. Fast inference.
+- **Provider selection:** Registry tries providers in preference order. If free tier exhausted on one, falls back to next. All three offer Flux variants — consistent quality across fallbacks.
+- **Forge OS internal use:**
+  - **Persona portraits:** Generated once during first `/init` using persona descriptions from PERSONALITY.md. Stored in `personas/{name}/portrait.png`. Rendered in Team Panel, gate reports, Proposal Feed attribution. Style: alchemical fantasy aesthetic consistent with design directive — "(32/64-bit) arcade mystical fantasy alchemical neon rave video game."
+  - **Project branding:** Sable + Calloway collaborate during `/init` to generate project logo, color palette preview, social card template. Stored in `vault/brand/`.
+  - **Mockup generation:** Riven generates UI mockups before Nyx builds. Operator describes a surface → Riven produces a reference image → Nyx builds to match. Mockup stored as echo attachment, linked in dispatch context.
+  - **Finding illustrations:** Mara annotates screenshots with UX findings overlaid — generates comparison images (current vs recommended) for gate reports.
+- **Project output use:**
+  - Gate reports include generated architecture diagrams + annotated screenshots
+  - `/init` project brief includes generated concept visuals
+  - Sable generates marketing assets (social cards, hero images) on demand
+  - Calloway generates competitive positioning visuals
+- **Mana cost:** 3 mana per image generation (already priced in grimoire). Cached results cost 0 on re-request.
+- Tauri commands: `generate_image(prompt, params) -> MediaResult`, `list_cached_media(type)`, `get_persona_portrait(slug)`
+
+**Tier 3: Audio Generation (API free + local synthesis)**
+- `src-tauri/src/media/providers/edge_tts.rs` — Microsoft Edge TTS: completely free, no API key, high-quality voices. 100+ voices across languages. Async streaming via `edge-tts` crate or CLI bridge.
+- `src-tauri/src/media/providers/local_audio.rs` — Local synthesis for UI sounds: sine waves, envelopes, basic FM synthesis via `rodio` + `hound` crates. No external dependency.
+- **Forge OS internal use:**
+  - **Ritual sounds:** Heartbeat ritual → gentle chime on fire. Dreamtime → ambient low tone on start, completion chord on finish. Gate pass → triumphant sting. Gate fail → warning tone. All generated locally via FM synthesis, stored in `assets/audio/`.
+  - **Notification audio:** P-CRIT finding → distinct alert tone. Build complete → completion sound. Configurable — operator enables/disables per event type.
+  - **TTS narration:** Edge TTS reads build summaries, gate reports, recommendation alerts. Useful for hands-off monitoring — operator hears status while working on something else. Each persona could have a distinct voice assignment from Edge TTS voice catalog.
+  - **Persona voices:** Map each persona to a distinct Edge TTS voice. Pierce → authoritative male. Mara → warm female. Tanaka → precise, measured. Stored as voice ID in persona config. Used for TTS narration of their findings/proposals.
+- **Project output use:**
+  - Narrated project briefs (TTS reads the summary)
+  - Audio accessibility layer for generated documents
+  - Demo narration for walkthrough recordings
+- **Mana cost:** 2 mana per TTS generation. Local synthesis = 0 mana.
+- Tauri commands: `generate_tts(text, voice_id) -> MediaResult`, `generate_ui_sound(sound_type) -> MediaResult`, `list_voices() -> Vec<VoiceInfo>`
+
+**Tier 4: Video/GIF Compositing (fully local, FFmpeg)**
+- `src-tauri/src/media/providers/ffmpeg.rs` — FFmpeg pipeline for compositing frames, adding overlays, encoding to GIF/MP4/WebM. No external API.
+- **Use cases:**
+  - **Pipeline visualization export:** Canvas HUD pipeline animation → captured frames → FFmpeg assembles into GIF. Shareable in Slack/Discord for stakeholder updates.
+  - **Demo recordings:** Sequence of PreviewPanel screenshots + transitions → assembled into walkthrough GIF/video. Automated via dispatch — Mara captures screenshots at key interaction points, FFmpeg composites.
+  - **Before/after comparisons:** Side-by-side frames from different build states → animated GIF showing the change.
+  - **Animated diagrams:** Sequence of Mermaid/D2 renders showing system evolution across phases → animated SVG or GIF.
+- **Not included:** AI video generation (Runway, Sora). Too expensive, too slow, not free. FFmpeg compositing from generated stills is sufficient and fully local.
+- **Mana cost:** 1 mana per video assembly (local processing only).
+- Tauri commands: `composite_video(frames, config) -> MediaResult`, `capture_pipeline_gif() -> MediaResult`
+
+**Atelier Panel (Media Gallery):**
+- New panel type: `Atelier` — browsable grid of all generated media.
+- Filter by type (diagram/image/audio/video), source (persona, ritual, project), date range.
+- Click to preview (images render inline, audio plays, diagrams open in graph viewer).
+- Export to file system or attach to proposals/gate reports.
+- Shows generation metadata: provider used, prompt, mana cost, cache status.
+
+**CapabilityFamily Extension:**
+- New capability: `MediaGen` — grants access to media generation tools. Added to capability family enum alongside existing families (ReadOnly, WriteCode, etc.).
+- Default grants: Riven + Sable + Calloway get `MediaGen` by default. Other personas request it explicitly via dispatch context.
+- Mana-gated: media generation tools check mana budget before calling provider API. Insufficient mana → generation skipped with logged reason, not failed dispatch.
+
+**Depends on:** Phase 1 (Tauri), Phase 8.1 (mana economy for budget gating), Phase 8.2 (dispatch pipeline for auto-generation triggers), Phase 4.4 (document gen engine for embedding media in reports)
+**New ADL:** OS-ADL-028 (media generation — API-first with free-tier providers, content-addressed caching, mana-gated generation)
+
 ---
 
 ## Phase 9: Integration Test + DMS Reconnection (2 sessions) — WAS PHASE 8
 
 **Goal:** Prove the full system works end-to-end, including all new capabilities from repo mining integration.
+
+**Carried-forward research patterns for Phase 9:**
+- **(AiDesigner + Agent Browser: AES-256-GCM with auto-key-generation for R-DS-01 keyring migration. `{{vault:keyName}}` reference syntax replaces plaintext credentials in config files. Auto-migration scan command detects and encrypts existing plaintext secrets. Two-tier storage: system keychain (preferred) + encrypted vault with 0o600 permissions (fallback).)**
+- **(AiDesigner: conversational tool discovery — `/init` becomes a natural conversation that auto-discovers needed MCPs from project dependencies (package.json, Cargo.toml, file structure) and configures them. "I need database access" → PostgreSQL MCP suggested and installed. Eliminates manual Tier 1/2/3/4 setup.)**
+- **(AiDesigner: invisible orchestration — selectable methodology visibility mode. Technical operators see full persona names, phase labels, and triad details. Non-technical users get a single conversational voice with Scout/Kehinde/Pierce working transparently behind natural questions.)**
 
 ### Session 9.1 — Fresh Project Test
 - `/init test-project` → verify all panels activate via window manager
@@ -1155,6 +1490,9 @@ The persona evolution data feeds the Canvas HUD:
   - Smart Review: make changes across Rust + TSX files → `/review` auto-dispatches Kehinde + Mara + Riven without manual selection
   - Proposal Feed: Pierce files a proposal → Tanaka evaluates → response appears in feed → accept → skill auto-generated
   - Proposal Feed pop-out: detach to second monitor, verify real-time updates via Tauri events
+  - Media generation: Kehinde generates architecture diagram via Mermaid → embedded in gate report. Riven generates UI mockup via HF Inference API → cached, shown in Media Gallery. Edge TTS narrates build summary. Pipeline visualization exported as GIF. Persona portraits rendered in Team Panel.
+  - Media provider fallback: exhaust one free tier → verify auto-fallback to next provider
+  - Ritual sounds: heartbeat chime fires on ritual tick, gate pass/fail tones audible
 
 ### Session 9.2 — DMS Reconnection
 - `/link` the Forge DMS vault
@@ -1268,6 +1606,114 @@ Patterns adopted from external repo analysis (2026-04-01):
 | Atomic skill decomposition (Skills Marketplace) | Block engineering | Phase 8 Session 8.1 |
 | Inter-agent trade-off pattern index | Block engineering + Novel | Phase 8 Session 8.2 |
 | Incident-driven policy evolution | Block engineering | Phase 8 Session 8.3b |
+| Extension type registry + tool whitelist | Block Goose | Phase 7 P7-C patch |
+| Three-tier capability layering (preset/custom/MCP) | AutoAgent | Phase 7 P7-C patch |
+| Lazy-loading command registry | just-bash (Vercel Labs) | Phase 7 P7-C patch |
+| Command allow-list per instance | just-bash (Vercel Labs) | Phase 7 P7-C patch |
+| Factory-based tool registration (per-persona) | AutoAgent | Phase 7 P7-C patch |
+| Built-in extension macro (DuplexStream in-process) | Block Goose | Phase 7 P7-C patch |
+| ToolConfirmationRouter (oneshot channels) | Block Goose | Phase 7 Session 7.2 |
+| AST transform plugin pipeline (action audit) | just-bash (Vercel Labs) | Phase 7 Session 7.2 / Phase 8 Session 8.2 |
+| Configurable execution limits (per-persona profiles) | just-bash (Vercel Labs) | Phase 8 Sessions 8.1/8.2 |
+| SharedProvider double-Arc (hot-swap models) | Block Goose | Phase 8 Session 8.1 |
+| Provider factory registry (dual registration) | Block Goose | Phase 8 Session 8.1 |
+| Recipe system (YAML + typed params + scoping) | Block Goose | Phase 8 Session 8.1 |
+| Thinking budget control (per-persona) | AutoAgent | Phase 8 Sessions 8.1/8.2 |
+| ATIF trajectory serialization (echo format) | AutoAgent | Phase 8 Sessions 8.1/8.2 |
+| Large response handler (context overflow guard) | Block Goose | Phase 8 Session 8.2 |
+| Fast model fallback (mana optimization) | Block Goose | Phase 8 Sessions 8.1/8.2 |
+| Virtual FS over indexed content (vault as FS) | ChromaFs (Mintlify) | Phase 8 Session 8.3 |
+| Two-stage grep (DB coarse + in-memory fine) | ChromaFs (Mintlify) | Validates Phase 4 Session 4.0 |
+| Page reconstruction from chunks (echo assembly) | ChromaFs (Mintlify) | Phase 8 Sessions 8.1/8.2 |
+| Per-user RBAC at FS level (persona vault pruning) | ChromaFs (Mintlify) | Phase 8 Session 8.3 |
+| Lazy content resolution (large artifact pointers) | ChromaFs (Mintlify) | Phase 8 Session 8.3 |
+| Meta-agent hill-climbing (persona evolution loop) | AutoAgent | Phase 8 Session 8.5 |
+| Composable filesystem (MountableFs persona mounts) | just-bash (Vercel Labs) | Phase 8 Session 8.3 |
+| Network allow-list + header injection (API security) | just-bash (Vercel Labs) | Phase 8 Session 8.1 |
+| Declarative capability metadata on agent definitions | oh-my-codex | Phase 7 P7-C patch |
+| Underspecification gating (redirect vague to planning) | oh-my-codex | Phase 7 Session 7.2 |
+| Phase-based agent composition (per-phase persona recs) | oh-my-codex | Phase 8 Session 8.2 |
+| Worker allocation scoring (role + scope + load) | oh-my-codex | Phase 8 Session 8.2 |
+| Three-tier memory (priority/working/manual sections) | oh-my-codex | Phase 8 Session 8.1 |
+| Pipeline stage interface (run + canSkip + checkpoint) | oh-my-codex | Phase 8 Session 8.2 |
+| Formal state machine with fix loop (max N attempts) | oh-my-codex | Phase 8 Session 8.2 |
+| Runtime overlay injection (marker-bounded context) | oh-my-codex | Phase 7 Session 7.2 / Phase 8 Session 8.2 |
+| Dual adapter system (YAML declarative + code imperative) | OpenCLI | Phase 7 P7-C patch (4th validation) |
+| Dispatch lifecycle hooks (before/after/startup) | OpenCLI | Phase 8 Session 8.2 |
+| Strategy cascade (minimum privilege discovery) | OpenCLI | Phase 8 Session 8.2 |
+| Compile-time key hash tables for IPC dispatch | Glaze | Phase 9 |
+| Buffer reuse + padding for zero-alloc IPC | Glaze | Phase 9 |
+| Binary format for high-frequency hot paths | Glaze | Phase 9 |
+| Expression<T> template+bindings (type-safe SQL) | SQLite.swift | Phase 9 |
+| Schema reader via PRAGMA introspection | SQLite.swift | Phase 9 |
+| Pure decision functions for lifecycle logic | background-agents | Phase 8 Session 8.1 |
+| Circuit breaker for agent/ritual dispatch | background-agents | Phase 8 Sessions 8.1/8.2 |
+| Auto-pause with consecutive failure tracking | background-agents | Phase 8 Session 8.1 |
+| Recovery sweep on every heartbeat tick | background-agents | Phase 8 Session 8.1 |
+| Typed event condition registry (reactive triggers) | background-agents | Phase 8 Session 8.2 |
+| Proactive warming on intent (pre-warm context) | background-agents | Phase 8 Session 8.1 |
+| Dispatch queue with serial execution + crash recovery | background-agents | Phase 8 Session 8.2 |
+| Log-normal scoring with percentile control points | Lighthouse | Phase 8 Session 8.3b (Pareto/quality scoring) |
+| Audit base class pattern (meta + requiredArtifacts + audit) | Lighthouse | Phase 8 Session 8.2 (gate audit structure) |
+| Rust crypto library landscape (ring/sodiumoxide/BLAKE3/rage/argon2) | awesome-cryptography | Phase 9 / R-DS-01 (Tanaka knowledge bank) |
+| Media generation pipeline (diagram/image/audio/video) | Novel | Phase 8 Session 8.8 |
+| MediaProvider trait (mirrors chat provider abstraction) | Novel (from existing provider pattern) | Phase 8 Session 8.8 |
+| Free-tier API targeting (HF Inference, fal.ai, Together, Edge TTS) | Novel | Phase 8 Session 8.8 |
+| Persona portraits + ritual sounds + pipeline GIF export | Novel | Phase 8 Session 8.8 |
+| Persistent context tree (agentic map + 96.1% retrieval benchmarks) | ByteRover CLI | Phase 8 Sessions 8.1/8.3 (validates KAIROS + sigils) |
+| Hub & Connectors extensible skill bundles | ByteRover CLI | Phase 8 Session 8.1 (validates skills marketplace) |
+| Tool Registry with Factory DI + requiredServices gating | ByteRover CLI | Phase 7 P7-C.1 (2nd validation factory tool reg) |
+| Tool Markers semantic classification (Core/Discovery/Execution/etc.) | ByteRover CLI | Phase 7 P7-C (validates CommandCategory enum) |
+| Policy Engine rule-based access (ALLOW/DENY, first-match-wins) | ByteRover CLI | Phase 7 Session 7.3 / Phase 8 Session 8.2 |
+| Priority-based invocation queue (4-tier, concurrency-limited) | ByteRover CLI | Phase 7 Session 7.3 (P7-L dispatch queue) |
+| Plugin before/after hooks (sequential before, parallel after) | ByteRover CLI | Phase 8 Session 8.2 (dispatch lifecycle hooks) |
+| Session overrides on immutable baseline (structuredClone) | ByteRover CLI | Phase 8 Session 8.2 (per-dispatch isolated state) |
+| Daemon architecture for persistent background state | ByteRover CLI + Agent Browser | Phase 8 Sessions 8.1/8.2 (validates ritual engine) |
+| Engine abstraction layer (pluggable backends, uniform API) | Agent Browser | Phase 8 Session 8.1 (5th validation dual-adapter) |
+| AX tree snapshot as agent observation model (refs, compact mode) | Agent Browser | Phase 8 Session 8.2 (gate pipeline: snapshot vs raw DOM) |
+| Action Policy Allow/Deny/Confirm trichotomy (JSON-configurable) | Agent Browser | Phase 7 Session 7.2 (2nd validation policy gate) |
+| WebSocket multiplexer with ID-correlated dispatch (oneshot senders) | Agent Browser | Phase 7 Session 7.3 (P7-L dispatch queue internals) |
+| Content boundary markers + AI-friendly error translation | Agent Browser | Phase 8 Sessions 8.1/8.2 (agent security + error UX) |
+| AES-256-GCM encrypted state persistence with session isolation | Agent Browser | Phase 9 (R-DS-01 — 2nd validation alongside AiDesigner) |
+| Retry with transient error classification (platform-specific codes) | Agent Browser | Phase 8 Session 8.2 (circuit breaker enhancement) |
+| Hierarchical config merge (4-tier, additive extension arrays) | Agent Browser | Phase 8 Sessions 8.1/8.2 (grimoire + dispatch config cascade) |
+| Invisible orchestration (hide methodology, one consistent voice) | AiDesigner | Phase 8 Session 8.5 / Phase 9 (selectable visibility) |
+| Dual-lane routing with automatic complexity escalation | AiDesigner | Phase 7 Session 7.2 / Phase 8 Session 8.2 |
+| Conversational tool discovery ("I need X" → auto-configure MCP) | AiDesigner | Phase 9 (auto-MCP setup during /init) |
+| Profile-based environment separation (dev/staging/prod, inheritance) | AiDesigner | Phase 8 Session 8.1 / Phase 9 (grimoire env profiles) |
+| Credential vault with {{vault:key}} reference syntax | AiDesigner | Phase 9 (R-DS-01 keyring migration pattern) |
+| Phase detection via filesystem state (verify claims against artifacts) | AiDesigner | Phase 8 Session 8.1 (vault watcher integrity check) |
+| Meta-agent ecosystem (librarian, refactor, genesis, inspector) | AiDesigner | Phase 8 Session 8.5 (persona evolution meta-agents) |
+| Checkpoint validation before phase transitions | AiDesigner | Phase 7 Session 7.3 (P7-L dispatch queue UX) |
+| Multi-agent BMAD framework with specialist roles | AiDesigner | Validates existing 10-persona architecture |
+| JSONL-over-stdio transport with write serialization | Factory-AI droid-sdk | Phase 8 Session 8.2 (agent subprocess IPC) |
+| Sticky error propagation (one failure kills all pending) | Factory-AI droid-sdk | Phase 8 Session 8.2 (dispatch error handling) |
+| Two-layer state machine (turn-level + mission-level) | Factory-AI droid-sdk | Phase 8 Session 8.2 (KAIROS + swarm state separation) |
+| DroidWorkingState 5-state turn lifecycle | Factory-AI droid-sdk | Phase 7 P7-C.1 (agent working state enum) |
+| MissionState 6-state orchestrator lifecycle | Factory-AI droid-sdk | Phase 7 Session 7.3 (proposal/mission state machine) |
+| InteractionMode × AutonomyLevel 2-axis dispatch gate | Factory-AI droid-sdk | Phase 7 P7-C.1 (refines CapabilityFamily gating) |
+| ToolConfirmationType 9-action permission taxonomy | Factory-AI droid-sdk | Phase 7 Session 7.2 (tool confirmation router) |
+| ToolConfirmationOutcome 8-response permission resolution | Factory-AI droid-sdk | Phase 7 Session 7.2 (confirmation UX) |
+| SettingsLevel 7-tier config hierarchy | Factory-AI droid-sdk | Phase 8 Session 8.1 (grimoire config cascade) |
+| ReasoningEffort 9-level thinking budget | Factory-AI droid-sdk | Phase 8 Session 8.1 (per-persona reasoning profiles) |
+| MissionFeature schema (preconditions + verification + fulfills) | Factory-AI droid-sdk | Phase 7 Session 7.3 (proposal item schema) |
+| Handoff structured worker completion packet | Factory-AI droid-sdk | Phase 8 Session 8.2 (swarm worker completion) |
+| ProgressLogEntry 11-type append-only audit log | Factory-AI droid-sdk | Phase 8 Session 8.2 (KAIROS dispatch audit trail) |
+| FeatureSuccessState (success/partial/failure) outcome quality | Factory-AI droid-sdk | Phase 7 Session 7.3 (proposal completion states) |
+| returnToOrchestrator boolean dispatch signal | Factory-AI droid-sdk | Phase 8 Session 8.2 (swarm chaining optimization) |
+| SkillFeedback + SkillDeviation self-improvement loop | Factory-AI droid-sdk | Phase 8 Session 8.5 (persona evolution input) |
+| DismissalRecord with justification (explicit dismiss + reasoning) | Factory-AI droid-sdk | Phase 7 Session 7.3 (proposal dismissal audit) |
+| MilestoneValidationTriggered checkpoint gate | Factory-AI droid-sdk | Phase 8 Session 8.2 (milestone-gated dispatch) |
+| Bidirectional JSON-RPC (server requests permission from client) | Factory-AI droid-sdk | Phase 8 Session 8.2 (capability gate IPC pattern) |
+| Notification-to-AsyncGenerator bridge (micro-queue + wake) | Factory-AI droid-sdk | Phase 8 Session 8.2 (Rust mpsc → React stream) |
+| Injectable transport interface (test/custom IPC seam) | Factory-AI droid-sdk | Phase 8 Session 8.2 (Tauri custom transport) |
+| allowedTools[] prefix-matching exogenous MCP allowlist | Factory-AI droid-action | Phase 7 P7-C.1 (3rd validation tool allowlist) |
+| Context-aware conditional MCP server registration | Factory-AI droid-action | Phase 8 Session 8.2 (per-dispatch MCP composition) |
+| Runtime permission probe before server registration | Factory-AI droid-action | Phase 8 Session 8.2 (live capability check) |
+| Review depth presets (model + reasoningEffort per tier) | Factory-AI droid-action | Phase 8 Session 8.1 (persona reasoning profiles) |
+| Plugin manifest + sidecar files (mcp.json, hooks.json) | Factory-AI factory-plugins | Phase 8 Session 8.1 (agent definition extensions) |
+| Skill as pure routing-description + instruction body | Factory-AI factory-plugins | Validates Phase 2 kernel architecture |
+| Agent output lint rules for predictable category errors | Factory-AI eslint-plugin | Phase 8 Session 8.2 (post-generation validation) |
 
 ## Verification
 
