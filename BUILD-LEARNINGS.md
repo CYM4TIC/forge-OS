@@ -38,6 +38,8 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-012 | `[design-system]` `[canvas]` | drift | Font strings hardcoded across 12 files. Added FONT token to canvas-tokens.ts. New tokens need propagation sweep. |
 | OS-BL-013 | `[governance]` | process-failure | "Pre-existing" is not an exemption. Rule 43 now structural gate at Phase 5: tsc zero errors + all findings fixed + climb per fix. |
 | OS-BL-014 | `[design-system]` `[frontend]` | gotcha | WCAG contrast fix already existed in sibling function (findingsBadgeColors) but connectivityBadge copied the bug, not the fix. |
+| OS-BL-015 | `[design-system]` `[frontend]` | gotcha | Removing JS focus ring handlers is half the migration — `outline: 'none'` inline styles in the same components silently defeat the CSS `:focus-visible` replacement. When migrating focus management to CSS, grep for BOTH the handler AND the suppression. P7-A: 11 instances across 7 files survived the initial removal pass. |
+| OS-BL-016 | `[design-system]` `[canvas]` | gotcha | StatusBadge glyph at 20x20px: dot radius is only 4px at 1x DPR. Glyph size formula must cap to dot boundary (`dotRadius * 1.4`), not grow independently. Small canvas components need size-aware rendering, not fixed minimums. |
 
 ---
 
