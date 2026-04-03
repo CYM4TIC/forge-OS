@@ -1100,10 +1100,11 @@ export function smartReviewRouting(diffSummary: string): Promise<string[]> {
   return invoke('smart_review_routing', { diffSummary });
 }
 
-/** Force-rescan the agent registry (triggers file walk). */
-export function refreshAgentRegistry(): Promise<RegistryEntry[]> {
-  if (!isTauriRuntime) return Promise.resolve([]);
-  return invoke('refresh_registry');
+/** Force-rescan the agent registry (triggers file walk), then return fresh entries. */
+export async function refreshAgentRegistry(): Promise<RegistryEntry[]> {
+  if (!isTauriRuntime) return [];
+  await invoke('refresh_registry');
+  return invoke('get_agent_registry');
 }
 
 /** Listen for agent working state changes (dispatch lifecycle). */
