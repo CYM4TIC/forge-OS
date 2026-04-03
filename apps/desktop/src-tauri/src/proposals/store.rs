@@ -468,9 +468,8 @@ pub fn get_proposal_feed(
     per_page: i64,
     filter: &ProposalFilter,
 ) -> Result<Vec<FeedEntry>, rusqlite::Error> {
-    // Three separate queries returning full rows — no N+1 re-fetch.
-    // Over-fetch per_page from each type, merge, sort, take page slice.
-    let fetch_limit = (page + 1) * per_page;
+    // Four separate queries returning full rows — no N+1 re-fetch.
+    // Merge, sort, take page slice.
 
     // 1. Proposals (full rows, filtered)
     let proposals = list_proposals(conn, filter)?;
@@ -622,14 +621,16 @@ pub fn get_proposal_feed(
 
 /// Full-text search on proposal title and body.
 /// Uses SQLite LIKE for broad matching (FTS5 index not on proposals table).
+/// LIKE wildcards (%, _) are escaped so user input is treated as literal text.
 pub fn search_proposals(
     conn: &Connection,
     query: &str,
 ) -> Result<Vec<Proposal>, rusqlite::Error> {
-    let pattern = format!("%{}%", query);
+    let escaped = query.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+    let pattern = format!("%{}%", escaped);
     let mut stmt = conn.prepare(
         "SELECT id, author, source, proposal_type, scope, target, severity, title, body, evidence, status, evaluators, preconditions, verification_steps, fulfills, created_at, resolved_at, decision_trace_id
-         FROM proposals WHERE title LIKE ?1 OR body LIKE ?1 ORDER BY created_at DESC LIMIT 50",
+         FROM proposals WHERE title LIKE ?1 ESCAPE '\\' OR body LIKE ?1 ESCAPE '\\' ORDER BY created_at DESC LIMIT 50",
     )?;
     let rows = stmt.query_map(params![pattern], row_to_proposal)?;
     rows.collect()
@@ -655,9 +656,10 @@ pub fn get_response(conn: &Connection, id: &str) -> Result<Option<ProposalRespon
 }
 
 pub fn get_decision_by_proposal(conn: &Connection, proposal_id: &str) -> Result<Option<Decision>, rusqlite::Error> {
+    // UNIQUE constraint on decisions(proposal_id) guarantees at most one row
     let mut stmt = conn.prepare(
         "SELECT id, proposal_id, resolution, rationale, implementing_batch, outcome_tracking, outcome, created_at
-         FROM decisions WHERE proposal_id = ?1 ORDER BY created_at DESC LIMIT 1"
+         FROM decisions WHERE proposal_id = ?1"
     )?;
     let mut rows = stmt.query_map(params![proposal_id], row_to_decision)?;
     match rows.next() {
@@ -740,7 +742,7 @@ pub fn row_to_decision(row: &rusqlite::Row) -> Result<Decision, rusqlite::Error>
     })
 }
 
-fn row_to_dismissal(row: &rusqlite::Row) -> Result<DismissalRecord, rusqlite::Error> {
+pub fn row_to_dismissal(row: &rusqlite::Row) -> Result<DismissalRecord, rusqlite::Error> {
     let type_str: String = row.get(2)?;
     Ok(DismissalRecord {
         id: row.get(0)?,

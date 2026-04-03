@@ -25,11 +25,13 @@ pub fn auto_assign_evaluators(proposal: &Proposal) -> Vec<String> {
     let scope_lower = proposal.scope.to_lowercase();
     let target_lower = proposal.target.to_lowercase();
     let combined = format!("{} {}", scope_lower, target_lower);
+    // Split into words for exact token matching (no substring false positives)
+    let words: Vec<&str> = combined.split_whitespace().collect();
 
     let mut matched: Vec<&str> = Vec::new();
 
     for (keywords, evaluators) in SCOPE_EVALUATOR_MAP {
-        let hit = keywords.iter().any(|kw| combined.contains(kw));
+        let hit = keywords.iter().any(|kw| words.iter().any(|w| w == kw));
         if hit {
             for ev in *evaluators {
                 if !matched.contains(ev) {

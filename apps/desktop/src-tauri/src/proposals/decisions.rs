@@ -26,10 +26,7 @@ pub fn resolve_proposal(
         ));
     }
 
-    let now = chrono_now();
-
-    // Transition proposal status (validates Open→Evaluating→Accepted|Rejected)
-    // First ensure we're in Evaluating state
+    // Validate state before transaction
     let proposal = store::get_proposal(conn, proposal_id)
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Proposal not found: {}", proposal_id))?;
@@ -41,39 +38,54 @@ pub fn resolve_proposal(
         ));
     }
 
-    // Update proposal status with resolution metadata
-    store::update_proposal_status(
-        conn,
-        proposal_id,
-        status,
-        Some(&now),
-        Some(decision_id),
-    )?;
-
-    // Create decision record
+    let now = chrono_now();
     let resolution = match status {
         ProposalStatus::Accepted => "accepted",
         ProposalStatus::Rejected => "rejected",
         _ => unreachable!(),
     };
-
     let outcome_str = outcome.map(|o| o.as_str().to_string());
 
-    conn.execute(
-        "INSERT INTO decisions (id, proposal_id, resolution, rationale, implementing_batch, outcome_tracking, outcome, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        params![
-            decision_id,
+    // Atomic: status update + decision insert in a single transaction
+    conn.execute_batch("BEGIN IMMEDIATE;").map_err(|e| e.to_string())?;
+
+    let tx_result = (|| -> Result<(), String> {
+        store::update_proposal_status(
+            conn,
             proposal_id,
-            resolution,
-            rationale,
-            implementing_batch,
-            Option::<String>::None, // outcome_tracking set later
-            outcome_str,
-            now,
-        ],
-    )
-    .map_err(|e| e.to_string())?;
+            status,
+            Some(&now),
+            Some(decision_id),
+        )?;
+
+        conn.execute(
+            "INSERT INTO decisions (id, proposal_id, resolution, rationale, implementing_batch, outcome_tracking, outcome, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![
+                decision_id,
+                proposal_id,
+                resolution,
+                rationale,
+                implementing_batch,
+                Option::<String>::None,
+                outcome_str,
+                now,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    })();
+
+    match tx_result {
+        Ok(()) => {
+            conn.execute_batch("COMMIT;").map_err(|e| e.to_string())?;
+        }
+        Err(e) => {
+            let _ = conn.execute_batch("ROLLBACK;");
+            return Err(e);
+        }
+    }
 
     // Read back the created decision
     store::get_decision_by_proposal(conn, proposal_id)
@@ -84,9 +96,8 @@ pub fn resolve_proposal(
 // ── Dismissal creation ──
 
 /// Dismiss a proposal with explicit justification.
-/// Creates a dismissal record in SQLite. Does NOT change proposal status to rejected —
-/// dismissal is a separate semantic: "acknowledged but deprioritized."
-/// The proposal remains in its current status with a linked dismissal record.
+/// Creates a dismissal record in SQLite. Only Open or Evaluating proposals can be dismissed.
+/// Accepted/Rejected proposals have completed the lifecycle. One dismissal per proposal.
 pub fn dismiss_proposal(
     conn: &Connection,
     dismissal_id: &str,
@@ -95,10 +106,27 @@ pub fn dismiss_proposal(
     summary: &str,
     justification: &str,
 ) -> Result<DismissalRecord, String> {
-    // Verify proposal exists
-    store::get_proposal(conn, proposal_id)
+    // Verify proposal exists and is in a dismissable state
+    let proposal = store::get_proposal(conn, proposal_id)
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Proposal not found: {}", proposal_id))?;
+
+    if proposal.status == ProposalStatus::Accepted || proposal.status == ProposalStatus::Rejected {
+        return Err(format!(
+            "Cannot dismiss resolved proposal (status: {})",
+            proposal.status.as_str()
+        ));
+    }
+
+    // One dismissal per proposal — check for existing
+    let existing = list_dismissals_for_proposal(conn, proposal_id)
+        .map_err(|e| e.to_string())?;
+    if !existing.is_empty() {
+        return Err(format!(
+            "Proposal {} already has a dismissal record",
+            proposal_id
+        ));
+    }
 
     let now = chrono_now();
 
@@ -131,7 +159,7 @@ pub fn get_dismissal(
         "SELECT id, proposal_id, dismissal_type, summary, justification, created_at
          FROM dismissals WHERE id = ?1",
     )?;
-    let mut rows = stmt.query_map(params![id], row_to_dismissal)?;
+    let mut rows = stmt.query_map(params![id], store::row_to_dismissal)?;
     match rows.next() {
         Some(row) => Ok(Some(row?)),
         None => Ok(None),
@@ -147,7 +175,7 @@ pub fn list_dismissals_for_proposal(
         "SELECT id, proposal_id, dismissal_type, summary, justification, created_at
          FROM dismissals WHERE proposal_id = ?1 ORDER BY created_at DESC",
     )?;
-    let rows = stmt.query_map(params![proposal_id], row_to_dismissal)?;
+    let rows = stmt.query_map(params![proposal_id], store::row_to_dismissal)?;
     rows.collect()
 }
 
@@ -164,21 +192,6 @@ pub fn get_decision_history(
     )?;
     let rows = stmt.query_map(params![per_page, offset], store::row_to_decision)?;
     rows.collect()
-}
-
-// ── Row mapper ──
-
-fn row_to_dismissal(row: &rusqlite::Row) -> Result<DismissalRecord, rusqlite::Error> {
-    let type_str: String = row.get(2)?;
-    Ok(DismissalRecord {
-        id: row.get(0)?,
-        proposal_id: row.get(1)?,
-        dismissal_type: DismissalType::from_str(&type_str)
-            .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
-        summary: row.get(3)?,
-        justification: row.get(4)?,
-        created_at: row.get(5)?,
-    })
 }
 
 /// UTC ISO 8601 timestamp (matches SQLite default format and hud/findings.rs pattern).

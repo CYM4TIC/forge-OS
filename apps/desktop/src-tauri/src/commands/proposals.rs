@@ -106,6 +106,18 @@ pub struct SearchProposalsRequest {
     pub query: String,
 }
 
+// ── Helpers ──
+
+const VALID_SEVERITIES: &[&str] = &["critical", "high", "medium", "low", "info"];
+
+fn validate_non_empty(field: &str, name: &str) -> Result<(), String> {
+    if field.trim().is_empty() {
+        Err(format!("{} cannot be empty", name))
+    } else {
+        Ok(())
+    }
+}
+
 // ── Tauri commands ──
 
 #[tauri::command]
@@ -114,6 +126,20 @@ pub fn file_proposal(
     db: State<'_, Database>,
     request: FileProposalRequest,
 ) -> Result<Proposal, String> {
+    // Input validation
+    validate_non_empty(&request.author, "author")?;
+    validate_non_empty(&request.title, "title")?;
+    validate_non_empty(&request.body, "body")?;
+    validate_non_empty(&request.scope, "scope")?;
+    validate_non_empty(&request.target, "target")?;
+    if !VALID_SEVERITIES.contains(&request.severity.as_str()) {
+        return Err(format!(
+            "Invalid severity '{}'. Must be one of: {}",
+            request.severity,
+            VALID_SEVERITIES.join(", ")
+        ));
+    }
+
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
     // Rate limit: max 3 per persona per session (automated exempt)
@@ -190,8 +216,8 @@ pub fn get_proposal_feed(
     request: GetProposalFeedRequest,
 ) -> Result<Vec<FeedEntry>, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    let page = request.page.unwrap_or(0);
-    let per_page = request.per_page.unwrap_or(20);
+    let page = request.page.unwrap_or(0).max(0);
+    let per_page = request.per_page.unwrap_or(20).clamp(1, 100);
     let filter = ProposalFilter {
         author: request.author,
         proposal_type: request.proposal_type,
@@ -237,12 +263,30 @@ pub fn evaluate_proposal(
     db: State<'_, Database>,
     request: EvaluateProposalRequest,
 ) -> Result<store::ProposalResponse, String> {
+    validate_non_empty(&request.author, "author")?;
+    validate_non_empty(&request.response_body, "response_body")?;
+
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
 
-    // Verify proposal exists and transition to Evaluating if still Open
+    // Verify proposal exists and is in an evaluable state
     let proposal = store::get_proposal(&conn, &request.id)
         .map_err(|e| e.to_string())?
         .ok_or_else(|| format!("Proposal not found: {}", request.id))?;
+
+    // Reject responses on terminal-state proposals
+    if proposal.status == ProposalStatus::Accepted || proposal.status == ProposalStatus::Rejected {
+        return Err(format!(
+            "Cannot evaluate resolved proposal (status: {})",
+            proposal.status.as_str()
+        ));
+    }
+
+    // Also reject if proposal has been dismissed
+    let dismissals = decisions::list_dismissals_for_proposal(&conn, &request.id)
+        .map_err(|e| e.to_string())?;
+    if !dismissals.is_empty() {
+        return Err(format!("Cannot evaluate dismissed proposal: {}", request.id));
+    }
 
     if proposal.status == ProposalStatus::Open {
         store::update_proposal_status(
@@ -280,6 +324,8 @@ pub fn resolve_proposal(
     db: State<'_, Database>,
     request: ResolveProposalRequest,
 ) -> Result<Decision, String> {
+    validate_non_empty(&request.rationale, "rationale")?;
+
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     let decision_id = Ulid::new().to_string();
 
@@ -304,6 +350,9 @@ pub fn dismiss_proposal(
     db: State<'_, Database>,
     request: DismissProposalRequest,
 ) -> Result<DismissalRecord, String> {
+    validate_non_empty(&request.summary, "summary")?;
+    validate_non_empty(&request.justification, "justification")?;
+
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     let dismissal_id = Ulid::new().to_string();
 
@@ -316,6 +365,7 @@ pub fn dismiss_proposal(
         &request.justification,
     )?;
 
+    let _ = app.emit("proposals:dismissed", &dismissal);
     let _ = app.emit("proposals:feed-updated", &dismissal);
     Ok(dismissal)
 }
@@ -326,8 +376,8 @@ pub fn get_decision_history(
     request: GetDecisionHistoryRequest,
 ) -> Result<Vec<Decision>, String> {
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
-    let page = request.page.unwrap_or(0);
-    let per_page = request.per_page.unwrap_or(20);
+    let page = request.page.unwrap_or(0).max(0);
+    let per_page = request.per_page.unwrap_or(20).clamp(1, 100);
     decisions::get_decision_history(&conn, page, per_page).map_err(|e| e.to_string())
 }
 
@@ -336,6 +386,7 @@ pub fn search_proposals(
     db: State<'_, Database>,
     request: SearchProposalsRequest,
 ) -> Result<Vec<Proposal>, String> {
+    validate_non_empty(&request.query, "query")?;
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     store::search_proposals(&conn, &request.query).map_err(|e| e.to_string())
 }
