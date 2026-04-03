@@ -41,6 +41,7 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-015 | `[design-system]` `[frontend]` | gotcha | Removing JS focus ring handlers is half the migration — `outline: 'none'` inline styles in the same components silently defeat the CSS `:focus-visible` replacement. When migrating focus management to CSS, grep for BOTH the handler AND the suppression. P7-A: 11 instances across 7 files survived the initial removal pass. |
 | OS-BL-016 | `[design-system]` `[canvas]` | gotcha | StatusBadge glyph at 20x20px: dot radius is only 4px at 1x DPR. Glyph size formula must cap to dot boundary (`dotRadius * 1.4`), not grow independently. Small canvas components need size-aware rendering, not fixed minimums. |
 | OS-BL-017 | `[frontend]` `[design-system]` | pattern | WAI-ARIA Tabs require roving tabindex (tabIndex 0/-1 + arrow keys + Home/End + all panels rendered). TeamPanel is the canonical template. Copy this pattern for all future tabbed panels. |
+| OS-BL-018 | `[frontend]` `[design-system]` | drift | @keyframes (spin, pulse) must be explicitly injected per-component when using inline React styles. Three components now duplicate them (TeamPanel, ConnectivityPanel, ActionPalette). Future: centralize in globals.css and remove per-component `<style>` injections. |
 
 ---
 
@@ -162,6 +163,15 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Problem:** Standard button tabs (each with tabIndex=0) create multiple tab stops where the WAI-ARIA Tabs Pattern requires a single tab stop with arrow key navigation (roving tabindex). All panels rendered, inactive hidden with display:none, so aria-controls resolves.
 **Solution:** TabButton gets `tabIndex={active ? 0 : -1}`, `aria-controls` only on active tab, `buttonRef` for programmatic focus. Parent tablist handles `onKeyDown` for ArrowLeft/Right/Up/Down/Home/End. All tabpanels rendered simultaneously with `display: activeTab === 'x' ? 'flex' : 'none'`.
 **Prevention:** This is now the canonical tab pattern for Forge OS. Any future tabbed panel must copy this template from TeamPanel — TabButton component + handleTablistKeyDown handler + tabRefs + all-panels-rendered.
+
+---
+
+### OS-BL-018: @keyframes Must Be Injected Per-Component — Inline Style Limitation
+**Discovered:** 2026-04-03 | **Domain:** frontend, design-system | **Severity:** drift | **Tag:** [FORGE-OS] `[frontend]` `[design-system]`
+**Context:** P7-G ActionPalette referenced `@keyframes spin` and `@keyframes pulse` in inline style objects, but neither was defined. Both animations silently failed (static spinner, no skeleton pulse). Three triad members flagged independently.
+**Problem:** React inline styles can reference animation names, but CSS `@keyframes` definitions must live in a stylesheet. Each component that uses animations currently injects its own `<style>` tag with keyframe definitions. This is fragile — the dependency is invisible until someone notices the animation doesn't work.
+**Solution:** Inject `<style>` block with required keyframes inside each component that uses them. M-CRIT-1 fix pattern: constant strings `KEYFRAMES` + `FOCUS_AND_MOTION_STYLES` rendered in every return path.
+**Prevention:** Long-term: define all reusable keyframes in globals.css. Short-term: any new component using `animation:` in inline styles must inject its own `<style>`. Grep for `animation:` in new component files to catch this.
 
 ---
 
