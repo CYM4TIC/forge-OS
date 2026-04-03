@@ -37,6 +37,7 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-011 | `[frontend]` `[runtime]` | gotcha | ThresholdStatus field is `usage_fraction` (0-1), not `usage_percent`. Phantom fields compile but evaluate to undefined at runtime. |
 | OS-BL-012 | `[design-system]` `[canvas]` | drift | Font strings hardcoded across 12 files. Added FONT token to canvas-tokens.ts. New tokens need propagation sweep. |
 | OS-BL-013 | `[governance]` | process-failure | "Pre-existing" is not an exemption. Rule 43 now structural gate at Phase 5: tsc zero errors + all findings fixed + climb per fix. |
+| OS-BL-014 | `[design-system]` `[frontend]` | gotcha | WCAG contrast fix already existed in sibling function (findingsBadgeColors) but connectivityBadge copied the bug, not the fix. |
 
 ---
 
@@ -144,6 +145,13 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Problem:** canvas-tokens.ts had CANVAS, STATUS, RADIUS, TIMING, GLOW, TINT, DOCK, HIGHLIGHT, PIPELINE — 9 token groups, no FONT. Every component independently hardcoded the same font strings. If the font stack ever changes, 12+ files drift independently.
 **Solution:** Added `FONT = { mono: 'monospace', system: '-apple-system, BlinkMacSystemFont, sans-serif' }` to canvas-tokens.ts. Propagated to all 12 consumer files. Added to barrel export.
 **Prevention:** When adding a new token group to canvas-tokens.ts, grep the codebase for the raw value it replaces. The gap isn't the missing token — it's the existing hardcoded instances that won't be found until someone greps for them. New tokens should ship with a propagation sweep.
+
+### OS-BL-014: WCAG Contrast in Badge Colors — Copy-Paste Divergence
+**Discovered:** 2026-04-02 | **Domain:** design-system | **Severity:** gotcha | **Tags:** `[design-system]` `[frontend]`
+**Context:** P6-J gate (Riven R-DS-01) — connectivityBadge used white text on amber, same file has findingsBadgeColors that already fixed this.
+**Problem:** findingsBadgeColors had a comment noting white on #f59e0b is 2.1:1 contrast and used dark text. connectivityBadge, written 50 lines below in the same file, made the exact same mistake and used '#fff'. The fix was already in the same file but the copy-paste divergence wasn't caught during build.
+**Solution:** Matched connectivityBadge warning text to CANVAS.bg (dark). Added comment cross-referencing the contrast requirement.
+**Prevention:** When creating a new function that parallels an existing one in the same file, read the existing function's comments and edge case handling. The fix you need may already be documented in the sibling function.
 
 ### OS-BL-013: "Pre-Existing" Is Not an Exemption — Rule 43 Structural Gate
 **Discovered:** 2026-04-02 | **Domain:** governance | **Severity:** process-failure | **Tag:** [FORGE-OS]
