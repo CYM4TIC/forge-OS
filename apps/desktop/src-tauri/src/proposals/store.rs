@@ -542,6 +542,20 @@ pub fn get_decision_by_proposal(conn: &Connection, proposal_id: &str) -> Result<
 
 // ── Row mappers ──
 
+/// Parse a JSON string column into a typed value, propagating errors instead of
+/// silently returning defaults. Corrupted JSON surfaces as a query error.
+fn parse_json_column<T: serde::de::DeserializeOwned>(
+    raw: &str,
+    column_name: &str,
+) -> Result<T, rusqlite::Error> {
+    serde_json::from_str(raw).map_err(|e| {
+        rusqlite::Error::InvalidParameterName(format!(
+            "Corrupted JSON in column '{}': {}",
+            column_name, e
+        ))
+    })
+}
+
 fn row_to_proposal(row: &rusqlite::Row) -> Result<Proposal, rusqlite::Error> {
     let evidence_str: String = row.get(9)?;
     let evaluators_str: String = row.get(11)?;
@@ -564,13 +578,16 @@ fn row_to_proposal(row: &rusqlite::Row) -> Result<Proposal, rusqlite::Error> {
         severity: row.get(6)?,
         title: row.get(7)?,
         body: row.get(8)?,
-        evidence: serde_json::from_str(&evidence_str).unwrap_or_default(),
+        evidence: parse_json_column(&evidence_str, "evidence")?,
         status: ProposalStatus::from_str(&status_str)
             .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
-        evaluators: serde_json::from_str(&evaluators_str).unwrap_or_default(),
-        preconditions: serde_json::from_str(&preconditions_str).unwrap_or_default(),
-        verification_steps: serde_json::from_str(&verification_str).unwrap_or_default(),
-        fulfills: fulfills_str.and_then(|s| serde_json::from_str(&s).ok()),
+        evaluators: parse_json_column(&evaluators_str, "evaluators")?,
+        preconditions: parse_json_column(&preconditions_str, "preconditions")?,
+        verification_steps: parse_json_column(&verification_str, "verification_steps")?,
+        fulfills: match fulfills_str {
+            Some(ref s) => Some(parse_json_column(s, "fulfills")?),
+            None => None,
+        },
         created_at: row.get(15)?,
         resolved_at: row.get(16)?,
         decision_trace_id: row.get(17)?,
@@ -586,7 +603,13 @@ fn row_to_decision(row: &rusqlite::Row) -> Result<Decision, rusqlite::Error> {
         rationale: row.get(3)?,
         implementing_batch: row.get(4)?,
         outcome_tracking: row.get(5)?,
-        outcome: outcome_str.and_then(|s| ProposalOutcome::from_str(&s).ok()),
+        outcome: match outcome_str {
+            Some(ref s) => Some(
+                ProposalOutcome::from_str(s)
+                    .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+            ),
+            None => None,
+        },
         created_at: row.get(7)?,
     })
 }
