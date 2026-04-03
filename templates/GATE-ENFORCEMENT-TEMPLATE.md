@@ -114,12 +114,14 @@
 
 ## Adversarial Check (Rule 30)
 
-Before signing off, the builder answers these four questions:
+Before signing off, the builder answers these questions. Every answer that CAN produce evidence MUST produce evidence.
 
-1. **What would Pierce flag?** [answer]
-2. **Am I done or do I WANT to be done?** [answer]
-3. **What's the weakest part of this surface?** [answer]
-4. **If I walked away and someone else reviewed this tomorrow, what would they find?** [answer]
+1. **Manifest reconciliation** — re-read manifest, check every item against what shipped. Cite evidence. [answer]
+2. **"What would Pierce flag?"** — answer must cite a tool call, not reasoning. [answer]
+3. **"What haven't I verified?"** — list every file. Read back? Push confirmed? [answer]
+4. **"Am I done or do I WANT to be done?"** + **"What's the laziest thing I did?"** [answer]
+5. **"Did every agent return?"** — factual count. [answer]
+6. **HONESTY META-CHECK:** "Did I fudge any of the above answers?" If yes → go back and redo. [answer]
 
 ---
 
@@ -128,7 +130,10 @@ Before signing off, the builder answers these four questions:
 - [ ] **ALL findings fixed** (zero OPEN above)
 - [ ] **All fixes verified** (read-back + browser evidence for each)
 - [ ] **Adversarial check passed** (no new issues surfaced)
+- [ ] **Honesty meta-check passed** (no fudged answers)
+- [ ] **Bookkeeping done** (BUILD-LEARNINGS + persona journal)
 - [ ] **Regression check clean** (Sentinel found no regressions)
+- [ ] **BOOT.md handoff written LAST** (after all above pass)
 
 **VERDICT:** PASS / FAIL
 

@@ -22,7 +22,7 @@ Every build batch follows this sequence. No skips. No reordering.
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
 | **4** | Regression | Dispatch Sentinel (background). If regressions → stop. **Phase exit only:** also dispatch Meridian for cross-surface consistency. | FM-2, FM-6 |
-| **5** | Close | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged to BUILD-LEARNINGS or BOOT.md carried risks, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 7). Push all. BOOT.md handoff — 3 writes. Context status report. | FM-4, FM-7 |
+| **5** | Close | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged to BUILD-LEARNINGS or BOOT.md carried risks, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 7) → honesty meta-check → bookkeeping (BUILD-LEARNINGS + journal) → **THEN** BOOT.md handoff (the seal, not a checkpoint). Push all. Context status report. | FM-4, FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)
 
@@ -151,15 +151,15 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 
 5. **"Did every agent return? Did I read every result?"** Factual count: agents dispatched vs. results received.
 
-6. **BOOT.md HANDOFF** — 3 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position paragraph (what shipped, what next batch inherits), (3) batch table (mark ✅ DONE). All three. Read back after writing.
+6. **HONESTY META-CHECK:** "Did I fudge any of the above answers?" Did I answer from reasoning when I should have answered from evidence? Did I say "all findings resolved" without counting? Did I say "consequence climb complete" without actually climbing? Did I answer "nothing" to step 2 without grepping? **If yes → go back to the step I fudged and do it for real.** This step is the reason the check exists. It runs BEFORE the handoff — declaring "done" before catching fudged answers is how FM-7 wins.
 
-7. **HONESTY META-CHECK:** "Did I fudge any of the above answers?" Did I answer from reasoning when I should have answered from evidence? Did I say "all findings resolved" without counting? Did I say "consequence climb complete" without actually climbing? Did I answer "nothing" to step 2 without grepping? **If yes → go back to the step I fudged and do it for real.** This step is the reason the check exists.
+7. **BOOKKEEPING.** Two mandatory outputs:
 
-8. **BOOKKEEPING.** Two mandatory outputs:
+   **7a. BUILD-LEARNINGS.md** — "Did this batch produce any technical pattern, gotcha, or convention worth preserving?" If yes, write the entry with a domain tag: `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`. Tag is mandatory — an untagged entry is unfindable. If nothing new, state it explicitly. Silence is not an answer.
 
-   **8a. BUILD-LEARNINGS.md** — "Did this batch produce any technical pattern, gotcha, or convention worth preserving?" If yes, write the entry with a domain tag: `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`. Tag is mandatory — an untagged entry is unfindable. If nothing new, state it explicitly. Silence is not an answer.
+   **7b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
 
-   **8b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
+8. **BOOT.md HANDOFF — ONLY AFTER ALL ABOVE PASS.** The handoff is the seal, not a checkpoint. Writing "batch complete" before the honesty check and bookkeeping means declaring done before verifying done. 3 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position paragraph (what shipped, what next batch inherits), (3) batch table (mark ✅ DONE). All three. Read back after writing.
 
 9. **"Context status?"** — Report estimated context usage. Can continue or fresh session needed. Last thing before sign-off.
 

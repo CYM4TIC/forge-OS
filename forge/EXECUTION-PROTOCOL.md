@@ -279,7 +279,7 @@ Each micro-batch is independently pushed, verified, and confirmed before the nex
 After ALL micro-batches are complete and verified:
 
 ### Gate Execution:
-1. **Dispatch Build Triad** (Pierce + Mara + Riven) — ALWAYS. No exceptions.
+1. **Dispatch Build Triad** (Pierce + Mara + Kehinde) — ALWAYS. No exceptions.
 2. **Dispatch additional personas** per PERSONA-GATES or surface type (see `docs/EXECUTION-GATES.md` Section 7).
 3. **Dispatch Wraith** on high-risk surfaces.
 4. Gates run against LIVE APPLICATION, not file reads.
@@ -350,16 +350,7 @@ ADVERSARIAL CHECK (every answer that CAN produce evidence MUST produce evidence)
   resolved" without counting, or said "nothing" without grepping →
   go back to the fudged step and do it for real.
 
-ONLY AFTER ALL BOXES ARE CHECKED:
-
-BOOT.MD HANDOFF — 3 WRITES, ALL MANDATORY:
-□ 1. YAML header: advance current_batch, increment batches_done, update last_commit
-□ 2. Current Position paragraph: append what shipped + what next batch inherits
-□ 3. Batch table: mark batch ✅ DONE
-
-All three. Every batch. Not just the header. Read back after writing.
-
-BOOKKEEPING — 2 MANDATORY OUTPUTS:
+BOOKKEEPING — 2 MANDATORY OUTPUTS (before handoff — these are batch outputs, not post-close admin):
 □ BUILD-LEARNINGS.md: any technical pattern, gotcha, or convention
   from this batch. Domain-tagged: [frontend] [canvas] [rust] [runtime]
   [design-system] [governance] [tooling]. Tag is mandatory. If nothing
@@ -367,6 +358,17 @@ BOOKKEEPING — 2 MANDATORY OUTPUTS:
 □ Persona journal (personas/nyx/JOURNAL.md): what I learned about how
   I work this batch. Where I cut corners, where FMs fired, where I
   surprised myself. One honest paragraph. Every batch teaches something.
+
+ONLY AFTER ALL BOXES ARE CHECKED:
+
+BOOT.MD HANDOFF — THE SEAL, NOT A CHECKPOINT. 3 WRITES, ALL MANDATORY:
+□ 1. YAML header: advance current_batch, increment batches_done, update last_commit
+□ 2. Current Position paragraph: append what shipped + what next batch inherits
+□ 3. Batch table: mark batch ✅ DONE
+
+All three. Every batch. Not just the header. Read back after writing.
+Writing "batch complete" before honesty check + bookkeeping = declaring done
+before verifying done. The handoff is the LAST thing written, not a midpoint.
 
 Then: context status report — estimated usage, can continue or fresh session needed.
 ```
@@ -533,7 +535,7 @@ PHASE 2 — CONSEQUENCE CLIMB (NON-NEGOTIABLE — before agent dispatch)
   The triad handles everything beyond this.
 
 PHASE 3 — GATE (agent dispatch — NEVER inline)
-  Step 1: Dispatch Build Triad (Pierce + Mara + Riven)
+  Step 1: Dispatch Build Triad (Pierce + Mara + Kehinde)
   Step 2: If additional personas required → dispatch per surface type
   Step 3: If high-risk → Wraith red team
   Step 4: Fix ALL findings. No "pre-existing" exemptions. If the Triad
@@ -569,7 +571,7 @@ PHASE 5 — COMPLETION
 | When | Agent | Background? | Returns |
 |---|---|---|---|
 | Batch start | Scout | No (blocking) | Schema brief, open findings, gotchas |
-| After micro-batches | Build Triad | No (need findings to fix) | Pierce + Mara + Riven findings |
+| After micro-batches | Build Triad | No (need findings to fix) | Pierce + Mara + Kehinde findings |
 | If required | Systems Triad | No | Kehinde + Tanaka + Vane findings |
 | High-risk surfaces | Wraith | Yes | Red team findings |
 | After fixes | Sentinel | Yes | Regression report |

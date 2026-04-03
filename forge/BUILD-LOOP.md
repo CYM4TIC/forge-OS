@@ -32,7 +32,7 @@ BUILD (per micro-batch)
   19. Repeat until surface complete
 
 GATE (AGENT DISPATCH — never inline)
-  20. Dispatch Build Triad (Pierce + Mara + Riven)
+  20. Dispatch Build Triad (Pierce + Mara + Kehinde)
   21. Dispatch additional personas per gates
   22. If high-risk → Wraith red team
   23. Fix ALL findings.
@@ -42,16 +42,17 @@ REGRESSION CHECK
   25. Regressions → STOP
 
 CLOSE
-  26. Adversarial check (Rule 27)
-  27. Push ALL changes (Rule 28)
-  28. Update BOOT.md handoff
-  29. Log build learnings
-  30. Report results + context window
+  26. Adversarial check (Rule 27) — evidence-based, not reasoning-based
+  27. Honesty meta-check — "did I fudge any of the above?"
+  28. Push ALL changes (Rule 28)
+  29. Log build learnings + persona journal
+  30. Update BOOT.md handoff — LAST (the seal, not a checkpoint)
+  31. Report results + context window
 
 INTROSPECTION CHECK
-  31. Layer exit → suggest introspection
-  32. Failure event → suggest targeted introspection
-  33. Batch milestone → suggest team check-in
+  32. Layer exit → suggest introspection
+  33. Failure event → suggest targeted introspection
+  34. Batch milestone → suggest team check-in
 ```
 
 ## Context Window Management
