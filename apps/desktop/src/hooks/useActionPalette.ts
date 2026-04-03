@@ -3,8 +3,8 @@
 // provides dispatch flow for orchestrators, commands, and sub-agents.
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { PaletteResponse, PaletteAction, SpecificationResult } from '../lib/tauri';
-import { getPaletteActions, getAgentContent, dispatchAgent, checkSpecification } from '../lib/tauri';
+import type { PaletteResponse, PaletteAction, SpecificationResult, ConfirmationRequest, ConfirmationOutcome } from '../lib/tauri';
+import { getPaletteActions, getAgentContent, dispatchAgent, checkSpecification, onConfirmationRequested, respondToConfirmation } from '../lib/tauri';
 
 export interface UseActionPaletteReturn {
   /** Resolved palette response (individual + orchestrator actions). */
@@ -26,6 +26,10 @@ export interface UseActionPaletteReturn {
   clearUnderspecified: () => void;
   /** Re-trigger the palette fetch (e.g., after error). */
   refresh: () => void;
+  /** Current pending confirmation request (null if none). */
+  pendingConfirmation: ConfirmationRequest | null;
+  /** Respond to a pending confirmation (supports full outcome set). */
+  respondConfirmation: (outcome: ConfirmationOutcome) => Promise<void>;
 }
 
 const EMPTY_RESPONSE: PaletteResponse = {
@@ -46,6 +50,8 @@ export function useActionPalette(selectedArray: string[]): UseActionPaletteRetur
   const [dispatching, setDispatching] = useState(false);
   const [dispatchingSlug, setDispatchingSlug] = useState<string | null>(null);
   const [underspecified, setUnderspecified] = useState<string | null>(null);
+  // K-MED-1: Queue for concurrent confirmations — process one at a time
+  const [confirmationQueue, setConfirmationQueue] = useState<ConfirmationRequest[]>([]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -59,6 +65,18 @@ export function useActionPalette(selectedArray: string[]): UseActionPaletteRetur
       mountedRef.current = false;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
+  }, []);
+
+  // P7-H: Subscribe to confirmation requests from the dispatch pipeline
+  // K-MED-1: Queue concurrent requests instead of overwriting
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    onConfirmationRequested((request) => {
+      if (mountedRef.current) {
+        setConfirmationQueue((q) => [...q, request]);
+      }
+    }).then((fn) => { unlisten = fn; });
+    return () => { if (unlisten) unlisten(); };
   }, []);
 
   // K-HIGH-1: stabilize dependency — JSON.stringify prevents infinite loop from
@@ -143,6 +161,7 @@ export function useActionPalette(selectedArray: string[]): UseActionPaletteRetur
         dynamic_context: context
           ? `Dispatched from Action Palette. Action: ${action.name} (${action.action_type}). Context: ${context}`
           : `Dispatched from Action Palette. Action: ${action.name} (${action.action_type}).`,
+        dispatch_context: 'action_palette',
       });
       return dispatchId;
     } catch (err) {
@@ -159,8 +178,30 @@ export function useActionPalette(selectedArray: string[]): UseActionPaletteRetur
     }
   }, []);
 
+  // Derive current pending confirmation (head of queue)
+  const pendingConfirmation = confirmationQueue.length > 0 ? confirmationQueue[0] : null;
+
+  // P7-H: Respond to a pending confirmation — full outcome set (P-HIGH-2 fix)
+  const respondConfirmation = useCallback(async (outcome: ConfirmationOutcome) => {
+    if (confirmationQueue.length === 0) return;
+    const req = confirmationQueue[0];
+    try {
+      await respondToConfirmation(req.id, outcome);
+    } catch (err) {
+      if (mountedRef.current) {
+        setError(typeof err === 'string' ? err : String(err));
+      }
+    } finally {
+      if (mountedRef.current) {
+        // K-MED-1: Dequeue — next request becomes active
+        setConfirmationQueue((q) => q.slice(1));
+      }
+    }
+  }, [confirmationQueue]);
+
   return {
     actions, loading, error, dispatch, dispatching, dispatchingSlug,
     underspecified, clearUnderspecified, refresh,
+    pendingConfirmation, respondConfirmation,
   };
 }

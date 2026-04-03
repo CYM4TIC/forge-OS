@@ -136,6 +136,10 @@ export interface DispatchRequest {
   tier?: string;
   provider_id?: string;
   timeout_ms?: number;
+  /** Dispatch context for capability resolution (e.g., "action_palette", "gate_review"). */
+  dispatch_context?: string;
+  /** Explicit capability overrides — takes precedence over dispatch_context. */
+  granted_capabilities?: CapabilityFamily[];
 }
 
 // ── Dispatch commands ──
@@ -1131,4 +1135,79 @@ export function onAgentWorkingStateChanged(
 ): Promise<UnlistenFn> {
   if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<AgentWorkingStateEvent>('agent:working-state-changed', (e) => callback(e.payload));
+}
+
+// ── Tool Confirmation Router (P7-H) ──
+
+/** The 9-action confirmation taxonomy (Factory-AI). Tagged union keyed on `type`. */
+export type ConfirmationType =
+  | { type: 'file_edit'; path: string; diff: string }
+  | { type: 'file_create'; path: string }
+  | { type: 'shell_exec'; command: string }
+  | { type: 'apply_patch'; file_count: number; summary: string }
+  | { type: 'mcp_tool'; server: string; tool_name: string }
+  | { type: 'ask_user'; question: string }
+  | { type: 'exit_spec_mode' }
+  | { type: 'propose_mission'; title: string }
+  | { type: 'start_mission_run'; mission_id: string };
+
+/** The 7-response outcome taxonomy (Factory-AI). */
+export type ConfirmationOutcome =
+  | 'proceed_once'
+  | 'proceed_always'
+  | 'proceed_auto_low'
+  | 'proceed_auto_medium'
+  | 'proceed_auto_high'
+  | 'proceed_edit'
+  | 'cancel';
+
+/** A pending confirmation request emitted via dispatch:confirmation-requested. */
+export interface ConfirmationRequest {
+  id: string;
+  confirmation_type: ConfirmationType;
+  arguments_summary: string;
+  capability_required: CapabilityFamily;
+  requesting_persona: string | null;
+}
+
+/** Result from check_confirmation_required when confirmation IS needed. */
+export interface ConfirmationRequirement {
+  capability_required: CapabilityFamily;
+  reason: string;
+  canonical_key: string;
+}
+
+/** Respond to a pending confirmation request. */
+export function respondToConfirmation(
+  requestId: string,
+  outcome: ConfirmationOutcome,
+): Promise<boolean> {
+  if (!isTauriRuntime) return Promise.resolve(false);
+  return invoke('respond_to_confirmation', { requestId, outcome });
+}
+
+/** Check if an action requires confirmation. Returns null if no confirmation needed. */
+export function checkConfirmationRequired(
+  confirmationType: ConfirmationType,
+  grantedCapabilities: CapabilityFamily[],
+): Promise<ConfirmationRequirement | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
+  return invoke('check_confirmation_required', {
+    confirmationType,
+    grantedCapabilities,
+  });
+}
+
+/** Listen for confirmation requests from the dispatch pipeline. */
+export function onConfirmationRequested(
+  callback: (request: ConfirmationRequest) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<ConfirmationRequest>('dispatch:confirmation-requested', (e) => callback(e.payload));
+}
+
+/** Get the count of pending confirmations. */
+export function getPendingConfirmationCount(): Promise<number> {
+  if (!isTauriRuntime) return Promise.resolve(0);
+  return invoke('get_pending_confirmation_count');
 }

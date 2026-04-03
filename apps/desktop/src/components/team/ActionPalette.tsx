@@ -3,12 +3,13 @@
 // Renders as content of "Actions" tab in TeamPanel (Magi).
 
 import { useState, useCallback } from 'react';
-import type { PaletteAction, PaletteActionType } from '../../lib/tauri';
+import type { PaletteAction, PaletteActionType, ConfirmationOutcome } from '../../lib/tauri';
 import type { UseActionPaletteReturn } from '../../hooks/useActionPalette';
 import { PersonaGlyph, CANVAS, STATUS, RADIUS, TIMING, FONT, TINT } from '@forge-os/canvas-components';
 import type { PersonaSlug } from '@forge-os/canvas-components';
 import { isPersonaSlug } from '@forge-os/shared';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ActionPaletteProps {
   palette: UseActionPaletteReturn;
@@ -276,7 +277,7 @@ function ActionSection({ type, actions, onDispatch, dispatchingSlug, reducedMoti
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function ActionPalette({ palette, selectedCount }: ActionPaletteProps) {
-  const { actions, loading, error, dispatch, dispatchingSlug, underspecified, clearUnderspecified, refresh } = palette;
+  const { actions, loading, error, dispatch, dispatchingSlug, underspecified, clearUnderspecified, refresh, pendingConfirmation, respondConfirmation } = palette;
   const reducedMotion = useReducedMotion();
 
   const handleDispatch = useCallback((action: PaletteAction) => {
@@ -491,6 +492,16 @@ export default function ActionPalette({ palette, selectedCount }: ActionPaletteP
         dispatchingSlug={dispatchingSlug}
         reducedMotion={reducedMotion}
       />
+
+      {/* P7-H: Confirmation modal for destructive/escalated dispatch */}
+      {pendingConfirmation && (
+        <ConfirmationModal
+          request={pendingConfirmation}
+          onRespond={async (outcome: ConfirmationOutcome) => {
+            await respondConfirmation(outcome);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -39,6 +39,7 @@ pub fn default_capabilities(context: &str) -> Vec<CapabilityFamily> {
         "gate_review" => vec![CapabilityFamily::ReadOnly],
         "build" => vec![CapabilityFamily::ReadOnly, CapabilityFamily::WriteCode],
         "dreamtime" => vec![CapabilityFamily::ReadOnly, CapabilityFamily::WriteVault],
+        "action_palette" => vec![CapabilityFamily::ReadOnly, CapabilityFamily::WriteCode],
         "red_team" => vec![CapabilityFamily::ReadOnly, CapabilityFamily::Destructive],
         "full_access" => vec![
             CapabilityFamily::ReadOnly,

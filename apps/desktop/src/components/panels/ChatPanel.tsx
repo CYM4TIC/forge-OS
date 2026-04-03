@@ -206,7 +206,7 @@ export default function ChatPanel() {
             <span style={{ color: CANVAS.muted, fontSize: 11 }}>Start a conversation or select a persona above.</span>
           </div>
         ) : (
-          <MessageList messages={messages} isStreaming={isStreaming} />
+          <MessageList messages={messages} isStreaming={isStreaming} selectedPersona={selectedPersona} />
         )}
 
         {/* Input */}

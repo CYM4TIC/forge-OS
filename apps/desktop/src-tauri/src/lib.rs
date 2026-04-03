@@ -19,6 +19,7 @@ mod swarm;
 
 use std::sync::Arc;
 
+use commands::confirmation::{ConfirmationRouter, ConfirmationRouterState};
 use commands::connectivity::HealthCheckManager;
 use commands::devserver::DevServerManager;
 use commands::registry::{AgentRegistry, RegistryState};
@@ -192,12 +193,17 @@ pub fn run() {
             // Agent registry — lazy-init on first query, Arc<Mutex> for async access
             let agent_registry: RegistryState = Arc::new(Mutex::new(AgentRegistry::default()));
 
+            // Confirmation router — session-scoped, manages auto-approve whitelist
+            let confirmation_router: ConfirmationRouterState =
+                Arc::new(Mutex::new(ConfirmationRouter::new()));
+
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
             app.manage(DevServerManager::new());
             app.manage(health_mgr);
             app.manage(agent_registry);
+            app.manage(confirmation_router);
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -318,6 +324,9 @@ pub fn run() {
             commands::registry::get_palette_actions,
             commands::registry::smart_review_routing,
             commands::registry::check_specification,
+            commands::confirmation::respond_to_confirmation,
+            commands::confirmation::check_confirmation_required,
+            commands::confirmation::get_pending_confirmation_count,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

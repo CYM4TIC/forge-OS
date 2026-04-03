@@ -15,6 +15,8 @@ export interface ChatMessage {
   tokens_in: number | null;
   tokens_out: number | null;
   status: 'complete' | 'streaming' | 'error';
+  /** P7-H: persona slug for glyph avatar attribution (null for operator/system). */
+  persona_slug: string | null;
 }
 
 interface UseChatReturn {
@@ -44,6 +46,7 @@ export function useChat(sessionId: string | null): UseChatReturn {
           tokens_in: r.tokens_in,
           tokens_out: r.tokens_out,
           status: 'complete' as const,
+          persona_slug: 'persona_slug' in r ? (r as { persona_slug: string | null }).persona_slug : null,
         })),
       );
       setError(null);
@@ -107,6 +110,7 @@ export function useChat(sessionId: string | null): UseChatReturn {
               tokens_in: null,
               tokens_out: null,
               status: 'streaming',
+              persona_slug: 'persona_slug' in event ? (event as { persona_slug: string | null }).persona_slug : null,
             },
           ]);
         } else {
@@ -151,6 +155,7 @@ export function useChat(sessionId: string | null): UseChatReturn {
           tokens_in: null,
           tokens_out: null,
           status: 'complete',
+          persona_slug: null,
         },
       ]);
 
