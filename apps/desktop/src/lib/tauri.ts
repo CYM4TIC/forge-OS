@@ -1005,3 +1005,117 @@ export function onConnectivityChanged(
   if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<ConnectivityChangedEvent>('connectivity:status-changed', (e) => callback(e.payload));
 }
+
+// ── Agent Registry Types (P7-E) ──
+
+export type AgentCategory = 'persona' | 'intelligence' | 'orchestrator' | 'utility' | 'sub_agent' | 'command';
+
+export type ReasoningEffort = 'low' | 'medium' | 'high';
+
+export type ModelClass = 'frontier' | 'standard' | 'fast';
+
+export type RoutingRole = 'leader' | 'specialist' | 'executor';
+
+export interface RegistryEntry {
+  slug: string;
+  name: string;
+  description: string;
+  category: AgentCategory;
+  tools: string[];
+  parent_agent: string | null;
+  file_path: string;
+  user_invocable: boolean;
+  model: string | null;
+  reasoning_effort: ReasoningEffort;
+  model_class: ModelClass;
+  routing_role: RoutingRole;
+}
+
+export type CommandCategory = 'build' | 'persona' | 'quality' | 'analysis' | 'reporting' | 'operations';
+
+export type AvailabilityCheck =
+  | 'git_changes'
+  | { mcp_connected: string }
+  | { env_var_set: string }
+  | 'server_running'
+  | 'always';
+
+export interface CommandDef {
+  slug: string;
+  name: string;
+  description: string;
+  category: CommandCategory;
+  aliases: string[];
+  dispatch_target: string;
+  available_when: AvailabilityCheck | null;
+  keyboard_shortcut: string | null;
+}
+
+export type PaletteActionType = 'command' | 'sub_agent' | 'orchestrator';
+
+export interface PaletteAction {
+  slug: string;
+  name: string;
+  description: string;
+  action_type: PaletteActionType;
+  dispatch_target_slug: string;
+}
+
+export interface PaletteResponse {
+  individual_actions: PaletteAction[];
+  orchestrator_actions: PaletteAction[];
+}
+
+export type CapabilityFamily = 'read_only' | 'write_code' | 'write_vault' | 'database' | 'external' | 'destructive';
+
+// ── Agent Registry Commands (P7-E) ──
+
+/** Get all registered agents (cached — fast, no scan). */
+export function getAgentRegistry(): Promise<RegistryEntry[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_agent_registry');
+}
+
+/** Get the markdown body of an agent definition file. */
+export function getAgentContent(slug: string): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
+  return invoke('get_agent_content', { slug });
+}
+
+/** Get all registered slash commands. */
+export function getCommandRegistry(): Promise<CommandDef[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_command_registry');
+}
+
+/** Get palette actions for the given persona selection. */
+export function getPaletteActions(selectedSlugs: string[]): Promise<PaletteResponse> {
+  if (!isTauriRuntime) return Promise.resolve({ individual_actions: [], orchestrator_actions: [] });
+  return invoke('get_palette_actions', { selectedSlugs });
+}
+
+/** Route a diff summary to the best review agents. */
+export function smartReviewRouting(diffSummary: string): Promise<string[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('smart_review_routing', { diffSummary });
+}
+
+/** Force-rescan the agent registry (triggers file walk). */
+export function refreshAgentRegistry(): Promise<RegistryEntry[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('refresh_registry');
+}
+
+/** Listen for agent working state changes (dispatch lifecycle). */
+export interface AgentWorkingStateEvent {
+  agent_slug: string;
+  state: 'idle' | 'streaming' | 'waiting_for_confirmation' | 'executing_tool' | 'compacting';
+  dispatch_id: string | null;
+}
+
+export function onAgentWorkingStateChanged(
+  callback: (event: AgentWorkingStateEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<AgentWorkingStateEvent>('agent:working-state-changed', (e) => callback(e.payload));
+}
