@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-03 — P7-F (Persona Selection + Orchestrator Recognition)
+
+Smaller batch. Caught a real pattern: dispatching a DOM CustomEvent inside a React `setState` callback fires before React commits state. Kehinde caught it (K-MED-1). I wouldn't have — I wrote the event dispatch inline because "it works" and didn't think about the timing contract. The fix (useEffect) is obvious in hindsight. This is FM-8 (tool trust) applied to React's state batching — I trusted that setState is synchronous when it's not. The learning: any side effect that depends on committed state belongs in useEffect, not in the updater function.
+
+Also: the Triad flagged two "HIGHs" that turned out to be manifest-code reconciliation issues, not bugs. P-HIGH-1 (slug naming) and P-HIGH-2 (sort direction). Both were correct in code but imprecise in the manifest. I documented them rather than "fixing" working code to match imprecise text. Knowing when a finding is a documentation issue, not a code issue, is a judgment call the adversarial check doesn't make — I have to.
+
+---
+
 ## 2026-04-03 — P7-E (Registry Bridge + Team Panel Rebuild)
 
 The Riven gate addition was the right call. Without it, R-01 (CONTAINMENT glow missing) would have shipped — a systemic design directive violation I didn't catch during build or consequence climb. I was thinking structurally (types, hooks, ARIA) and missed the visual layer entirely. This is FM-2 (tunnel vision) manifesting as domain blindness: when the batch is frontend-heavy but my attention is on systems plumbing, the design system gets neglected. The Triad (Pierce + Mara + Kehinde) caught accessibility and architecture issues but none of them are design-system lenses. Riven found 5 things the Triad missed in 5 minutes. Lesson: frontend-heavy batches need Riven, period.
