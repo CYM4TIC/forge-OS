@@ -93,7 +93,7 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
   if (loading) {
     return (
       <div style={CENTER_STATE}>
-        <span style={{ color: CANVAS.muted, fontSize: 13 }}>Loading build state...</span>
+        <span style={{ color: CANVAS.muted, fontSize: 13 }}>Kindling the forge...</span>
       </div>
     );
   }
@@ -114,8 +114,8 @@ export default function CanvasPanel({ bootPath, onStageClick }: CanvasPanelProps
     return (
       <div style={CENTER_STATE}>
         <div style={{ textAlign: 'center', padding: '0 16px' }}>
-          <span style={{ color: CANVAS.muted, fontSize: 13, display: 'block', marginBottom: 4 }}>No build state</span>
-          <span style={{ color: CANVAS.muted, fontSize: 11, opacity: 0.7 }}>Load a BOOT.md to activate the pipeline</span>
+          <span style={{ color: CANVAS.muted, fontSize: 13, display: 'block', marginBottom: 4 }}>The Forge is cold</span>
+          <span style={{ color: CANVAS.muted, fontSize: 11, opacity: 0.7 }}>Bind a BOOT.md to light the pipeline</span>
         </div>
       </div>
     );

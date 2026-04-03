@@ -335,7 +335,7 @@ export default function AgentBoardPanel() {
     createPanelWindow({
       panel_id: 'agent_board',
       panel_type: 'AgentBoardPanel',
-      title: 'Agent Board',
+      title: 'Grimoire',
       width: 600,
       height: 400,
     });
@@ -418,10 +418,10 @@ export default function AgentBoardPanel() {
       >
         <div style={{ fontSize: 20, color: CANVAS.muted }}>&#x25CB;</div>
         <div style={{ color: CANVAS.label, fontSize: 13, textAlign: 'center' }}>
-          No agents discovered
+          The Grimoire is empty
         </div>
         <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 220 }}>
-          Start a build session to see your team here.
+          Begin a transmutation to summon your practitioners.
         </div>
       </div>
     );
@@ -451,7 +451,7 @@ export default function AgentBoardPanel() {
         }}
       >
         <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-          Agent Board
+          Grimoire
         </span>
         {isTauriRuntime && (
           <button

@@ -283,7 +283,7 @@ export default function FindingsPanel() {
     createPanelWindow({
       panel_id: 'findings',
       panel_type: 'FindingsPanel',
-      title: 'Findings Feed',
+      title: 'Echoes',
       width: 500,
       height: 600,
     });
@@ -347,7 +347,7 @@ export default function FindingsPanel() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            Findings
+            Echoes
           </span>
           {counts.total > 0 && (
             <span style={{ fontSize: 10, color: CANVAS.muted }}>
@@ -388,11 +388,11 @@ export default function FindingsPanel() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: 16 }}>
             <div style={{ fontSize: 20, color: CANVAS.muted }}>&#x2713;</div>
             <div style={{ color: CANVAS.label, fontSize: 13, textAlign: 'center' }}>
-              {findings.length === 0 ? 'No findings yet' : 'No findings match filters'}
+              {findings.length === 0 ? 'No echoes yet' : 'No echoes match filters'}
             </div>
             <div style={{ color: CANVAS.muted, fontSize: 11, textAlign: 'center', maxWidth: 220 }}>
               {findings.length === 0
-                ? 'Run a gate review to see findings here.'
+                ? 'Run a gate review to hear the echoes.'
                 : 'Try adjusting your filters.'}
             </div>
           </div>

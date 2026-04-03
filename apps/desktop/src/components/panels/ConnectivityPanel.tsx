@@ -72,7 +72,7 @@ function aggregateStatus(services: ServiceHealth[]): {
 } {
   const configured = services.filter((s) => s.status !== 'unconfigured');
   if (configured.length === 0) {
-    return { label: 'No Services Configured', color: CANVAS.muted, badgeStatus: 'neutral' };
+    return { label: 'Scrying Pool Dark', color: CANVAS.muted, badgeStatus: 'neutral' };
   }
   const hasUnreachable = configured.some((s) => s.status === 'unreachable');
   const hasDegraded = configured.some((s) => s.status === 'degraded');
@@ -82,7 +82,7 @@ function aggregateStatus(services: ServiceHealth[]): {
   if (hasDegraded) {
     return { label: 'Degraded', color: STATUS.warning, badgeStatus: 'warning', glyph: '\u26A0' };
   }
-  return { label: 'All Systems Operational', color: STATUS.success, badgeStatus: 'success', glyph: '\u2713' };
+  return { label: 'The Forge Flows', color: STATUS.success, badgeStatus: 'success', glyph: '\u2713' };
 }
 
 // ─── Styles (canvas-tokens, no Tailwind — matches PreviewPanel sibling) ───
@@ -433,10 +433,10 @@ export default function ConnectivityPanel() {
       <div style={CENTER_STATE}>
         <span style={{ fontSize: 28 }} aria-hidden="true">{'\u2699'}</span>
         <span style={{ color: CANVAS.text, fontSize: 13, fontWeight: 600 }}>
-          No services configured
+          No channels opened for scrying
         </span>
         <span style={{ color: CANVAS.label, fontSize: 11, maxWidth: 280, textAlign: 'center', lineHeight: '16px' }}>
-          Add service credentials in Settings to monitor GitHub, Supabase, Cloudflare, and more.
+          Add service credentials in Settings to open channels to GitHub, Supabase, Cloudflare, and more.
         </span>
       </div>
     );

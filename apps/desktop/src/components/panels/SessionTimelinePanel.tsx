@@ -340,7 +340,7 @@ function SessionTimelinePanel() {
     createPanelWindow({
       panel_id: 'session_timeline',
       panel_type: 'SessionTimelinePanel',
-      title: 'Session Timeline',
+      title: 'The Chronicle',
       width: 800,
       height: 300,
     });
@@ -418,7 +418,7 @@ function SessionTimelinePanel() {
         }}
       >
         <span style={{ color: CANVAS.muted, fontSize: 12 }}>
-          No session events yet. Start a build to see the timeline.
+          The chronicle is unwritten. Begin a transmutation.
         </span>
       </div>
     );
@@ -448,7 +448,7 @@ function SessionTimelinePanel() {
         }}
       >
         <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>
-          Session Timeline
+          The Chronicle
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ color: CANVAS.muted, fontSize: 11 }}>

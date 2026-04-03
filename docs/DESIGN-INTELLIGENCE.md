@@ -62,6 +62,49 @@ The base palette below remains the structural foundation. The visual direction a
 - **Not distracting during work.** Ambient animations are subtle (long durations, small ranges). Active animations fire on real events. The system is calm when idle, alive when working — like an engine at rest vs under load.
 - **Not inaccessible.** `prefers-reduced-motion` still respected — reduce animations to state changes only, keep glow/color. Color is never the sole indicator. Contrast ratios still enforced.
 
+### Aesthetic Directive — The Alchemical Forge (2026-04-02)
+
+> **(32 and/or 64-bit) arcade mystical fantasy alchemical neon rave video game.**
+> The operator is running an alchemical forge. The tool transmutes specs into production code.
+> The personas are not software agents — they are practitioners at the workbench.
+
+**What this adds to the existing rave/arcade foundation:**
+
+| Layer | Source | Effect |
+|-------|--------|--------|
+| **Mystical vocabulary** | Excalibur research synthesis | UI labels use alchemical register: Mana (tokens), Vessel (context), Echoes (traces), Grimoire (registry), Ritual (scheduled), Scrying (monitoring), Ley Lines (relationships), Sigils (indexes), Dreamtime (consolidation), Alchemy (transformation) |
+| **Two-register voice** | Sable directive | Mystical for operations (panel headers, status, empty states). Clinical for quality (gate verdicts, severity counts, error messages). Never mix. |
+| **Containment field glow** | Riven directive | Panel shells get subtle inner glow (`inset 0 0 12px accent/0.06`). Panels are containment fields, not software windows. |
+| **Engraved headers** | Riven directive | Panel header font-weight 700 (not 600). Heavier = carved, not printed. |
+| **Arcade readout tracking** | Riven directive | Monospace data labels get `letter-spacing: 0.05em`. Reads as game HUD without pixel-font cosplay. |
+| **Rune borders** | Phase 7+ | Animated subtle glyph/rune patterns on panel borders. Ambient, not distracting. Reduced-motion: static glow only. |
+| **Tooltip translations** | Mara directive | Every mystical label has a tooltip with clinical translation. Fantasy is opt-in comprehension, never a barrier. Mana → "Token budget: 47,231 / 100,000 remaining" |
+
+**Vocabulary mapping (canonical — Sable-approved):**
+
+| Mystical Term | Literal Meaning | Where It Appears | Tooltip Pattern |
+|---|---|---|---|
+| Mana | Token budget | TokenGauge label | "Token budget: {used} / {total}" |
+| Vessel | Context window | ContextMeter label | "Context window: {percent}% capacity" |
+| Echoes | Findings / traces | FindingsPanel header | "Build findings: {count} total" |
+| Grimoire | Agent registry | Graph tab (agents) | "Agent & persona registry" |
+| Scrying | Health monitoring | ConnectivityPanel header | "Service health monitoring" |
+| Ley Lines | Relationships / backlinks | Graph tab (relationships) | "Cross-references and relationships" |
+| Sigils | Index entries | VaultBrowser context | "Vault index entries" |
+| Dreamtime | Nightly consolidation | Scheduled task label | "Overnight consolidation job" |
+| Ritual | Scheduled job | Scheduled task type | "Recurring scheduled task" |
+| The Forge | Build system / app | Status messages | "Build system status" |
+| Transmutation | Build transformation | Batch completion | "Build batch complete" |
+
+**What NOT to rename:**
+- Gate verdicts: "PASS" / "FAIL" stay literal
+- Severity levels: CRIT/HIGH/MED/LOW/INFO stay literal
+- File paths, function names, technical identifiers
+- Error messages — clinical voice only
+
+**Jarvis-UI inspiration (adapted):**
+The Prompt-Surfer/obsidian-jarvis-ui Iron Man aesthetic validates the containment-field panel treatment and HUD overlay pattern. Adapted for Forge: less holographic-blue, more indigo-neon-alchemical. The JARVIS "glass panel" becomes the Forge "containment field." The JARVIS "AI assistant overlay" becomes persona glyph presence. Same spatial confidence, different mythology.
+
 ---
 
 ## Pre-Delivery Checklist (Build Triad Gate)

@@ -448,7 +448,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
   if (loading) {
     return (
       <div ref={containerRef} style={{ ...PANEL_SHELL, ...CENTER_STATE }} role="status" aria-busy="true">
-        <span>Loading vault...</span>
+        <span>Opening the vault...</span>
       </div>
     );
   }
@@ -467,7 +467,7 @@ export default function VaultBrowserPanel({ vaultPath }: VaultBrowserPanelProps 
   if (!vaultPath) {
     return (
       <div ref={containerRef} style={{ ...PANEL_SHELL, ...CENTER_STATE }}>
-        <span>No vault path configured</span>
+        <span>No vault bound</span>
       </div>
     );
   }

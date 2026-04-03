@@ -629,13 +629,13 @@ export default function GraphViewerPanel() {
   // Loading/error states (MARA-04)
   if (isLoading) {
     return (
-      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Ley Line map">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
           color: CANVAS.label, fontSize: 12, fontFamily: FONT.mono,
         }}>
-          Loading graph data...
+          Tracing ley lines...
         </div>
       </div>
     );
@@ -643,7 +643,7 @@ export default function GraphViewerPanel() {
 
   if (error) {
     return (
-      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Ley Line map">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
@@ -658,13 +658,13 @@ export default function GraphViewerPanel() {
   // Empty state (PIERCE-04)
   if (graphData.nodes.length === 0) {
     return (
-      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Knowledge graph viewer">
+      <div ref={containerRef} style={PANEL_SHELL} role="region" aria-label="Ley Line map">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
           color: CANVAS.muted, fontSize: 12, fontFamily: FONT.mono,
         }}>
-          No graph data available
+          No ley lines charted
         </div>
       </div>
     );
@@ -675,7 +675,7 @@ export default function GraphViewerPanel() {
       ref={containerRef}
       style={PANEL_SHELL}
       role="region"
-      aria-label="Knowledge graph viewer. Use arrow keys to navigate nodes, Enter to select, Escape to deselect."
+      aria-label="Ley Line map. Use arrow keys to navigate nodes, Enter to select, Escape to deselect."
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
@@ -708,7 +708,7 @@ export default function GraphViewerPanel() {
         role="status"
         aria-live="polite"
       >
-        Knowledge graph: {graphData.nodes.length} nodes, {graphData.edges.length} edges.
+        Ley Lines: {graphData.nodes.length} nodes, {graphData.edges.length} edges.
         {selectedNode
           ? ` Selected: ${selectedNode.data.label}, ${selectedNode.data.type}. ${selectedConnections} connections.`
           : ' No node selected. Use arrow keys to navigate.'}
