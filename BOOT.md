@@ -12,7 +12,7 @@ session_6_1_complete: true
 current_batch: P7-J
 phase_7_batches: 14
 batches_done: 107
-last_commit: 4f9a5bd
+last_commit: a630b6c
 session_6_2_complete: true
 phase_6_complete: true
 session_5_1_complete: true
