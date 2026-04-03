@@ -7,7 +7,7 @@
  */
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────
-export { CANVAS, STATUS, ZONES, DOCK, GLOW, TINT, PIPELINE, BADGE_COLORS, RADIUS, TIMING, HIGHLIGHT, FONT, getZoneColor, getZoneLabel, getPipelineColor } from './canvas-tokens.js';
+export { CANVAS, STATUS, ZONES, DOCK, GLOW, TINT, PIPELINE, BADGE_COLORS, CONTAINMENT, RADIUS, TIMING, HIGHLIGHT, FONT, getZoneColor, getZoneLabel, getPipelineColor } from './canvas-tokens.js';
 
 // ─── Core Gauges (P4-M) ─────────────────────────────────────────────────────
 export { StatCard } from './stat-card.js';

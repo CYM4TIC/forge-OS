@@ -142,15 +142,18 @@ export function PanelContainer({
       onKeyDown={handleKeyDown}
       onFocus={() => onFocus(panel.id)}
     >
-      {/* Panel frame — glowing border on focus */}
-      <div className="h-full w-full rounded-lg border border-border-subtle bg-bg-secondary overflow-hidden flex flex-col shadow-lg shadow-black/40">
+      {/* Panel frame — containment field (Alchemical Forge directive) */}
+      <div
+        className="h-full w-full rounded-lg border border-border-subtle bg-bg-secondary overflow-hidden flex flex-col shadow-lg shadow-black/40"
+        style={{ boxShadow: 'inset 0 0 12px rgba(99, 102, 241, 0.06), 0 10px 15px -3px rgba(0, 0, 0, 0.4)' }}
+      >
         {/* Titlebar — drag region */}
         <div
           className="flex items-center justify-between px-2 h-8 min-h-[32px] bg-bg-elevated border-b border-border-subtle cursor-grab active:cursor-grabbing"
           onMouseDown={handleTitleBarMouseDown}
         >
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-xs text-text-muted truncate">{panel.title}</span>
+            <span className="text-xs text-text-muted truncate" style={{ fontWeight: 700, letterSpacing: '0.05em' }}>{panel.title}</span>
             {panel.badgeCount > 0 && (
               <span className="flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-accent text-[10px] text-white font-medium">
                 {panel.badgeCount > 99 ? '99+' : panel.badgeCount}

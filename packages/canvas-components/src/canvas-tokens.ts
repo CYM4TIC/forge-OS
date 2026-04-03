@@ -61,6 +61,12 @@ export const FONT = {
   system: '-apple-system, BlinkMacSystemFont, sans-serif',
 } as const;
 
+/** Containment field — subtle inner glow on panel shells (Alchemical Forge directive). */
+export const CONTAINMENT = {
+  glow: 'inset 0 0 12px rgba(99, 102, 241, 0.06)',
+  glowActive: 'inset 0 0 16px rgba(99, 102, 241, 0.1)',
+} as const;
+
 /** Border radii */
 export const RADIUS = {
   card: 8,

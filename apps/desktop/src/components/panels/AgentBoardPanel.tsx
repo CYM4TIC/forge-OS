@@ -450,7 +450,7 @@ export default function AgentBoardPanel() {
           flexShrink: 0,
         }}
       >
-        <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
           Grimoire
         </span>
         {isTauriRuntime && (

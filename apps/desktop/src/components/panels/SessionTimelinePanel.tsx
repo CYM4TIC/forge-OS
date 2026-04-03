@@ -447,7 +447,7 @@ function SessionTimelinePanel() {
           flexShrink: 0,
         }}
       >
-        <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>
+        <span style={{ color: CANVAS.label, fontSize: 11, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
           The Chronicle
         </span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
