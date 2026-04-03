@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 use commands::connectivity::HealthCheckManager;
 use commands::devserver::DevServerManager;
+use commands::registry::{AgentRegistry, RegistryState};
 use database::Database;
 use dispatch::AgentDispatcher;
 use providers::claude::ClaudeProvider;
@@ -188,11 +189,15 @@ pub fn run() {
             let health_cache = health_mgr.cache.clone();
             let health_interval = health_mgr.check_interval.clone();
 
+            // Agent registry — lazy-init on first query, Arc<Mutex> for async access
+            let agent_registry: RegistryState = Arc::new(Mutex::new(AgentRegistry::default()));
+
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
             app.manage(DevServerManager::new());
             app.manage(health_mgr);
+            app.manage(agent_registry);
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -305,6 +310,9 @@ pub fn run() {
             commands::connectivity::check_all_services,
             commands::connectivity::get_service_status,
             commands::connectivity::set_check_interval,
+            commands::registry::get_agent_registry,
+            commands::registry::get_agent_content,
+            commands::registry::refresh_registry,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
