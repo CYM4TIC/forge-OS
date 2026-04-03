@@ -9,7 +9,7 @@ import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 import { HIGHLIGHT } from './canvas-tokens.js';
 
-import { CANVAS, STATUS } from './canvas-tokens';
+import { CANVAS, STATUS, FONT } from './canvas-tokens';
 
 const COLORS = {
   success: STATUS.success,
@@ -105,7 +105,7 @@ export function StatusBadge({
     // Label text
     if (label) {
       const fontSize = Math.min(Math.floor(height * 0.35), 13) * dpr;
-      ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `600 ${fontSize}px ${FONT.system}`;
       ctx.fillStyle = COLORS.label;
       ctx.textBaseline = 'middle';
       ctx.fillText(label, dotX + dotRadius + 6 * dpr, dotY);

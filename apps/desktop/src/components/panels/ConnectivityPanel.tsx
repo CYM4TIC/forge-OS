@@ -7,7 +7,17 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useConnectivity } from '../../hooks/useConnectivity';
 import { checkService, type ServiceHealth, type ServiceStatus } from '../../lib/tauri';
 import { StatusBadge, type BadgeStatus } from '@forge-os/canvas-components';
-import { CANVAS, STATUS, RADIUS, TINT } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, RADIUS, TINT, FONT } from '@forge-os/canvas-components';
+
+// ─── Helpers ───────────────────────────────────────────────────────
+
+function friendlyError(raw: string): string {
+  if (raw.includes('network') || raw.includes('fetch')) return 'Network error — check your connection.';
+  if (raw.includes('timeout')) return 'Request timed out — services may be slow.';
+  if (raw.includes('unauthorized') || raw.includes('401')) return 'Authentication failed — check credentials.';
+  if (raw.includes('forbidden') || raw.includes('403')) return 'Access denied — check permissions.';
+  return 'Something went wrong. Try again.';
+}
 
 // ─── Status Mapping ────────────────────────────────────────────────
 
@@ -171,13 +181,15 @@ const CARD_NAME: React.CSSProperties = {
 const CARD_LATENCY: React.CSSProperties = {
   fontSize: 11,
   color: CANVAS.label,
-  fontFamily: 'monospace',
+  fontFamily: FONT.mono,
 };
 
 const DETAIL_SECTION: React.CSSProperties = {
   marginTop: 10,
   paddingTop: 8,
   borderTop: `1px solid ${CANVAS.border}`,
+  overflow: 'hidden',
+  animation: 'detail-expand 0.2s ease-out',
 };
 
 const UNCONFIGURED_CARD: React.CSSProperties = {
@@ -205,8 +217,6 @@ const ERROR_BANNER: React.CSSProperties = {
   gap: 6,
   flexShrink: 0,
 };
-
-// ─── Focus styles ──────────────────────────────────────────────────
 
 const FOCUS_VISIBLE_SHADOW = `0 0 0 2px ${STATUS.accent}`;
 
@@ -307,22 +317,22 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
           <dl style={{ margin: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
               <dt style={{ color: CANVAS.label, fontWeight: 500 }}>Status</dt>
-              <dd style={{ color: CANVAS.text, fontFamily: 'monospace', margin: 0 }}>{statusLabel(service.status)}</dd>
+              <dd style={{ color: CANVAS.text, fontFamily: FONT.mono, margin: 0 }}>{statusLabel(service.status)}</dd>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
               <dt style={{ color: CANVAS.label, fontWeight: 500 }}>Last Checked</dt>
-              <dd style={{ color: CANVAS.text, fontFamily: 'monospace', margin: 0 }}>{lastCheckedStr}</dd>
+              <dd style={{ color: CANVAS.text, fontFamily: FONT.mono, margin: 0 }}>{lastCheckedStr}</dd>
             </div>
             {service.latencyMs != null && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
                 <dt style={{ color: CANVAS.label, fontWeight: 500 }}>Latency</dt>
-                <dd style={{ color: CANVAS.text, fontFamily: 'monospace', margin: 0 }}>{service.latencyMs}ms</dd>
+                <dd style={{ color: CANVAS.text, fontFamily: FONT.mono, margin: 0 }}>{service.latencyMs}ms</dd>
               </div>
             )}
             {hasDetails && Object.entries(service.details).map(([key, value]) => (
               <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
                 <dt style={{ color: CANVAS.label, fontWeight: 500 }}>{key}</dt>
-                <dd style={{ color: CANVAS.text, fontFamily: 'monospace', margin: 0, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={value}>{value}</dd>
+                <dd style={{ color: CANVAS.text, fontFamily: FONT.mono, margin: 0, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={value}>{value}</dd>
               </div>
             ))}
           </dl>
@@ -397,7 +407,7 @@ export default function ConnectivityPanel() {
           Failed to load services
         </span>
         <span style={{ color: CANVAS.label, fontSize: 11, maxWidth: 260, textAlign: 'center' }}>
-          {error}
+          {friendlyError(error)}
         </span>
         <button
           ref={retryRef}
@@ -442,6 +452,7 @@ export default function ConnectivityPanel() {
 
   return (
     <div style={PANEL_SHELL}>
+      <style>{`@keyframes detail-expand { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }`}</style>
       {/* Live region — updated only on aggregate status transitions */}
       <div ref={liveRegionRef} aria-live="polite" aria-atomic="true" style={SR_ONLY} />
 
@@ -451,7 +462,7 @@ export default function ConnectivityPanel() {
         <span style={{ fontSize: 13, fontWeight: 600, color: agg.color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {agg.label}
         </span>
-        <span style={{ fontSize: 11, color: CANVAS.muted, fontFamily: 'monospace' }} aria-label={`Last checked at ${lastCheckedDisplay}`}>
+        <span style={{ fontSize: 11, color: CANVAS.muted, fontFamily: FONT.mono }} aria-label={`Last checked at ${lastCheckedDisplay}`}>
           {lastCheckedDisplay}
         </span>
         <button

@@ -9,7 +9,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { CANVAS, STATUS, getZoneColor as _getZoneColor } from './canvas-tokens';
+import { CANVAS, STATUS, FONT, getZoneColor as _getZoneColor } from './canvas-tokens';
 
 const COLORS = {
   bg: CANVAS.bg,
@@ -118,7 +118,7 @@ export function ProgressArc({
     // Center text
     if (centerText) {
       const fontSize = Math.floor(size * 0.18) * dpr;
-      ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `bold ${fontSize}px ${FONT.system}`;
       ctx.fillStyle = COLORS.text;
       ctx.textAlign = 'center';
       ctx.textBaseline = subLabel ? 'bottom' : 'middle';
@@ -129,7 +129,7 @@ export function ProgressArc({
     // Sub-label
     if (subLabel) {
       const subFontSize = Math.max(Math.floor(size * 0.08), 9) * dpr;
-      ctx.font = `600 ${subFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `600 ${subFontSize}px ${FONT.system}`;
       ctx.fillStyle = COLORS.label;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';

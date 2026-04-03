@@ -9,7 +9,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI, renderText } from '@forge-os/layout-engine';
 
-import { CANVAS, STATUS } from './canvas-tokens';
+import { CANVAS, STATUS, FONT } from './canvas-tokens';
 
 const COLORS = {
   bg: CANVAS.bg,
@@ -83,7 +83,7 @@ export function StatCard({
     const valueFontSize = Math.min(Math.floor(height * 0.3), 48);
     renderText(ctx, displayValue, {
       width, height: valueZoneHeight,
-      font: `bold ${valueFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`,
+      font: `bold ${valueFontSize}px ${FONT.system}`,
       lineHeight: Math.ceil(valueFontSize * 1.2),
       color: valueColor ?? COLORS.accent,
       align: 'center',
@@ -97,7 +97,7 @@ export function StatCard({
     ctx.translate(0, labelZoneTop * dpr);
     renderText(ctx, label.toUpperCase(), {
       width, height: labelZoneHeight,
-      font: `600 ${labelFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`,
+      font: `600 ${labelFontSize}px ${FONT.system}`,
       lineHeight: Math.ceil(labelFontSize * 1.4),
       color: COLORS.label,
       align: 'center',
@@ -116,7 +116,7 @@ export function StatCard({
       ctx.translate(0, trendZoneTop * dpr);
       renderText(ctx, arrow + trendText, {
         width, height: trendZoneHeight,
-        font: `600 ${trendFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`,
+        font: `600 ${trendFontSize}px ${FONT.system}`,
         lineHeight: Math.ceil(trendFontSize * 1.4),
         color: trendColor,
         align: 'center',

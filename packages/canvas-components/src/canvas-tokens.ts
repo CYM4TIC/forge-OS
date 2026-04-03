@@ -55,6 +55,12 @@ export function getZoneLabel(value: number): string {
   return 'COMPACTING';
 }
 
+/** Font stacks */
+export const FONT = {
+  mono: 'monospace',
+  system: '-apple-system, BlinkMacSystemFont, sans-serif',
+} as const;
+
 /** Border radii */
 export const RADIUS = {
   card: 8,

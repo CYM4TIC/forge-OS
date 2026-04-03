@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { CANVAS, STATUS, RADIUS, GLOW } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, RADIUS, GLOW, FONT } from '@forge-os/canvas-components';
 import { PersonaGlyph } from '@forge-os/canvas-components';
 import { setupCanvasForHiDPI, fitToContainer } from '@forge-os/layout-engine';
 import { useGraphData } from '../../hooks/useGraphData';
@@ -185,7 +185,7 @@ function drawGraph(
         minFont: 8,
         maxFont: 13,
         maxLines: 1,
-        fontFamily: 'monospace',
+        fontFamily: FONT.mono,
       });
       ctx.font = fit.font;
       ctx.fillStyle = isSelected ? CANVAS.text : CANVAS.label;
@@ -226,7 +226,7 @@ function drawGraph(
         minFont: 8,
         maxFont: 13,
         maxLines: 1,
-        fontFamily: 'monospace',
+        fontFamily: FONT.mono,
       });
       ctx.font = fit.font;
       ctx.fillStyle = isSelected ? CANVAS.text : CANVAS.label;
@@ -306,8 +306,9 @@ export default function GraphViewerPanel() {
 
   // Animation loop — runs force simulation + draws
   useEffect(() => {
-    const ctx = ctxRef.current;
-    if (!ctx || dimensions.width <= 0 || dimensions.height <= 0) return;
+    const ctxVal = ctxRef.current;
+    if (!ctxVal || dimensions.width <= 0 || dimensions.height <= 0) return;
+    const ctx: CanvasRenderingContext2D = ctxVal;
 
     function animate() {
       const layout = layoutRef.current;
@@ -542,34 +543,34 @@ export default function GraphViewerPanel() {
               boxShadow: `0 0 6px ${selectedNode.data.color}`,
             }}
           />
-          <span style={{ color: CANVAS.text, fontSize: 14, fontWeight: 600, fontFamily: 'monospace' }}>
+          <span style={{ color: CANVAS.text, fontSize: 14, fontWeight: 600, fontFamily: FONT.mono }}>
             {selectedNode.data.label}
           </span>
         </div>
 
-        <div style={{ color: CANVAS.label, fontSize: 11, fontFamily: 'monospace', marginBottom: 4 }}>
+        <div style={{ color: CANVAS.label, fontSize: 11, fontFamily: FONT.mono, marginBottom: 4 }}>
           {selectedNode.data.type.toUpperCase()}
           {selectedNode.data.domain ? ` \u2014 ${selectedNode.data.domain}` : ''}
         </div>
 
         {connections.length > 0 && (
           <div style={{ marginTop: 8, borderTop: `1px solid ${CANVAS.border}`, paddingTop: 8 }}>
-            <div style={{ color: CANVAS.muted, fontSize: 10, fontFamily: 'monospace', marginBottom: 4 }}>
+            <div style={{ color: CANVAS.muted, fontSize: 10, fontFamily: FONT.mono, marginBottom: 4 }}>
               CONNECTIONS ({connections.length})
             </div>
             {connections.slice(0, 6).map((c, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                <span style={{ color: CANVAS.label, fontSize: 11, fontFamily: 'monospace' }}>
+                <span style={{ color: CANVAS.label, fontSize: 11, fontFamily: FONT.mono }}>
                   {c.label}
                 </span>
-                <span style={{ color: CANVAS.muted, fontSize: 10, fontFamily: 'monospace' }}>
+                <span style={{ color: CANVAS.muted, fontSize: 10, fontFamily: FONT.mono }}>
                   {c.relation}
                 </span>
               </div>
             ))}
             {connections.length > 6 && (
-              <div style={{ color: CANVAS.muted, fontSize: 10, fontFamily: 'monospace' }}>
+              <div style={{ color: CANVAS.muted, fontSize: 10, fontFamily: FONT.mono }}>
                 +{connections.length - 6} more
               </div>
             )}
@@ -618,7 +619,7 @@ export default function GraphViewerPanel() {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
-          color: CANVAS.label, fontSize: 12, fontFamily: 'monospace',
+          color: CANVAS.label, fontSize: 12, fontFamily: FONT.mono,
         }}>
           Loading graph data...
         </div>
@@ -632,7 +633,7 @@ export default function GraphViewerPanel() {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
-          color: STATUS.danger, fontSize: 12, fontFamily: 'monospace',
+          color: STATUS.danger, fontSize: 12, fontFamily: FONT.mono,
         }}>
           {error}
         </div>
@@ -647,7 +648,7 @@ export default function GraphViewerPanel() {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '100%', height: '100%',
-          color: CANVAS.muted, fontSize: 12, fontFamily: 'monospace',
+          color: CANVAS.muted, fontSize: 12, fontFamily: FONT.mono,
         }}>
           No graph data available
         </div>

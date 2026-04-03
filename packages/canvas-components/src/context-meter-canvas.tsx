@@ -11,7 +11,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { CANVAS, HIGHLIGHT, getZoneColor, getZoneLabel } from './canvas-tokens';
+import { CANVAS, HIGHLIGHT, FONT, getZoneColor, getZoneLabel } from './canvas-tokens';
 
 const COLORS = {
   bg: CANVAS.bg,
@@ -119,7 +119,7 @@ export function ContextMeterCanvas({
     // Zone label — above bar
     if (isHorizontal) {
       const zoneFontSize = Math.min(Math.floor(height * 0.16), 10);
-      ctx.font = `700 ${zoneFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `700 ${zoneFontSize}px ${FONT.system}`;
       ctx.fillStyle = fillColor;
       ctx.textBaseline = 'top';
       ctx.fillText(getZoneLabel(currentValue), pad, 2);
@@ -128,7 +128,7 @@ export function ContextMeterCanvas({
     // Token count — below bar
     if (tokensUsed != null && tokensTotal != null && isHorizontal) {
       const countFontSize = Math.min(Math.floor(height * 0.16), 10);
-      ctx.font = `500 ${countFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `500 ${countFontSize}px ${FONT.system}`;
       ctx.fillStyle = COLORS.label;
       ctx.textBaseline = 'bottom';
       const countText = `${formatTokens(tokensUsed)} / ${formatTokens(tokensTotal)}`;
@@ -138,7 +138,7 @@ export function ContextMeterCanvas({
       const pctText = `${Math.round(currentValue * 100)}%`;
       const pctWidth = ctx.measureText(pctText).width;
       ctx.fillStyle = fillColor;
-      ctx.font = `700 ${countFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `700 ${countFontSize}px ${FONT.system}`;
       ctx.fillText(pctText, width - pad - pctWidth, height - 2);
     }
 

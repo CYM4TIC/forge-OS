@@ -10,7 +10,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { DOCK } from './canvas-tokens';
+import { DOCK, FONT } from './canvas-tokens';
 
 const COLORS = DOCK;
 
@@ -87,7 +87,7 @@ export function DockPill({
     // Icon
     const iconFontSize = Math.min(Math.floor(height * 0.5), 14);
     const pad = 8;
-    ctx.font = `${iconFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `${iconFontSize}px ${FONT.system}`;
     ctx.textBaseline = 'middle';
     ctx.fillStyle = isActive ? COLORS.activeText : COLORS.dimText;
     ctx.fillText(icon, pad, height / 2);
@@ -96,7 +96,7 @@ export function DockPill({
     const labelX = pad + iconFontSize + 4;
     const labelFontSize = Math.min(Math.floor(height * 0.38), 12);
     const maxLabelWidth = width - labelX - pad - (badgeCount > 0 ? 20 : 0);
-    ctx.font = `500 ${labelFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `500 ${labelFontSize}px ${FONT.system}`;
     ctx.fillStyle = isActive ? COLORS.activeText : COLORS.dimText;
 
     // Truncate label if needed
@@ -113,7 +113,7 @@ export function DockPill({
     if (badgeCount > 0) {
       const badgeText = badgeCount > 99 ? '99+' : badgeCount.toString();
       const badgeFontSize = 9;
-      ctx.font = `bold ${badgeFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `bold ${badgeFontSize}px ${FONT.system}`;
       const badgeWidth = Math.max(ctx.measureText(badgeText).width + 6, 14);
       const badgeHeight = 14;
       const badgeX = width - pad - badgeWidth + badgeWidth / 2;

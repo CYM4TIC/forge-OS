@@ -10,7 +10,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { listVaultTree, readVaultFile } from '../../lib/tauri';
 import type { VaultTreeNode } from '../../lib/tauri';
-import { CANVAS, STATUS, RADIUS } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, RADIUS, FONT } from '@forge-os/canvas-components';
 
 // ─── Styles (canvas-tokens, no Tailwind — RIVEN-HIGH-1 pattern) ────────────
 
@@ -62,7 +62,7 @@ const PREVIEW_HEADER: React.CSSProperties = {
   borderBottom: `1px solid ${CANVAS.border}`,
   fontSize: 11,
   color: CANVAS.label,
-  fontFamily: 'monospace',
+  fontFamily: FONT.mono,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -72,7 +72,7 @@ const PREVIEW_CONTENT: React.CSSProperties = {
   flex: 1,
   overflow: 'auto',
   padding: 12,
-  fontFamily: 'monospace',
+  fontFamily: FONT.mono,
   fontSize: 12,
   lineHeight: 1.5,
   color: CANVAS.text,

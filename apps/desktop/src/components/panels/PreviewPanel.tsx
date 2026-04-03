@@ -14,7 +14,7 @@ import {
   type DevServerInfo,
   type DomRequestPayload,
 } from '../../lib/tauri';
-import { CANVAS, STATUS, RADIUS } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, RADIUS, FONT } from '@forge-os/canvas-components';
 
 // ─── Styles (RIVEN-HIGH-1: canvas-tokens, no Tailwind) ──────────────
 
@@ -126,7 +126,7 @@ const LOG_CONTAINER: React.CSSProperties = {
   padding: '8px 10px',
   maxHeight: 180,
   overflowY: 'auto',
-  fontFamily: 'monospace',
+  fontFamily: FONT.mono,
   fontSize: 11,
   lineHeight: '16px',
   borderTop: `1px solid ${CANVAS.border}`,
@@ -519,7 +519,7 @@ export default function PreviewPanel({ serverId: initialServerId }: PreviewPanel
   );
 
   const handleCustomDimBlur = useCallback(
-    (dim: 'width' | 'height') => {
+    (_dim: 'width' | 'height') => {
       const w = Math.max(120, Math.min(3840, customWidth || 120));
       const h = Math.max(120, Math.min(3840, customHeight || 120));
       setCustomWidth(w);

@@ -10,7 +10,7 @@
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { setupCanvasForHiDPI } from '@forge-os/layout-engine';
 
-import { CANVAS, STATUS } from './canvas-tokens';
+import { CANVAS, STATUS, FONT } from './canvas-tokens';
 
 const COLORS = {
   text: CANVAS.text,
@@ -55,7 +55,7 @@ export function TokenGauge({
 
   // Pre-measure widest value to reserve space
   const fontSize = fontSizeProp ?? Math.min(Math.floor(height * (label ? 0.4 : 0.5)), 36);
-  const font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  const font = `bold ${fontSize}px ${FONT.system}`;
 
   const reservedWidth = useMemo(() => {
     // Reserve width for widest possible value to prevent layout shift.
@@ -103,7 +103,7 @@ export function TokenGauge({
 
     // Label
     if (label) {
-      ctx.font = `600 ${labelFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `600 ${labelFontSize}px ${FONT.system}`;
       ctx.fillStyle = COLORS.label;
       ctx.textBaseline = 'top';
 

@@ -7,7 +7,7 @@
 
 import { useRef, useEffect, useCallback } from 'react';
 import { setupCanvasForHiDPI, fitToContainer } from '@forge-os/layout-engine';
-import { CANVAS, STATUS } from './canvas-tokens';
+import { CANVAS, STATUS, FONT } from './canvas-tokens';
 
 const COLORS = {
   ...CANVAS,
@@ -114,7 +114,7 @@ export function NodeCard({
     // Icon
     if (icon) {
       const iconFontSize = Math.floor(iconSize * 0.85);
-      ctx.font = `${iconFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.font = `${iconFontSize}px ${FONT.system}`;
       ctx.textBaseline = 'middle';
       ctx.fillStyle = COLORS.text;
       ctx.fillText(icon, iconX, height / 2);
@@ -123,7 +123,7 @@ export function NodeCard({
     // Label — auto-sized to fit
     if (textWidth > 20) {
       const fit = fitToContainer(label, textWidth, {
-        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily: FONT.system,
         minFont: 8,
         maxFont: Math.min(height * 0.35, 18),
         maxLines: subLabel ? 1 : 2,
@@ -138,7 +138,7 @@ export function NodeCard({
       // Sub-label
       if (subLabel) {
         const subFontSize = Math.min(fit.fontSize * 0.7, 11);
-        ctx.font = `500 ${subFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.font = `500 ${subFontSize}px ${FONT.system}`;
         ctx.fillStyle = COLORS.muted;
         ctx.fillText(subLabel, textX, height * 0.65, textWidth);
       }
