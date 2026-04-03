@@ -98,3 +98,19 @@
 **Consequence:** EXECUTION-PROTOCOL.md Section 8 defines the dispatch loop. The orchestrator manages session lifecycle. The dashboard shows parallel gate sessions in real-time.
 
 ---
+
+### OS-ADL-017: Dev Server Management via Tauri Shell Plugin
+**Status:** LOCKED | **Date:** 2026-04-02 | **Domain:** runtime
+**Decision:** Dev servers are managed through `tauri-plugin-shell` with a scoped command allowlist (19 dev binaries). DevServerManager runs processes as background tasks with stdout/stderr ring buffers (1000 lines), exit monitors, port auto-detection (11 regex patterns + TCP fallback), and health polling (HTTP GET every 5s with Healthy/Degraded/Running transitions). Max 10 concurrent servers. CWD validation prevents path traversal. Agent DOM access via oneshot channel pattern (UUID request_id, 5s timeout) reads same-origin iframe contentDocument.
+**Rationale:** Native process management gives control over lifecycle, output capture, and cleanup that browser-based approaches can't match. The allowlist prevents arbitrary command execution. Health polling provides status without requiring the dev server to implement a health endpoint.
+**Consequence:** 6 Tauri commands (start/stop/restart/remove/list/get_logs), `detect_server_port` command, `devserver:status-changed` events, `read_preview_dom`/`preview_dom_response` commands. PreviewPanel renders iframe with sandbox + path tracking. Frontend bridge: 8 functions + 4 types, useDevServer hook.
+
+---
+
+### OS-ADL-018: Service Health Monitoring
+**Status:** LOCKED | **Date:** 2026-04-02 | **Domain:** runtime
+**Decision:** External service health is monitored via HealthCheckManager with per-service implementations (GitHub, Supabase, Cloudflare, Stripe, Typesense, Custom). Background tokio poller emits `connectivity:status-changed` events. Service credentials stored in SQLite (V12 migration, service_configs table) with SSRF prevention on custom URLs. Per-service 5s cooldown on manual checks. Aggregate status in dock pill (green/amber/red badge + unhealthy count). ConnectivityPanel shows expandable service cards with detail key-value pairs. Carried risk: plaintext credentials in SQLite (keyring migration tracked for pre-release).
+**Rationale:** Knowing whether GitHub, Supabase, and other services are reachable before attempting operations prevents cryptic failures during builds. The aggregate dock pill gives at-a-glance health without opening the panel. Per-service cooldown prevents rate limiting from manual re-checks.
+**Consequence:** 4 Tauri commands (check_service/check_all_services/get_service_status/set_check_interval), useConnectivity hook, ConnectivityPanel (5 states, card grid, expand-to-detail), dock pill aggregate badge. Dev workspace preset includes connectivity panel. 6 total workspace presets.
+
+---

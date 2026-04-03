@@ -30,6 +30,8 @@ interface BadgeStyle {
   text: string;
 }
 
+type BadgePosition = 'top-right' | 'top-left';
+
 interface DockPillData {
   type: PanelType;
   label: string;
@@ -38,6 +40,7 @@ interface DockPillData {
   panelId: string | null;
   badgeCount: number;
   badgeStyle: BadgeStyle | null;
+  badgePosition: BadgePosition;
   isActive: boolean;
   tooltip: string | null;
 }
@@ -51,17 +54,25 @@ function findingsBadgeColors(counts: HudSeverityCounts | null): { bg: string; te
   return { bg: STATUS.warning, text: CANVAS.bg };
 }
 
-/** Compute aggregate connectivity status for the dock pill badge. */
+/** Compute aggregate connectivity status for the dock pill badge.
+ *  Two-tier color model: danger (unreachable) or warning (degraded).
+ *  No STATUS.critical — that's reserved for findings severity. */
 function connectivityBadge(services: ServiceHealth[]): { count: number; style: BadgeStyle | null; tooltip: string } {
   const configured = services.filter((s) => s.status !== 'unconfigured');
   if (configured.length === 0) return { count: 0, style: null, tooltip: 'No services configured' };
-  const unhealthy = configured.filter((s) => s.status !== 'healthy');
-  if (unhealthy.length === 0) return { count: 0, style: null, tooltip: 'All systems operational' };
-  const hasUnreachable = unhealthy.some((s) => s.status === 'unreachable');
+  const unreachable = configured.filter((s) => s.status === 'unreachable');
+  const degraded = configured.filter((s) => s.status === 'degraded');
+  const unhealthyCount = unreachable.length + degraded.length;
+  if (unhealthyCount === 0) return { count: 0, style: null, tooltip: 'All systems operational' };
+  // R-DS-01: white on amber is 2.1:1 contrast. Use dark text on warning, same as findingsBadgeColors.
+  const style: BadgeStyle = unreachable.length > 0
+    ? { bg: STATUS.danger, text: '#fff' }
+    : { bg: STATUS.warning, text: CANVAS.bg };
+  const noun = unhealthyCount === 1 ? 'service' : 'services';
   return {
-    count: unhealthy.length,
-    style: { bg: hasUnreachable ? STATUS.danger : STATUS.warning, text: '#fff' },
-    tooltip: `${configured.length - unhealthy.length}/${configured.length} services healthy`,
+    count: unhealthyCount,
+    style,
+    tooltip: `${unhealthyCount} ${noun} unhealthy`,
   };
 }
 
@@ -90,6 +101,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
         badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : 0,
         badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
         isActive: isFindings && findingsLoading ? true : false,
+        badgePosition: isConnectivity ? 'top-left' : 'top-right',
         tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
       });
     } else {
@@ -103,6 +115,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
           badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : inst.badgeCount,
           badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
           isActive: inst.isActive,
+          badgePosition: isConnectivity ? 'top-left' : 'top-right',
           tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
         });
       }
@@ -173,7 +186,7 @@ function DockPill({
           style={{
             position: 'absolute',
             top: -4,
-            right: -4,
+            ...(pill.badgePosition === 'top-left' ? { left: -4 } : { right: -4 }),
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -221,18 +234,24 @@ export function DockBar({
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
-  // Poll service status for connectivity dock pill badge
+  // Poll service status for connectivity dock pill badge (10s — backend already polls, this reads cache)
+  // Staggered 2.5s from findings poll to desync IPC bursts (P-QA-04)
   const [connectivityServices, setConnectivityServices] = useState<ServiceHealth[]>([]);
   useEffect(() => {
     let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     const poll = () => {
       getServiceStatus().then((services) => {
         if (!cancelled) setConnectivityServices(services);
-      }).catch(() => {});
+      }).catch(() => {
+        // Retain last-known services on error — don't reset to [] which gives false "all clear"
+      });
     };
-    poll();
-    const interval = setInterval(poll, 10000); // 10s — lighter than findings, backend already polls
-    return () => { cancelled = true; clearInterval(interval); };
+    const startId = setTimeout(() => {
+      poll();
+      intervalId = setInterval(poll, 10000);
+    }, 2500);
+    return () => { cancelled = true; clearTimeout(startId); if (intervalId) clearInterval(intervalId); };
   }, []);
 
   const pills = buildDockPills(panels, findingsCounts, findingsLoading, connectivityServices);
@@ -264,7 +283,7 @@ export function DockBar({
       }}
     >
       {/* Panel pills — horizontal scroll for overflow */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', maxHeight: DOCK_BAR_HEIGHT - 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', maxHeight: DOCK_BAR_HEIGHT - 8 }}>
         {pills.map((pill, i) => (
           <DockPill
             key={pill.panelId ?? `${pill.type}-${i}`}

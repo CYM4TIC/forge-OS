@@ -153,8 +153,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'preview', state: 'docked', position: { x: 320, y: 0 }, size: { width: 560, height: 400 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'connectivity', state: 'docked', position: { x: 320, y: 400 }, size: { width: 560, height: 200 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'preview', state: 'docked', position: { x: 320, y: 0 }, size: { width: 560, height: 360 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'connectivity', state: 'docked', position: { x: 320, y: 360 }, size: { width: 560, height: 240 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
 ];
