@@ -61,6 +61,8 @@
 ## Zero Tolerance (Rule 43)
 43. **Every fixable problem gets fixed when found. No exceptions.** Gate findings, consequence climb discoveries, issues spotted while coding or reading files — all get the same treatment. Fix now, verify, then resume. The only valid deferral: the fix requires resources from a later phase that don't exist yet. When uncertain whether to fix or defer: STOP and ask the operator. Do not self-triage. Do not silently pass. Patience is how we get perfection. Perfection over speed, always.
 
+**Structural enforcement (Phase 5 gate):** Rule 43 is enforced as a blocking gate at Phase 5 (Close). Before the adversarial check, `tsc --noEmit` must return zero errors across the full build. Any error — including ones not introduced by the current batch — is a hard stop. The term "pre-existing" is not a valid exemption. If it compiles with errors, you don't close. Origin of the error is irrelevant. Fix it, verify zero errors, then proceed.
+
 ## Post-Write Audits (Rules 44-46)
 44. **Sibling audit (FM-12 defense).** After writing any component that lives alongside others, open the nearest sibling and compare: header styling, icon characters, touch targets, border radius, color tokens. 5 properties. 2 minutes.
 45. **Modality check (FM-13 defense).** After writing any canvas component, ask: What does someone who can't see this perceive? Can someone navigate this with only a keyboard? Do real-time updates announce themselves? If any answer is "nothing" or "no," fix before proceeding.

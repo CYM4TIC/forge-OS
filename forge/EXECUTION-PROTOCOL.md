@@ -302,6 +302,13 @@ For EACH finding:
 Before writing the BOOT.md handoff:
 
 ```
+RULE 43 GATE (BLOCKING — runs first, before everything else):
+
+□ tsc --noEmit returns ZERO errors across the full build
+□ Any error — regardless of which batch introduced it — is a hard stop
+□ "Pre-existing" is not a valid exemption. Fix it. Re-run. Confirm zero.
+□ This gate cannot be skipped, deferred, or rationalized away.
+
 COMPLETION GATE — ALL MUST BE TRUE:
 
 □ Every micro-batch was verified (cite evidence per micro-batch)
@@ -516,6 +523,7 @@ PHASE 4 — REGRESSION CHECK
   If regressions → STOP, fix before handoff.
 
 PHASE 5 — COMPLETION
+  RULE 43 GATE: tsc --noEmit = zero errors. Hard stop if not. Fix all.
   Run Completion Checklist (Section 4).
   Run Consequence Check (Rules 35-41, OS-BL-007).
   Run Adversarial Check.

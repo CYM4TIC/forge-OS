@@ -69,7 +69,7 @@ function severityToColor(severity: string | null): string | undefined {
     case 'critical': return STATUS.danger;
     case 'high': return STATUS.critical;
     case 'medium': return STATUS.warning;
-    case 'low': return STATUS.accent;
+    case 'low': return STATUS.neutral;
     default: return undefined;
   }
 }

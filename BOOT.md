@@ -11,7 +11,7 @@ current_session: 6.2_NEXT
 session_6_1_complete: true
 current_batch: P6-J
 batches_done: 96
-last_commit: a20e25a
+last_commit: 7f2a248
 session_5_1_complete: true
 session_5_2_complete: true
 session_5_3_complete: true

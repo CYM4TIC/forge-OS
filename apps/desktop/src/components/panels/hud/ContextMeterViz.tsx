@@ -20,7 +20,7 @@ import {
   setupCanvasForHiDPI,
 } from '@forge-os/layout-engine';
 import type { StyledSpan, CanvasRenderOptions } from '@forge-os/layout-engine';
-import { CANVAS, getZoneColor, getZoneLabel } from '@forge-os/canvas-components';
+import { CANVAS, FONT, getZoneColor, getZoneLabel } from '@forge-os/canvas-components';
 
 /** Convert a hex token to rgba with dynamic alpha */
 function hexToRgba(hex: string, alpha: number): string {
@@ -44,7 +44,7 @@ const DENSITY_SAMPLES = [
   'Architecture decisions logged. Build learnings propagated.',
 ];
 
-const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, sans-serif';
+const FONT_FAMILY = FONT.system;
 
 // ─── Density Mapping ────────────────────────────────────────────────────────
 

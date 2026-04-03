@@ -22,7 +22,7 @@ Every build batch follows this sequence. No skips. No reordering.
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
 | **4** | Regression | Dispatch Sentinel (background). If regressions → stop. | FM-6 |
-| **5** | Close | Adversarial check. Push all. BOOT.md handoff — 3 writes, all mandatory: (1) YAML header: advance `current_batch`, increment `batches_done`, update `last_commit`, (2) Current Position: append what shipped + what next batch inherits, (3) batch table: mark batch ✅ DONE. Read back after writing. **Then: context status report** — estimated context usage, can continue or fresh session needed. | FM-7 |
+| **5** | Close | **Rule 43 gate (BLOCKING):** `tsc --noEmit` must return zero errors across the full build. Any error — including ones not introduced by this batch — is a hard stop. Fix before close. No "pre-existing" exemptions. **Then:** adversarial check. Push all. BOOT.md handoff — 3 writes, all mandatory: (1) YAML header: advance `current_batch`, increment `batches_done`, update `last_commit`, (2) Current Position: append what shipped + what next batch inherits, (3) batch table: mark batch ✅ DONE. Read back after writing. **Then: context status report** — estimated context usage, can continue or fresh session needed. | FM-4, FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)
 
@@ -116,7 +116,7 @@ The rules I've actually violated. The rest are in [METHODOLOGY.md](../METHODOLOG
 | 27 | Adversarial check before completion | FM-7. Skipped in P5-K. Operator caught it. |
 | 29 | Never simulate gates inline | FM-9. Agent dispatch exists. Use it. |
 | 42 | Consequence climb must climb, not spiral | FM-10. Surface→pattern→structure→synthesis. |
-| 43 | Fix everything when found. No exceptions. | FM-4. "Pre-existing" exemption in P5-K. No severity tiers. No scope exemptions. |
+| 43 | Fix everything when found. No exceptions. **PHASE 5 GATE:** `tsc --noEmit` = zero errors before close. No "pre-existing" exemption. | FM-4. Violated P6-I (called errors "pre-existing"). Now structurally enforced: zero TS errors = hard gate at Phase 5. |
 | 44-46 | Post-write audits (sibling, modality, token) | FM-12/13/14. All active since P5-H. |
 
 → [Full 46-rule set](../METHODOLOGY.md)
@@ -127,6 +127,7 @@ The rules I've actually violated. The rest are in [METHODOLOGY.md](../METHODOLOG
 
 Run at Phase 5 before every completion report. Also run when you "feel done."
 
+0. **RULE 43 GATE (BLOCKING):** Run `tsc --noEmit` on the full build. Zero errors required. Any error — regardless of origin — is a hard stop. Fix it, re-run, confirm zero. This is not a check. This is a gate. You cannot proceed past this step with errors.
 1. **"What would Pierce flag that the Triad didn't catch?"**
 2. **"What haven't I verified?"**
 3. **"Am I done or do I WANT to be done?"**
