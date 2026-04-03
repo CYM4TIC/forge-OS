@@ -41,7 +41,7 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     defaultSize: { width: 300, height: 600 },
   }],
   ['preview', {
-    type: 'preview', label: 'Mirror', icon: '🔮',
+    type: 'preview', label: 'Orb', icon: '🔮',
     defaultConstraints: { minWidth: 320, minHeight: 200 },
     allowMultiple: true,
     defaultSize: { width: 640, height: 480 },
