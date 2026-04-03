@@ -131,6 +131,51 @@ impl ProposalOutcome {
     }
 }
 
+/// Why a proposal was dismissed rather than resolved (from Factory-AI DismissalRecord pattern).
+/// Distinct from rejection: rejection = "evaluated and declined."
+/// Dismissal = "acknowledged but deprioritized with documented reasoning."
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DismissalType {
+    /// A new issue was discovered that supersedes this proposal.
+    DiscoveredIssue,
+    /// Critical context emerged that invalidates the proposal premise.
+    CriticalContext,
+    /// Work was started but cannot be completed in current scope.
+    IncompleteWork,
+}
+
+impl DismissalType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::DiscoveredIssue => "discovered_issue",
+            Self::CriticalContext => "critical_context",
+            Self::IncompleteWork => "incomplete_work",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s {
+            "discovered_issue" => Ok(Self::DiscoveredIssue),
+            "critical_context" => Ok(Self::CriticalContext),
+            "incomplete_work" => Ok(Self::IncompleteWork),
+            _ => Err(format!("Invalid dismissal type: {}", s)),
+        }
+    }
+}
+
+/// A dismissal record — paper trail for deprioritized proposals.
+/// Every dismissed item has explicit justification. No silent drops.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DismissalRecord {
+    pub id: String,
+    pub proposal_id: String,
+    pub dismissal_type: DismissalType,
+    pub summary: String,
+    pub justification: String,
+    pub created_at: String,
+}
+
 /// Mission-level state machine (from Factory-AI 6-state orchestrator lifecycle).
 /// Separated from AgentWorkingState (P7-D) — mission state drives orchestration
 /// (worker dispatch, milestone gates), agent state drives UI (spinners, permission dialogs).
@@ -252,6 +297,7 @@ pub enum FeedEntry {
     ProposalFiled { proposal: Proposal },
     ResponseAdded { response: ProposalResponse },
     DecisionMade { decision: Decision },
+    ProposalDismissed { dismissal: DismissalRecord },
 }
 
 // ── Filter ──
@@ -505,6 +551,40 @@ pub fn get_proposal_feed(
         .query_map(d_refs.as_slice(), row_to_decision)?
         .collect::<Result<Vec<_>, _>>()?;
 
+    // 4. Dismissals (joined to filtered proposals)
+    let mut dismiss_sql = String::from(
+        "SELECT dm.id, dm.proposal_id, dm.dismissal_type, dm.summary, dm.justification, dm.created_at
+         FROM dismissals dm
+         INNER JOIN proposals p ON dm.proposal_id = p.id WHERE 1=1"
+    );
+    let mut dm_params: Vec<String> = Vec::new();
+    if let Some(ref author) = filter.author {
+        dm_params.push(author.clone());
+        dismiss_sql.push_str(&format!(" AND p.author = ?{}", dm_params.len()));
+    }
+    if let Some(ref pt) = filter.proposal_type {
+        dm_params.push(pt.clone());
+        dismiss_sql.push_str(&format!(" AND p.proposal_type = ?{}", dm_params.len()));
+    }
+    if let Some(ref status) = filter.status {
+        dm_params.push(status.clone());
+        dismiss_sql.push_str(&format!(" AND p.status = ?{}", dm_params.len()));
+    }
+    if let Some(ref source) = filter.source {
+        dm_params.push(source.clone());
+        dismiss_sql.push_str(&format!(" AND p.source = ?{}", dm_params.len()));
+    }
+    dismiss_sql.push_str(" ORDER BY dm.created_at DESC");
+
+    let mut dm_stmt = conn.prepare(&dismiss_sql)?;
+    let dm_refs: Vec<&dyn rusqlite::types::ToSql> = dm_params
+        .iter()
+        .map(|v| v as &dyn rusqlite::types::ToSql)
+        .collect();
+    let dismissals: Vec<DismissalRecord> = dm_stmt
+        .query_map(dm_refs.as_slice(), row_to_dismissal)?
+        .collect::<Result<Vec<_>, _>>()?;
+
     // Merge all entries with timestamps, sort chronologically, paginate
     let mut entries: Vec<(String, FeedEntry)> = Vec::new();
     for p in proposals {
@@ -518,6 +598,10 @@ pub fn get_proposal_feed(
     for d in decisions {
         let ts = d.created_at.clone();
         entries.push((ts, FeedEntry::DecisionMade { decision: d }));
+    }
+    for dm in dismissals {
+        let ts = dm.created_at.clone();
+        entries.push((ts, FeedEntry::ProposalDismissed { dismissal: dm }));
     }
 
     // Sort descending by timestamp (ISO 8601 is lexicographically sortable)
@@ -534,6 +618,21 @@ pub fn get_proposal_feed(
         .collect();
 
     Ok(page_entries)
+}
+
+/// Full-text search on proposal title and body.
+/// Uses SQLite LIKE for broad matching (FTS5 index not on proposals table).
+pub fn search_proposals(
+    conn: &Connection,
+    query: &str,
+) -> Result<Vec<Proposal>, rusqlite::Error> {
+    let pattern = format!("%{}%", query);
+    let mut stmt = conn.prepare(
+        "SELECT id, author, source, proposal_type, scope, target, severity, title, body, evidence, status, evaluators, preconditions, verification_steps, fulfills, created_at, resolved_at, decision_trace_id
+         FROM proposals WHERE title LIKE ?1 OR body LIKE ?1 ORDER BY created_at DESC LIMIT 50",
+    )?;
+    let rows = stmt.query_map(params![pattern], row_to_proposal)?;
+    rows.collect()
 }
 
 pub fn get_response(conn: &Connection, id: &str) -> Result<Option<ProposalResponse>, rusqlite::Error> {
@@ -621,7 +720,7 @@ fn row_to_proposal(row: &rusqlite::Row) -> Result<Proposal, rusqlite::Error> {
     })
 }
 
-fn row_to_decision(row: &rusqlite::Row) -> Result<Decision, rusqlite::Error> {
+pub fn row_to_decision(row: &rusqlite::Row) -> Result<Decision, rusqlite::Error> {
     let outcome_str: Option<String> = row.get(6)?;
     Ok(Decision {
         id: row.get(0)?,
@@ -638,5 +737,18 @@ fn row_to_decision(row: &rusqlite::Row) -> Result<Decision, rusqlite::Error> {
             None => None,
         },
         created_at: row.get(7)?,
+    })
+}
+
+fn row_to_dismissal(row: &rusqlite::Row) -> Result<DismissalRecord, rusqlite::Error> {
+    let type_str: String = row.get(2)?;
+    Ok(DismissalRecord {
+        id: row.get(0)?,
+        proposal_id: row.get(1)?,
+        dismissal_type: DismissalType::from_str(&type_str)
+            .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+        summary: row.get(3)?,
+        justification: row.get(4)?,
+        created_at: row.get(5)?,
     })
 }

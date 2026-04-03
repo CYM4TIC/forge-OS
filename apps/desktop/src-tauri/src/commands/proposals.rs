@@ -5,10 +5,13 @@ use tokio::sync::Mutex;
 use ulid::Ulid;
 
 use crate::database::Database;
+use crate::proposals::decisions;
 use crate::proposals::store::{
-    self, FeedEntry, MissionState, Proposal, ProposalFilter,
+    self, Decision, DismissalRecord, DismissalType, FeedEntry,
+    MissionState, Proposal, ProposalFilter, ProposalOutcome,
     ProposalSource, ProposalStatus, ProposalType,
 };
+use crate::proposals::triage;
 
 // ── MissionState in-memory store ──
 
@@ -68,6 +71,41 @@ pub struct UpdateMissionStateRequest {
     pub state: MissionState,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct EvaluateProposalRequest {
+    pub id: String,
+    pub response_body: String,
+    pub author: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ResolveProposalRequest {
+    pub id: String,
+    pub status: ProposalStatus,
+    pub rationale: String,
+    pub outcome: Option<ProposalOutcome>,
+    pub implementing_batch: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DismissProposalRequest {
+    pub id: String,
+    pub dismissal_type: DismissalType,
+    pub summary: String,
+    pub justification: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GetDecisionHistoryRequest {
+    pub page: Option<i64>,
+    pub per_page: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SearchProposalsRequest {
+    pub query: String,
+}
+
 // ── Tauri commands ──
 
 #[tauri::command]
@@ -96,7 +134,7 @@ pub fn file_proposal(
     }
 
     let id = Ulid::new().to_string();
-    let proposal = Proposal {
+    let mut proposal = Proposal {
         id: id.clone(),
         author: request.author,
         source: request.source,
@@ -116,6 +154,9 @@ pub fn file_proposal(
         resolved_at: None,
         decision_trace_id: None,
     };
+
+    // Auto-assign evaluators based on proposal scope
+    proposal.evaluators = triage::auto_assign_evaluators(&proposal);
 
     store::create_proposal(&conn, &proposal).map_err(|e| e.to_string())?;
 
@@ -186,4 +227,115 @@ pub async fn update_mission_state(
     holder.state = request.state;
     let _ = app.emit("mission:state-changed", &holder.state);
     Ok(holder.state)
+}
+
+// ── P7-J: Triage + Decisions + Dismissals + Search ──
+
+#[tauri::command]
+pub fn evaluate_proposal(
+    app: tauri::AppHandle,
+    db: State<'_, Database>,
+    request: EvaluateProposalRequest,
+) -> Result<store::ProposalResponse, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+
+    // Verify proposal exists and transition to Evaluating if still Open
+    let proposal = store::get_proposal(&conn, &request.id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("Proposal not found: {}", request.id))?;
+
+    if proposal.status == ProposalStatus::Open {
+        store::update_proposal_status(
+            &conn,
+            &request.id,
+            &ProposalStatus::Evaluating,
+            None,
+            None,
+        )?;
+    }
+
+    let response_id = Ulid::new().to_string();
+    let response = store::ProposalResponse {
+        id: response_id,
+        proposal_id: request.id,
+        author: request.author,
+        body: request.response_body,
+        created_at: String::new(), // SQLite DEFAULT
+    };
+
+    store::add_response(&conn, &response).map_err(|e| e.to_string())?;
+
+    // Re-read for SQLite-generated timestamp
+    let stored = store::get_response(&conn, &response.id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "Response created but not found".to_string())?;
+
+    let _ = app.emit("proposals:feed-updated", &stored);
+    Ok(stored)
+}
+
+#[tauri::command]
+pub fn resolve_proposal(
+    app: tauri::AppHandle,
+    db: State<'_, Database>,
+    request: ResolveProposalRequest,
+) -> Result<Decision, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let decision_id = Ulid::new().to_string();
+
+    let decision = decisions::resolve_proposal(
+        &conn,
+        &request.id,
+        &request.status,
+        &request.rationale,
+        request.outcome.as_ref(),
+        request.implementing_batch.as_deref(),
+        &decision_id,
+    )?;
+
+    let _ = app.emit("proposals:decision-made", &decision);
+    let _ = app.emit("proposals:feed-updated", &decision);
+    Ok(decision)
+}
+
+#[tauri::command]
+pub fn dismiss_proposal(
+    app: tauri::AppHandle,
+    db: State<'_, Database>,
+    request: DismissProposalRequest,
+) -> Result<DismissalRecord, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let dismissal_id = Ulid::new().to_string();
+
+    let dismissal = decisions::dismiss_proposal(
+        &conn,
+        &dismissal_id,
+        &request.id,
+        &request.dismissal_type,
+        &request.summary,
+        &request.justification,
+    )?;
+
+    let _ = app.emit("proposals:feed-updated", &dismissal);
+    Ok(dismissal)
+}
+
+#[tauri::command]
+pub fn get_decision_history(
+    db: State<'_, Database>,
+    request: GetDecisionHistoryRequest,
+) -> Result<Vec<Decision>, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let page = request.page.unwrap_or(0);
+    let per_page = request.per_page.unwrap_or(20);
+    decisions::get_decision_history(&conn, page, per_page).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn search_proposals(
+    db: State<'_, Database>,
+    request: SearchProposalsRequest,
+) -> Result<Vec<Proposal>, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    store::search_proposals(&conn, &request.query).map_err(|e| e.to_string())
 }

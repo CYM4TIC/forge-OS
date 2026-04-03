@@ -443,3 +443,22 @@ CREATE INDEX IF NOT EXISTS idx_decisions_proposal_id ON decisions(proposal_id);
 CREATE INDEX IF NOT EXISTS idx_decisions_outcome ON decisions(outcome);
 COMMIT;
 "#;
+
+/// Phase 7 schema v14: Dismissals table for proposal deprioritization tracking.
+/// Dismissals are distinct from rejections — they represent "acknowledged but deprioritized"
+/// with documented reasoning. No silent drops.
+pub const SCHEMA_V14: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS dismissals (
+    id TEXT PRIMARY KEY NOT NULL,
+    proposal_id TEXT NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
+    dismissal_type TEXT NOT NULL CHECK (dismissal_type IN ('discovered_issue', 'critical_context', 'incomplete_work')),
+    summary TEXT NOT NULL,
+    justification TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_dismissals_proposal_id ON dismissals(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_dismissals_created_at ON dismissals(created_at);
+COMMIT;
+"#;

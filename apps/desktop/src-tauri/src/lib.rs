@@ -339,6 +339,11 @@ pub fn run() {
             commands::proposals::get_proposal_feed,
             commands::proposals::get_mission_state,
             commands::proposals::update_mission_state,
+            commands::proposals::evaluate_proposal,
+            commands::proposals::resolve_proposal,
+            commands::proposals::dismiss_proposal,
+            commands::proposals::get_decision_history,
+            commands::proposals::search_proposals,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

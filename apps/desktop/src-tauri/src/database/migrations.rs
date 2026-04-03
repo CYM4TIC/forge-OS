@@ -87,5 +87,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 13;")?;
     }
 
+    // Phase 7: Dismissals table for proposal deprioritization
+    if current_version < 14 {
+        conn.execute_batch(schema::SCHEMA_V14)?;
+        conn.execute_batch("PRAGMA user_version = 14;")?;
+    }
+
     Ok(())
 }
