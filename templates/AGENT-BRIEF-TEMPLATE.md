@@ -58,7 +58,7 @@ Every agent dispatch — Scout, Triad, Sentinel, Wraith, or any individual perso
 ## Output Format
 [What the agent should produce.]
 - For **Scout:** Schema recon brief + open findings + gotchas
-- For **Build Triad (Pierce+Mara+Riven):** Gate Enforcement Template (filled out)
+- For **Build Triad (Pierce+Mara+Kehinde):** Gate Enforcement Template (filled out)
 - For **Sentinel:** Regression report (last 3 surfaces, pass/fail per surface)
 - For **Wraith:** Red team report (attack vectors attempted, results, severity)
 - For **Individual persona:** Findings list with severity + evidence

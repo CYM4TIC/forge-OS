@@ -41,7 +41,7 @@
 
 ### Parallel Review
 **Pattern:** A builds, B+C+D review simultaneously
-**Example:** Nyx builds a surface → Pierce + Mara + Riven gate in parallel (Build Triad)
+**Example:** Nyx builds a surface → Pierce + Mara + Kehinde gate in parallel (Build Triad)
 **Rule:** All reviewers' findings must be resolved before the batch closes.
 
 ### Collaborative Design

@@ -112,6 +112,7 @@ The base palette below remains the structural foundation. The visual direction a
 | graph_viewer | Ley Lines | ✨ | Graph |
 | context_meter | Vessel | 🏺 | Context |
 | action_palette (P7-F) | Invocation | TBD | — |
+| media_gallery (8.8) | Atelier | 🎨 | Media Gallery |
 
 Grammar: places are bare nouns (Crucible, Furnace, Magi, Orb, Vault). Phenomena are bare nouns (Echoes, Scrying, Ley Lines). No "The" prefix — sleeker.
 

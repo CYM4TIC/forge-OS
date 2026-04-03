@@ -154,7 +154,7 @@ Agents with swarm capability automatically swarm when:
 **Orchestrators (8) — parallel internal dispatch:**
 | Orchestrator | Parallel Dispatch | Max Concurrent |
 |-------------|-------------------|----------------|
-| Build Triad | Pierce + Mara + Riven simultaneously | 3 |
+| Build Triad | Pierce + Mara + Kehinde simultaneously | 3 |
 | Systems Triad | Kehinde + Tanaka + Vane simultaneously | 3 |
 | Strategy Triad | Calloway + Voss + Sable simultaneously | 3 |
 | Full Audit | All triads + Wraith + Sentinel + Meridian in waves | 8 |

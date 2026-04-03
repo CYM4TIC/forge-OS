@@ -4,7 +4,7 @@
 
 ## Gate Types
 
-**Build Triad** (Frontend): Pierce (QA) + Mara (UX) + Riven (Design). After every frontend batch.
+**Build Triad** (Default): Pierce (QA) + Mara (UX) + Kehinde (Systems). After every batch. Riven (Design) dispatched ad-hoc for frontend-heavy batches.
 
 **Systems Triad** (Backend): Kehinde (Systems) + Tanaka (Security) + Vane (Financial). After backend batches with auth/financial implications.
 

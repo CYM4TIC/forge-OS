@@ -20,7 +20,7 @@ The Gate Runner. Reads the project's gate configuration, determines which triads
 ## Step 1 — Identify Required Gates
 Read PERSONA-GATES.md. Find the entry for the target batch.
 Determine:
-- Is the Build Triad (Pierce + Mara + Riven) required? (YES for all frontend)
+- Is the Build Triad (Pierce + Mara + Kehinde) required? (YES for all batches)
 - Is the Systems Triad (Kehinde + Tanaka + Vane) required? (YES for backend)
 - Is the Strategy Triad (Calloway + Voss + Sable) required? (YES for customer-facing)
 - Are additional individual personas required?

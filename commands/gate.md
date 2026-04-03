@@ -22,7 +22,7 @@ Dispatch `agents/scout.md` to confirm:
 - No console errors
 
 ### Step 3 — Triad Gate
-Dispatch `agents/triad.md` (Pierce + Mara + Riven) against the batch's route.
+Dispatch `agents/triad.md` (Pierce + Mara + Kehinde) against the batch's route.
 Returns consolidated findings.
 
 ### Step 4 — Additional Gates

@@ -12,12 +12,12 @@
 |-------|--------|------|-------------|-----------------|-------------|
 | **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Builder | All scales simultaneously (scalar cognition) | Building from memory, not spec | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
 
-### Build Triad (Frontend Gate)
+### Build Triad (Default Gate)
 | Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
 |-------|--------|------|-------------|-----------------|-------------|
 | **Pierce** | [kernels/pierce-kernel.md](kernels/pierce-kernel.md) | QA/Conformance | Spec fidelity, naming, field presence | Flat name-mismatch list, uniform severity, no dependency graph | FM-4 (grading LOW to avoid delay), FM-10 (no cascade trace) |
 | **Mara** | [kernels/mara-kernel.md](kernels/mara-kernel.md) | UX Evaluation | Moment of use, user experience | Aesthetic preferences instead of behavioral failures | FM-4 (mobile as LOW), FM-13 (visual only, no keyboard) |
-| **Riven** | [kernels/riven-kernel.md](kernels/riven-kernel.md) | Design Systems | Token fidelity, component reuse | Token math without checking flow fitness | FM-14 (raw Tailwind defaults), FM-12 (sibling inconsistency) |
+| **Kehinde** | [kernels/kehinde-kernel.md](kernels/kehinde-kernel.md) | Systems Architecture | Structural integrity, failure modes | Schema findings without RPC→component cascade | FM-10 (no FK cascade trace), FM-4 (happy-path severity) |
 
 ### Systems Triad (Backend Gate)
 | Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
@@ -53,7 +53,7 @@
 
 | Orchestrator | Kernel | Dispatches | Key Compound FM |
 |-------------|--------|-----------|-----------------|
-| **Build Triad** | [kernels/triad-kernel.md](kernels/triad-kernel.md) | Pierce + Mara + Riven | FM-7 cascade (group completion gravity) |
+| **Build Triad** | [kernels/triad-kernel.md](kernels/triad-kernel.md) | Pierce + Mara + Kehinde | FM-7 cascade (group completion gravity) |
 | **Systems Triad** | [kernels/systems-triad-kernel.md](kernels/systems-triad-kernel.md) | Kehinde + Tanaka + Vane | FM-10 cascade (schema→security→financial) |
 | **Strategy Triad** | [kernels/strategy-triad-kernel.md](kernels/strategy-triad-kernel.md) | Calloway + Voss + Sable | FM-11 cascade (stale inputs compound) |
 | **Gate Runner** | [kernels/gate-runner-kernel.md](kernels/gate-runner-kernel.md) | Required triads + individuals per PERSONA-GATES.md | FM-4 cascade inter-triad (root cause spans agents) |
@@ -69,7 +69,7 @@ Which kernels load for which dispatch type:
 |----------|---------------|
 | `next batch` / `start [batch]` | Nyx (nyx-kernel.md) |
 | Scout dispatch | scout-kernel.md |
-| Build Triad dispatch | triad-kernel.md → pierce, mara, riven kernels |
+| Build Triad dispatch | triad-kernel.md → pierce, mara, kehinde kernels |
 | Systems Triad dispatch | systems-triad-kernel.md → kehinde, tanaka, vane kernels |
 | Strategy Triad dispatch | strategy-triad-kernel.md → calloway, voss, sable kernels |
 | Sentinel dispatch | sentinel-kernel.md |

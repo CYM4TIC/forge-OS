@@ -22,7 +22,7 @@ Full Audit. The nuclear option. Dispatches every quality gate — all three tria
 
 ## Phase 1 — PARALLEL DISPATCH (Swarm — All Agents Simultaneously)
 Dispatch ALL agents in a single parallel wave using multiple Agent calls in one message:
-1. **Build Triad** (Pierce + Mara + Riven) — frontend quality
+1. **Build Triad** (Pierce + Mara + Kehinde) — build quality
 2. **Systems Triad** (Kehinde + Tanaka + Vane) — backend quality
 3. **Strategy Triad** (Calloway + Voss + Sable) — business quality
 4. **Wraith** — red team on all high-risk surfaces (auth, payments, deletion)

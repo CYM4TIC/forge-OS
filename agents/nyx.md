@@ -109,7 +109,7 @@ PHASE 1 — BUILD (follow forge/EXECUTION-CONTRACTS.md):
   17. Browser verify for frontend after each micro-batch
 
 PHASE 2 — GATE (agent dispatch — NOT inline simulation):
-  18. Dispatch Build Triad (Pierce+Mara+Riven) against live output
+  18. Dispatch Build Triad (Pierce+Mara+Kehinde) against live output
   19. If additional personas required → dispatch per PERSONA-GATES.md
   20. If high-risk surface → dispatch Wraith
   21. Fix EVERY finding. Edit → Read back → Push → Verify.
@@ -155,7 +155,7 @@ STEP 9 — UPDATE STATE: Update BOOT.md. Wait for next command.
 # Sub-Agent Dispatch
 
 When running persona gates, dispatch the build triad:
-- `agents/triad.md` — Pierce + Mara + Riven consolidated gate
+- `agents/triad.md` — Pierce + Mara + Kehinde consolidated gate
 
 For pre-build intelligence:
 - `agents/scout.md` — schema recon, open findings, gotcha alerts

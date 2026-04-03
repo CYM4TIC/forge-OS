@@ -53,7 +53,7 @@
 
 | # | Agent | File | Model | Domain |
 |---|-------|------|-------|--------|
-| 21 | Build Triad | `agents/triad.md` | medium | Pierce + Mara + Riven |
+| 21 | Build Triad | `agents/triad.md` | medium | Pierce + Mara + Kehinde |
 | 22 | Systems Triad | `agents/systems-triad.md` | medium | Kehinde + Tanaka + Vane |
 | 23 | Strategy Triad | `agents/strategy-triad.md` | medium | Calloway + Voss + Sable |
 | 24 | Gate Runner | `agents/gate-runner.md` | medium | Config-driven gate dispatch |

@@ -103,7 +103,7 @@ The right response to a circuit break is **reframe the problem**, not retry hard
 ## 3. Critic Self-Audit + Realist Check
 
 ### The Problem
-Quality gate personas (Pierce, Mara, Riven) can inflate severity. A theoretical spec deviation that affects no user gets classified as P-CRIT. This wastes fix cycles on low-impact issues.
+Quality gate personas (Pierce, Mara, Kehinde) can inflate severity. A theoretical spec deviation that affects no user gets classified as P-CRIT. This wastes fix cycles on low-impact issues.
 
 ### Self-Audit (Before Reporting)
 
@@ -235,7 +235,7 @@ Each lens doesn't require a separate pass. During a single review, the reviewer 
 
 | Surface Type | Always Dispatch | Conditional Dispatch | Wraith Trigger |
 |-------------|-----------------|---------------------|----------------|
-| **Frontend (any)** | Build Triad (Pierce + Mara + Riven) | — | If auth-gated or handles PII |
+| **Frontend (any)** | Build Triad (Pierce + Mara + Kehinde) | — | If auth-gated or handles PII |
 | **Backend RPC** | Pierce + Kehinde | Tanaka (if auth/RLS) | If handles payments or deletion |
 | **Edge Function** | Pierce + Kehinde | Tanaka (if handles secrets) | If webhook or external API |
 | **Payment flow** | Pierce + Vane + Tanaka | Voss (if terms/consent) | Always |

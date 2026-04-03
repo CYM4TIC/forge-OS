@@ -43,7 +43,7 @@
 
 | Agent | File | What It Orchestrates | Max Concurrent |
 |-------|------|---------------------|----------------|
-| **Build Triad** | `agents/triad.md` | Pierce + Mara + Riven | 3 |
+| **Build Triad** | `agents/triad.md` | Pierce + Mara + Kehinde | 3 |
 | **Systems Triad** | `agents/systems-triad.md` | Kehinde + Tanaka + Vane | 3 |
 | **Strategy Triad** | `agents/strategy-triad.md` | Calloway + Voss + Sable | 3 |
 | **Gate Runner** | `agents/gate-runner.md` | Full gate per PERSONA-GATES.md | 6 |

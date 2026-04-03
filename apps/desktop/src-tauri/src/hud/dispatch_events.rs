@@ -30,7 +30,7 @@ pub fn emit_agent_dispatched<R: tauri::Runtime>(
     emit_dispatch_flow(app, "nyx", &[agent_slug], FlowType::Dispatch, None);
 }
 
-/// Convenience: emit a Build Triad dispatch (Nyx → Pierce + Mara + Riven).
+/// Convenience: emit a Build Triad dispatch (Nyx → Pierce + Mara + Kehinde).
 /// Called from Rust-side triad orchestrator (Phase 7+).
 #[allow(dead_code)]
 pub fn emit_triad_dispatched<R: tauri::Runtime>(
@@ -39,7 +39,7 @@ pub fn emit_triad_dispatched<R: tauri::Runtime>(
     emit_dispatch_flow(
         app,
         "nyx",
-        &["pierce", "mara", "riven"],
+        &["pierce", "mara", "kehinde"],
         FlowType::Dispatch,
         None,
     );
