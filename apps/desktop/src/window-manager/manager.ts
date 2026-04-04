@@ -107,8 +107,8 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
 const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'build',
-    name: 'Build Mode',
-    description: 'Canvas big, chat + preview + dispatch queue docked',
+    name: 'Foundry',
+    description: 'Crucible + Furnace + Orb + Crucible Queue — active construction',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -119,8 +119,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   },
   {
     id: 'review',
-    name: 'Review Mode',
-    description: 'Chat + findings + dispatch queue + agora for gate review',
+    name: 'Tribunal',
+    description: 'Crucible + Echoes + Crucible Queue + Agora — judgment and review',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -131,8 +131,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   },
   {
     id: 'focus',
-    name: 'Focus Mode',
-    description: 'Chat only, everything else minimized',
+    name: 'Sanctum',
+    description: 'Crucible only — deep work, undisturbed',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'floating', position: { x: 100, y: 20 }, size: { width: 500, height: 560 }, tabGroupId: null, tabOrder: 0 },
@@ -140,8 +140,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   },
   {
     id: 'gate_review',
-    name: 'Gate Review',
-    description: 'Agent Board + Findings + Timeline for gate sessions',
+    name: 'Tempering',
+    description: 'Grimoire + Echoes + Chronicle — the fire that hardens',
     isBuiltIn: true,
     panels: [
       { type: 'agent_board', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 350 }, tabGroupId: null, tabOrder: 0 },
@@ -152,7 +152,7 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'observatory',
     name: 'Observatory',
-    description: 'Canvas HUD + Graph Viewer + Vault Browser for exploration',
+    description: 'Furnace + Ley Lines + Vault — scrying the deep structure',
     isBuiltIn: true,
     panels: [
       { type: 'canvas_hud', state: 'docked', position: { x: 0, y: 0 }, size: { width: 500, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -162,8 +162,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   },
   {
     id: 'dev',
-    name: 'Dev Mode',
-    description: 'Chat + Preview + Connectivity for active development',
+    name: 'Ouroboros',
+    description: 'Crucible + Orb + Scrying — the forge reshaping itself',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -173,8 +173,8 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   },
   {
     id: 'team',
-    name: 'Team Mode',
-    description: 'Chat + team + dispatch queue + agora for team coordination',
+    name: 'Magi',
+    description: 'Crucible + Magi + Crucible Queue + Agora — the council convenes',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
