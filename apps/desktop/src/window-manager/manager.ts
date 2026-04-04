@@ -95,7 +95,7 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     defaultSize: { width: 420, height: 500 },
   }],
   ['dispatch_queue', {
-    type: 'dispatch_queue', label: 'Crucible Queue', icon: '⚙️',
+    type: 'dispatch_queue', label: 'Quorum', icon: '⚙️',
     defaultConstraints: { minWidth: 300, minHeight: 250 },
     allowMultiple: false,
     defaultSize: { width: 440, height: 520 },
@@ -108,7 +108,7 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'build',
     name: 'Foundry',
-    description: 'Crucible + Furnace + Orb + Crucible Queue — active construction',
+    description: 'Crucible + Furnace + Orb + Quorum — active construction',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -120,7 +120,7 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'review',
     name: 'Tribunal',
-    description: 'Crucible + Echoes + Crucible Queue + Agora — judgment and review',
+    description: 'Crucible + Echoes + Quorum + Agora — judgment and review',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
@@ -174,7 +174,7 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'team',
     name: 'Magi',
-    description: 'Crucible + Magi + Crucible Queue + Agora — the council convenes',
+    description: 'Crucible + Magi + Quorum + Agora — the council convenes',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },

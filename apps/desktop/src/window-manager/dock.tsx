@@ -113,7 +113,7 @@ function proposalBadge(openCount: number): { count: number; style: BadgeStyle | 
   };
 }
 
-/** Active dispatch count for Crucible Queue dock pill badge.
+/** Active dispatch count for Quorum dock pill badge.
  *  Active = status 'running'. Uses BADGE_COLORS.accent. */
 function dispatchBadge(activeCount: number): { count: number; style: BadgeStyle | null; tooltip: string } {
   if (activeCount === 0) return { count: 0, style: null, tooltip: 'No active dispatches' };
@@ -359,7 +359,7 @@ export function DockBar({
     return () => { cancelled = true; clearInterval(interval); if (unlisten) unlisten(); };
   }, []);
 
-  // Poll active dispatch count for Crucible Queue dock pill badge.
+  // Poll active dispatch count for Quorum dock pill badge.
   // Staggered 3.75s from findings poll.
   const [activeDispatchCount, setActiveDispatchCount] = useState(0);
   useEffect(() => {

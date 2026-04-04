@@ -31,7 +31,7 @@ import type {
 // ─── Strings (M-LOW-2: centralized for i18n readiness) ──────────────────────
 
 const STRINGS = {
-  panelTitle: 'Crucible Queue',
+  panelTitle: 'Quorum',
   queueTab: 'Queue',
   gatesTab: 'Gates',
   loadingQueue: 'Loading dispatch queue',
