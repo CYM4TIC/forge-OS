@@ -95,7 +95,7 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     defaultSize: { width: 420, height: 500 },
   }],
   ['dispatch_queue', {
-    type: 'dispatch_queue', label: 'Quorum', icon: '⚙️',
+    type: 'dispatch_queue', label: 'Quorum', icon: '🔱',
     defaultConstraints: { minWidth: 300, minHeight: 250 },
     allowMultiple: false,
     defaultSize: { width: 440, height: 520 },
