@@ -192,6 +192,7 @@ pub fn file_proposal(
         .ok_or_else(|| "Proposal created but not found".to_string())?;
 
     let _ = app.emit("proposals:filed", &stored);
+    let _ = app.emit("proposals:feed-updated", &stored);
     Ok(stored)
 }
 

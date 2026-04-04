@@ -12,7 +12,8 @@ export type PanelType =
   | 'vault_browser'
   | 'graph_viewer'
   | 'session_timeline'
-  | 'context_meter';
+  | 'context_meter'
+  | 'proposal_feed';
 
 export type PanelState = 'docked' | 'floating' | 'minimized' | 'popped_out';
 

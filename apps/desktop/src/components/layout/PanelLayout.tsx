@@ -19,6 +19,7 @@ import SessionTimelinePanel from '../panels/SessionTimelinePanel';
 import VaultBrowserPanel from '../panels/VaultBrowserPanel';
 import GraphViewerPanel from '../panels/GraphViewerPanel';
 import ContextMeterPanel from '../panels/ContextMeterPanel';
+import ProposalFeedPanel from '../panels/ProposalFeedPanel';
 
 interface PanelLayoutProps {
   panels: PanelInstance[];
@@ -59,6 +60,8 @@ function PanelContent({ panel, onStageClick }: { panel: PanelInstance; onStageCl
       return <GraphViewerPanel />;
     case 'context_meter':
       return <ContextMeterPanel />;
+    case 'proposal_feed':
+      return <ProposalFeedPanel />;
     default:
       return null;
   }

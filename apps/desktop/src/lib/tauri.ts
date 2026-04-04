@@ -1211,3 +1211,188 @@ export function getPendingConfirmationCount(): Promise<number> {
   if (!isTauriRuntime) return Promise.resolve(0);
   return invoke('get_pending_confirmation_count');
 }
+
+// ── Proposal types (P7-K bridge) ──
+
+export type ProposalStatus = 'open' | 'evaluating' | 'accepted' | 'rejected';
+export type ProposalSource = 'persona' | 'automated' | 'consortium';
+export type ProposalType = 'optimization' | 'pattern' | 'rule' | 'architecture' | 'skill' | 'policy';
+export type ProposalOutcome = 'success' | 'partial' | 'failure';
+export type DismissalType = 'discovered_issue' | 'critical_context' | 'incomplete_work';
+
+export interface Proposal {
+  id: string;
+  author: string;
+  source: ProposalSource;
+  proposal_type: ProposalType;
+  scope: string;
+  target: string;
+  severity: string;
+  title: string;
+  body: string;
+  evidence: string[];
+  status: ProposalStatus;
+  evaluators: string[];
+  preconditions: string[];
+  verification_steps: string[];
+  fulfills: string[] | null;
+  created_at: string;
+  resolved_at: string | null;
+  decision_trace_id: string | null;
+}
+
+export interface ProposalResponse {
+  id: string;
+  proposal_id: string;
+  author: string;
+  body: string;
+  created_at: string;
+}
+
+export interface Decision {
+  id: string;
+  proposal_id: string;
+  resolution: string;
+  rationale: string;
+  implementing_batch: string | null;
+  outcome_tracking: string | null;
+  outcome: ProposalOutcome | null;
+  created_at: string;
+}
+
+export interface DismissalRecord {
+  id: string;
+  proposal_id: string;
+  dismissal_type: DismissalType;
+  summary: string;
+  justification: string;
+  created_at: string;
+}
+
+export type FeedEntry =
+  | { entry_type: 'proposal_filed'; proposal: Proposal }
+  | { entry_type: 'response_added'; response: ProposalResponse }
+  | { entry_type: 'decision_made'; decision: Decision }
+  | { entry_type: 'proposal_dismissed'; dismissal: DismissalRecord };
+
+export interface ProposalFilter {
+  author?: string;
+  proposal_type?: ProposalType;
+  status?: ProposalStatus;
+  source?: ProposalSource;
+}
+
+// ── Proposal commands ──
+
+export function fileProposal(request: {
+  author: string;
+  source: ProposalSource;
+  proposal_type: ProposalType;
+  scope: string;
+  target: string;
+  severity: string;
+  title: string;
+  body: string;
+  evidence?: string[];
+  preconditions?: string[];
+  verification_steps?: string[];
+  fulfills?: string[];
+  session_id?: string;
+}): Promise<Proposal> {
+  if (!isTauriRuntime) return Promise.reject(new Error('Not in Tauri runtime'));
+  return invoke('file_proposal', { request });
+}
+
+export function listProposals(filter?: ProposalFilter): Promise<Proposal[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  const request = {
+    author: filter?.author ?? null,
+    proposal_type: filter?.proposal_type ?? null,
+    status: filter?.status ?? null,
+    source: filter?.source ?? null,
+  };
+  return invoke('list_proposals', { request });
+}
+
+export function evaluateProposal(
+  id: string,
+  responseBody: string,
+  author: string,
+): Promise<ProposalResponse> {
+  if (!isTauriRuntime) return Promise.reject(new Error('Not in Tauri runtime'));
+  return invoke('evaluate_proposal', { request: { id, response_body: responseBody, author } });
+}
+
+export function resolveProposal(
+  id: string,
+  status: ProposalStatus,
+  rationale: string,
+  outcome?: ProposalOutcome,
+  implementingBatch?: string,
+): Promise<Decision> {
+  if (!isTauriRuntime) return Promise.reject(new Error('Not in Tauri runtime'));
+  return invoke('resolve_proposal', {
+    request: {
+      id,
+      status,
+      rationale,
+      outcome: outcome ?? null,
+      implementing_batch: implementingBatch ?? null,
+    },
+  });
+}
+
+export function dismissProposal(
+  id: string,
+  dismissalType: DismissalType,
+  summary: string,
+  justification: string,
+): Promise<DismissalRecord> {
+  if (!isTauriRuntime) return Promise.reject(new Error('Not in Tauri runtime'));
+  return invoke('dismiss_proposal', {
+    request: { id, dismissal_type: dismissalType, summary, justification },
+  });
+}
+
+export function getProposalFeed(
+  page?: number,
+  perPage?: number,
+  filter?: ProposalFilter,
+): Promise<FeedEntry[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_proposal_feed', {
+    request: {
+      page: page ?? 0,
+      per_page: perPage ?? 20,
+      author: filter?.author ?? null,
+      proposal_type: filter?.proposal_type ?? null,
+      status: filter?.status ?? null,
+      source: filter?.source ?? null,
+    },
+  });
+}
+
+export function getDecisionHistory(
+  page?: number,
+  perPage?: number,
+): Promise<Decision[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('get_decision_history', {
+    request: { page: page ?? 0, per_page: perPage ?? 20 },
+  });
+}
+
+export function searchProposals(query: string): Promise<Proposal[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
+  return invoke('search_proposals', { request: { query } });
+}
+
+/** Subscribe to proposal feed updates (new entries from any source).
+ * Payload varies by event source (Proposal, ProposalResponse, Decision, DismissalRecord).
+ * The hook re-fetches rather than parsing the payload — callback is fire-and-forget. */
+export function onProposalFeedUpdated(
+  callback: (event: Proposal | ProposalResponse | Decision | DismissalRecord) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<Proposal | ProposalResponse | Decision | DismissalRecord>('proposals:feed-updated', (e) => callback(e.payload));
+}
