@@ -183,14 +183,17 @@ export function dispatchAgent(request: DispatchRequest): Promise<string> {
 }
 
 export function getAgentStatus(dispatchId: string): Promise<AgentStatus | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('get_agent_status', { dispatchId });
 }
 
 export function listActiveAgents(): Promise<AgentSummary[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_active_agents');
 }
 
 export function cancelAgent(dispatchId: string): Promise<boolean> {
+  if (!isTauriRuntime) return Promise.resolve(false);
   return invoke('cancel_agent', { dispatchId });
 }
 
