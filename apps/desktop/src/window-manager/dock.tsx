@@ -10,6 +10,10 @@ import { DOCK_BAR_HEIGHT } from './snapping';
 import { getFindingCounts, getServiceStatus, listProposals, listActiveAgents, onProposalFeedUpdated } from '../lib/tauri';
 import type { HudSeverityCounts, ServiceHealth, AgentSummary } from '../lib/tauri';
 import { CANVAS, TIMING, DOCK as DOCK_TOKENS, BADGE_COLORS } from '@forge-os/canvas-components';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+
+// M-CRIT-1: Pulse keyframe must be self-provided per OS-BL-018.
+const DOCK_KEYFRAMES = `@keyframes dock-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }`;
 
 interface DockBarProps {
   panels: PanelInstance[];
@@ -52,6 +56,17 @@ function findingsBadgeColors(counts: HudSeverityCounts | null): { bg: string; te
   if (counts.critical > 0) return BADGE_COLORS.danger;
   if (counts.high > 0) return BADGE_COLORS.critical;
   return BADGE_COLORS.warning;
+}
+
+/** Build tooltip for findings pill from severity counts (M-HIGH-3). */
+function findingsTooltip(counts: HudSeverityCounts | null): string | null {
+  if (!counts || counts.total === 0) return null;
+  const parts: string[] = [];
+  if (counts.critical > 0) parts.push(`${counts.critical} critical`);
+  if (counts.high > 0) parts.push(`${counts.high} high`);
+  if (counts.medium > 0) parts.push(`${counts.medium} medium`);
+  if (counts.low > 0) parts.push(`${counts.low} low`);
+  return `${counts.total} finding${counts.total === 1 ? '' : 's'}: ${parts.join(', ')}`;
 }
 
 /** Compute aggregate connectivity status for the dock pill badge.
@@ -143,7 +158,8 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
       : null;
     const resolvedPosition: BadgePosition = isConnectivity ? 'top-left' : 'top-right';
     const resolvedGlyph = isConnectivity ? (cBadge?.glyph ?? '') : '';
-    const resolvedTooltip = isConnectivity ? (cBadge?.tooltip ?? null)
+    const resolvedTooltip = isFindings ? findingsTooltip(findingsCounts)
+      : isConnectivity ? (cBadge?.tooltip ?? null)
       : isProposals ? (pBadge?.tooltip ?? null)
       : isDispatch ? (dBadge?.tooltip ?? null)
       : null;
@@ -223,19 +239,21 @@ const PILL_STATES: Record<DockPillState, React.CSSProperties> = {
 function DockPill({
   pill,
   onClick,
+  reducedMotion,
 }: {
   pill: DockPillData;
   onClick: () => void;
+  reducedMotion: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={pill.state === 'active'}
-      aria-label={`${pill.label} — ${pill.state}${pill.badgeCount > 0 ? `, ${pill.badgeCount} ${pill.tooltip ?? 'items'}` : ''}`}
+      aria-label={`${pill.label} — ${pill.state}${pill.badgeCount > 0 ? `, ${pill.tooltip ?? `${pill.badgeCount} items`}` : ''}`}
       style={{
         ...PILL_BASE,
         ...PILL_STATES[pill.state],
-        ...(pill.isActive ? { animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : {}),
+        ...(pill.isActive && !reducedMotion ? { animation: 'dock-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' } : {}),
       }}
       title={pill.tooltip ?? `${pill.label} (${pill.state})`}
     >
@@ -243,6 +261,7 @@ function DockPill({
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>{pill.label}</span>
       {pill.badgeCount > 0 && (
         <span
+          aria-hidden="true"
           style={{
             position: 'absolute',
             top: -4,
@@ -275,6 +294,7 @@ export function DockBar({
   onOpen,
   onFocus,
 }: DockBarProps) {
+  const reducedMotion = useReducedMotion();
   // Poll finding counts for severity-aware badge on Findings pill
   const [findingsCounts, setFindingsCounts] = useState<HudSeverityCounts | null>(null);
   const [findingsLoading, setFindingsLoading] = useState(true);
@@ -317,15 +337,18 @@ export function DockBar({
 
   // Poll open proposal count for Agora dock pill badge.
   // Polls open + evaluating proposals. Event-driven refresh via proposals:feed-updated.
+  // K-HIGH-2: sequence counter prevents stale poll results from overwriting fresh event results.
   const [openProposalCount, setOpenProposalCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
+    let seq = 0;
     const fetchCount = () => {
+      const mySeq = ++seq;
       Promise.all([
         listProposals({ status: 'open' }),
         listProposals({ status: 'evaluating' }),
       ]).then(([open, evaluating]) => {
-        if (!cancelled) setOpenProposalCount(open.length + evaluating.length);
+        if (!cancelled && mySeq === seq) setOpenProposalCount(open.length + evaluating.length);
       }).catch(() => { /* retain last-known count */ });
     };
     fetchCount();
@@ -374,6 +397,9 @@ export function DockBar({
 
   return (
     <div
+      role="toolbar"
+      aria-label="Dock bar"
+      aria-orientation="horizontal"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -385,6 +411,7 @@ export function DockBar({
         height: DOCK_BAR_HEIGHT,
       }}
     >
+      {!reducedMotion && <style>{DOCK_KEYFRAMES}</style>}
       {/* Panel pills — horizontal scroll for overflow */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', maxHeight: DOCK_BAR_HEIGHT - 8 }}>
         {pills.map((pill, i) => (
@@ -392,6 +419,7 @@ export function DockBar({
             key={pill.panelId ?? `${pill.type}-${i}`}
             pill={pill}
             onClick={() => handlePillClick(pill)}
+            reducedMotion={reducedMotion}
           />
         ))}
       </div>

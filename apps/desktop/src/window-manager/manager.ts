@@ -108,13 +108,13 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'build',
     name: 'Build Mode',
-    description: 'Canvas big, chat + team + dispatch queue docked',
+    description: 'Canvas big, chat + preview + dispatch queue docked',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'canvas_hud', state: 'docked', position: { x: 320, y: 0 }, size: { width: 540, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'team', state: 'docked', position: { x: 860, y: 0 }, size: { width: 260, height: 300 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'dispatch_queue', state: 'docked', position: { x: 860, y: 300 }, size: { width: 260, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'canvas_hud', state: 'docked', position: { x: 320, y: 0 }, size: { width: 500, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'preview', state: 'docked', position: { x: 820, y: 0 }, size: { width: 320, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'dispatch_queue', state: 'docked', position: { x: 820, y: 300 }, size: { width: 320, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {
@@ -124,9 +124,9 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'findings', state: 'docked', position: { x: 320, y: 0 }, size: { width: 400, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'dispatch_queue', state: 'docked', position: { x: 720, y: 0 }, size: { width: 280, height: 300 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'proposal_feed', state: 'docked', position: { x: 720, y: 300 }, size: { width: 280, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'findings', state: 'docked', position: { x: 320, y: 0 }, size: { width: 380, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'dispatch_queue', state: 'docked', position: { x: 700, y: 0 }, size: { width: 300, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'proposal_feed', state: 'docked', position: { x: 700, y: 300 }, size: { width: 300, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {
@@ -135,7 +135,7 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
     description: 'Chat only, everything else minimized',
     isBuiltIn: true,
     panels: [
-      { type: 'chat', state: 'floating', position: { x: 100, y: 20 }, size: { width: 500, height: 700 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'chat', state: 'floating', position: { x: 100, y: 20 }, size: { width: 500, height: 560 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {

@@ -250,7 +250,7 @@ const ProposalCard = memo(function ProposalCard({ proposal }: { proposal: Propos
     <div
       role="article"
       tabIndex={0}
-      aria-label={`Proposal by ${authorSlug ? authorSlug : proposal.author}: ${proposal.title}`}
+      aria-label={`Proposal by ${authorSlug ? PERSONA_SHORT[authorSlug] : proposal.author}: ${proposal.title}`}
       style={{
         display: 'flex',
         gap: 10,
@@ -349,7 +349,7 @@ const ResponseCard = memo(function ResponseCard({ response }: { response: Propos
     <div
       role="article"
       tabIndex={0}
-      aria-label={`Evaluation by ${authorSlug ? authorSlug : response.author}`}
+      aria-label={`Evaluation by ${authorSlug ? PERSONA_SHORT[authorSlug] : response.author}`}
       style={{
         display: 'flex',
         gap: 8,
@@ -445,7 +445,7 @@ const DecisionCard = memo(function DecisionCard({ decision }: { decision: Decisi
         </p>
         {decision.implementing_batch && (
           <span style={{ fontSize: 10, color: CANVAS.label, marginTop: 2, display: 'inline-block' }}>
-            {STRINGS.batch(decision.implementing_batch!)}
+            {STRINGS.batch(decision.implementing_batch)}
           </span>
         )}
       </div>
@@ -500,6 +500,10 @@ const FeedEntryCard = memo(function FeedEntryCard({ entry }: { entry: FeedEntry 
       return <DecisionCard decision={entry.decision} />;
     case 'proposal_dismissed':
       return <DismissalCard dismissal={entry.dismissal} />;
+    default: {
+      const _exhaustive: never = entry;
+      return _exhaustive;
+    }
   }
 });
 
@@ -788,7 +792,7 @@ export default function ProposalFeedPanel() {
               color: 'inherit',
               border: 'none',
               cursor: 'pointer',
-              minHeight: 20,
+              minHeight: 32,
             }}
           >
             {STRINGS.retry}
