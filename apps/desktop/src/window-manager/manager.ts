@@ -94,6 +94,12 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     allowMultiple: false,
     defaultSize: { width: 420, height: 500 },
   }],
+  ['dispatch_queue', {
+    type: 'dispatch_queue', label: 'Crucible Queue', icon: '⚙️',
+    defaultConstraints: { minWidth: 300, minHeight: 250 },
+    allowMultiple: false,
+    defaultSize: { width: 440, height: 520 },
+  }],
 ]);
 
 // ── Built-in Workspace Presets ──

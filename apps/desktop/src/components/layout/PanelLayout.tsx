@@ -20,6 +20,7 @@ import VaultBrowserPanel from '../panels/VaultBrowserPanel';
 import GraphViewerPanel from '../panels/GraphViewerPanel';
 import ContextMeterPanel from '../panels/ContextMeterPanel';
 import ProposalFeedPanel from '../panels/ProposalFeedPanel';
+import DispatchQueuePanel from '../panels/DispatchQueuePanel';
 
 interface PanelLayoutProps {
   panels: PanelInstance[];
@@ -62,6 +63,8 @@ function PanelContent({ panel, onStageClick }: { panel: PanelInstance; onStageCl
       return <ContextMeterPanel />;
     case 'proposal_feed':
       return <ProposalFeedPanel />;
+    case 'dispatch_queue':
+      return <DispatchQueuePanel />;
     default:
       return null;
   }

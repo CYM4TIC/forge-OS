@@ -13,7 +13,8 @@ export type PanelType =
   | 'graph_viewer'
   | 'session_timeline'
   | 'context_meter'
-  | 'proposal_feed';
+  | 'proposal_feed'
+  | 'dispatch_queue';
 
 export type PanelState = 'docked' | 'floating' | 'minimized' | 'popped_out';
 

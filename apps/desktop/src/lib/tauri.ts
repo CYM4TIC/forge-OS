@@ -142,6 +142,39 @@ export interface DispatchRequest {
   granted_capabilities?: CapabilityFamily[];
 }
 
+// ── Dispatch Queue types (P7-L) ──
+
+export type DispatchPriority = 'critical' | 'high' | 'normal' | 'low';
+
+export interface DispatchQueueEntry {
+  dispatch_id: string;
+  agent_slug: string;
+  status: AgentStatus;
+  priority: DispatchPriority;
+  elapsed_ms: number;
+  queued_at: number;
+  started_at: number | null;
+  completed_at: number | null;
+  error: string | null;
+}
+
+export type GateStage = 'not_started' | 'in_progress' | 'pass' | 'fail' | 'pending';
+
+export interface GateStatus {
+  build: GateStage;
+  triad: GateStage;
+  sentinel: GateStage;
+  meridian: GateStage;
+  open_findings: number;
+  can_advance: boolean;
+}
+
+export interface CheckpointState {
+  batch_id: string;
+  acknowledged: boolean;
+  summary: string | null;
+}
+
 // ── Dispatch commands ──
 
 export function dispatchAgent(request: DispatchRequest): Promise<string> {
