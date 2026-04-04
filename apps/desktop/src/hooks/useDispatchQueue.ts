@@ -12,6 +12,8 @@ import {
   onAgentWorkingStateChanged,
   getFindingCounts,
   onDispatchFlow,
+  onFindingAdded,
+  onFindingResolved,
   getAgentRegistry,
   type AgentSummary,
   type AgentResult,
@@ -46,6 +48,8 @@ export interface UseDispatchQueueReturn {
   error: string | null;
   /** Manual refresh. */
   refresh: () => Promise<void>;
+  /** Export gate report (stub — wired when doc gen engine ships). */
+  exportReport: () => Promise<void>;
 }
 
 const MAX_COMPLETED = 10;
@@ -137,11 +141,18 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
   const fetchingRef = useRef(false);
   const categoryMapRef = useRef<Map<string, AgentCategory>>(new Map());
 
-  // ── Load agent registry for category→priority mapping ──
+  // ── Initial load: registry first, then active agents + finding counts (K-L-001 fix) ──
 
   useEffect(() => {
+    mountedRef.current = true;
     let cancelled = false;
-    const loadRegistry = async () => {
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      fetchingRef.current = true;
+
+      // Load registry first so priority derivation is correct on initial render
       try {
         const registry: RegistryEntry[] = await getAgentRegistry();
         if (!cancelled) {
@@ -154,21 +165,8 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       } catch {
         // Non-fatal: priority derivation falls back to 'low'
       }
-    };
-    loadRegistry();
-    return () => { cancelled = true; };
-  }, []);
 
-  // ── Initial load: active agents + finding counts ──
-
-  useEffect(() => {
-    mountedRef.current = true;
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      fetchingRef.current = true;
+      if (cancelled) return;
 
       try {
         const [agents, findings] = await Promise.all([
@@ -200,51 +198,51 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
 
   // ── Subscribe to agent working state changes (real-time queue updates) ──
 
+  // K-L-002 fix: no shared debounce — React batches setState calls automatically.
+  // A shared debounce timer drops events from parallel dispatches.
   useEffect(() => {
     let unlisten: (() => void) | null = null;
     let cancelled = false;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const setup = async () => {
       const unsub = await onAgentWorkingStateChanged((event: AgentWorkingStateEvent) => {
-        if (cancelled || !mountedRef.current) return;
-        if (debounceTimer) clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          if (cancelled || !mountedRef.current || fetchingRef.current) return;
-          // Update or insert the entry for this dispatch
-          setEntries((prev) => {
-            const dispatchId = event.dispatch_id;
-            if (!dispatchId) return prev;
+        if (cancelled || !mountedRef.current || fetchingRef.current) return;
+        // Update or insert the entry for this dispatch
+        setEntries((prev) => {
+          const dispatchId = event.dispatch_id;
+          if (!dispatchId) return prev;
 
-            const idx = prev.findIndex((e) => e.dispatch_id === dispatchId);
-            if (idx >= 0) {
-              // Update existing entry
-              const updated = [...prev];
-              const existing = updated[idx];
-              updated[idx] = {
-                ...existing,
-                status: mapWorkingStateToStatus(event.state),
-                started_at: existing.started_at ?? (event.state !== 'idle' ? Date.now() : null),
-                completed_at: event.state === 'idle' ? Date.now() : existing.completed_at,
-              };
-              return sortEntries(trimCompleted(updated));
-            }
-            // New dispatch — insert
-            const category = categoryMapRef.current.get(event.agent_slug);
-            const newEntry: DispatchQueueEntry = {
-              dispatch_id: dispatchId,
-              agent_slug: event.agent_slug,
-              status: mapWorkingStateToStatus(event.state),
-              priority: derivePriority(category),
-              elapsed_ms: 0,
-              queued_at: Date.now(),
-              started_at: event.state !== 'idle' ? Date.now() : null,
-              completed_at: null,
-              error: null,
+          const idx = prev.findIndex((e) => e.dispatch_id === dispatchId);
+          if (idx >= 0) {
+            // Update existing entry — K-L-004 fix: don't map idle to complete
+            const updated = [...prev];
+            const existing = updated[idx];
+            const newStatus = mapWorkingStateToStatus(event.state);
+            // Skip idle→complete transition — completion comes from agent:result
+            if (newStatus === 'queued' && existing.status === 'running') return prev;
+            updated[idx] = {
+              ...existing,
+              status: newStatus,
+              started_at: existing.started_at ?? (newStatus === 'running' ? Date.now() : null),
             };
-            return sortEntries([...prev, newEntry].slice(0, MAX_ENTRIES));
-          });
-        }, 500);
+            return sortEntries(trimCompleted(updated));
+          }
+          // New dispatch — insert
+          const category = categoryMapRef.current.get(event.agent_slug);
+          const newStatus = mapWorkingStateToStatus(event.state);
+          const newEntry: DispatchQueueEntry = {
+            dispatch_id: dispatchId,
+            agent_slug: event.agent_slug,
+            status: newStatus,
+            priority: derivePriority(category),
+            elapsed_ms: 0,
+            queued_at: Date.now(),
+            started_at: newStatus === 'running' ? Date.now() : null,
+            completed_at: null,
+            error: null,
+          };
+          return sortEntries([...prev, newEntry].slice(0, MAX_ENTRIES));
+        });
       });
       unlisten = unsub;
       if (cancelled) unsub();
@@ -253,7 +251,6 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     setup();
     return () => {
       cancelled = true;
-      if (debounceTimer) clearTimeout(debounceTimer);
       unlisten?.();
     };
   }, []);
@@ -332,6 +329,39 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       unlisten?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Subscribe to finding events for reactive gate updates (K-L-005 fix) ──
+
+  useEffect(() => {
+    let unlistenAdded: (() => void) | null = null;
+    let unlistenResolved: (() => void) | null = null;
+    let cancelled = false;
+
+    const setup = async () => {
+      const [addedUnsub, resolvedUnsub] = await Promise.all([
+        onFindingAdded(() => {
+          if (!cancelled && mountedRef.current) refreshFindings();
+        }),
+        onFindingResolved(() => {
+          if (!cancelled && mountedRef.current) refreshFindings();
+        }),
+      ]);
+      unlistenAdded = addedUnsub;
+      unlistenResolved = resolvedUnsub;
+      if (cancelled) {
+        addedUnsub();
+        resolvedUnsub();
+      }
+    };
+
+    setup();
+    return () => {
+      cancelled = true;
+      unlistenAdded?.();
+      unlistenResolved?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshFindings is stable (useCallback with [] deps)
   }, []);
 
   // ── Refresh helpers ──
@@ -440,6 +470,11 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     setCheckpoint({ batch_id: batchId, acknowledged: false, summary: null });
   }, []);
 
+  // Stub — wired when document generation engine ships (Phase 8+)
+  const exportReport = useCallback(async () => {
+    // Will invoke doc gen Tauri command when available
+  }, []);
+
   return {
     queue: entries,
     activeDispatches,
@@ -451,15 +486,18 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     loading,
     error,
     refresh,
+    exportReport,
   };
 }
 
 // ── Helpers ──
 
 /** Map AgentWorkingState values to AgentStatus. */
+// K-L-004 fix: idle maps to 'queued' (not 'complete'). True completion
+// comes from agent:result events, not working state transitions.
 function mapWorkingStateToStatus(state: string): DispatchQueueEntry['status'] {
   switch (state) {
-    case 'idle': return 'complete';
+    case 'idle': return 'queued';
     case 'streaming':
     case 'executing_tool': return 'running';
     case 'waiting_for_confirmation':

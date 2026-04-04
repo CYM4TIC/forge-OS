@@ -157,6 +157,7 @@ const DispatchCard = memo(function DispatchCard({ entry }: DispatchCardProps) {
       style={{
         display: 'flex',
         alignItems: 'center',
+        flexWrap: 'wrap',
         gap: 10,
         padding: '8px 12px',
         borderRadius: RADIUS.card,
@@ -202,7 +203,7 @@ const DispatchCard = memo(function DispatchCard({ entry }: DispatchCardProps) {
         >
           {formatAgentName(entry.agent_slug)}
         </div>
-        <div style={{ fontSize: 10, color: CANVAS.muted }}>
+        <div style={{ fontSize: 10, color: CANVAS.muted }} aria-hidden="true">
           {entry.dispatch_id.slice(0, 8)}
         </div>
       </div>
@@ -341,6 +342,8 @@ function Header({
         style={{
           padding: '4px 8px',
           fontSize: 11,
+          minWidth: 32,
+          minHeight: 32,
           borderRadius: RADIUS.pill,
           background: CANVAS.bgElevated,
           color: CANVAS.muted,
@@ -426,7 +429,6 @@ function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAcknowledge }:
       {!acknowledged && gateStatus.triad === 'pass' && gateStatus.open_findings === 0 && (
         <button
           onClick={onAcknowledge}
-          autoFocus
           style={{
             marginTop: 8,
             padding: '6px 12px',
@@ -527,6 +529,12 @@ export default function DispatchQueuePanel() {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       setActiveTab((prev) => (prev === 'queue' ? 'gates' : 'queue'));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActiveTab('queue');
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActiveTab('gates');
     }
   }, []);
 
@@ -637,6 +645,7 @@ export default function DispatchQueuePanel() {
             style={{
               fontSize: 10,
               padding: '2px 8px',
+              minHeight: 32,
               borderRadius: RADIUS.pill,
               background: CANVAS.bgElevated,
               color: CANVAS.text,
@@ -689,11 +698,13 @@ export default function DispatchQueuePanel() {
       </div>
 
       {/* Queue tab */}
+      {activeTab === 'queue' && (
       <div
         id="dispatch-panel-queue"
         role="tabpanel"
         aria-labelledby="dispatch-tab-queue"
-        style={{ display: activeTab === 'queue' ? 'flex' : 'none', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+        tabIndex={0}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
       >
         {queue.length === 0 ? (
           <div
@@ -756,13 +767,16 @@ export default function DispatchQueuePanel() {
           </div>
         )}
       </div>
+      )}
 
       {/* Gates tab */}
+      {activeTab === 'gates' && (
       <div
         id="dispatch-panel-gates"
         role="tabpanel"
         aria-labelledby="dispatch-tab-gates"
-        style={{ display: activeTab === 'gates' ? 'flex' : 'none', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+        tabIndex={0}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
       >
         <div
           style={{
@@ -787,10 +801,12 @@ export default function DispatchQueuePanel() {
             {STRINGS.gateStatusTitle}
           </div>
 
-          <GateRow label="Build" stage={gateStatus.build} />
-          <GateRow label="Build Triad" stage={gateStatus.triad} />
-          <GateRow label="Sentinel" stage={gateStatus.sentinel} />
-          <GateRow label="Meridian" stage={gateStatus.meridian} />
+          <div role="list" aria-label={STRINGS.gateStatusTitle}>
+            <div role="listitem"><GateRow label="Build" stage={gateStatus.build} /></div>
+            <div role="listitem"><GateRow label="Build Triad" stage={gateStatus.triad} /></div>
+            <div role="listitem"><GateRow label="Sentinel" stage={gateStatus.sentinel} /></div>
+            <div role="listitem"><GateRow label="Meridian" stage={gateStatus.meridian} /></div>
+          </div>
 
           {/* Checkpoint */}
           <div style={{ marginTop: 8 }}>
@@ -848,12 +864,11 @@ export default function DispatchQueuePanel() {
             </div>
           </div>
 
-          {/* Export report button */}
+          {/* Export report button — wired when doc gen engine ships (Phase 8+) */}
           <button
-            onClick={() => {
-              // Phase 4 document generation engine — invoke when available
-              // For now, logs intent. Will be wired when doc gen commands are exposed.
-            }}
+            disabled
+            aria-disabled="true"
+            title="Gate report export available when document generation engine ships"
             style={{
               marginTop: 12,
               padding: '8px 16px',
@@ -861,16 +876,18 @@ export default function DispatchQueuePanel() {
               fontWeight: 600,
               borderRadius: RADIUS.pill,
               background: CANVAS.bgElevated,
-              color: CANVAS.text,
+              color: CANVAS.muted,
               border: `1px solid ${CANVAS.border}`,
-              cursor: 'pointer',
+              cursor: 'not-allowed',
               width: '100%',
+              opacity: 0.5,
             }}
           >
             {STRINGS.exportReport}
           </button>
         </div>
       </div>
+      )}
 
       {/* SR live region for active dispatch count */}
       <div

@@ -849,6 +849,7 @@ export function onFindingResolved(
 export function onDispatchFlow(
   callback: (event: DispatchFlowEvent) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<DispatchFlowEvent>>('hud:dispatch-flow', (e) => callback(e.payload.payload));
 }
 
