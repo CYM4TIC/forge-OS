@@ -245,3 +245,19 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Prevention:** Any future LIKE query with user input must escape wildcards. Parameterized queries prevent injection but NOT wildcard interpretation.
 
 ---
+
+### OS-BL-022: Real-Time Hook Pattern — Debounce + Fetch Guard + Entry Cap
+**Discovered:** 2026-04-04 | **Domain:** frontend | **Severity:** pattern | **Tag:** `[frontend]`
+**Context:** P7-K — useProposalFeed subscribes to rapid-fire Tauri events. Without guards: thundering herd (10 concurrent fetches), unbounded entries array, race between loadMore and real-time handler corrupting page order.
+**Solution:** Three-part defense: (1) 500ms debounce timer on event handler (per useAgentRegistry K-01 pattern), (2) `fetchingRef` boolean to prevent concurrent loadMore + real-time fetches, (3) MAX_ENTRIES=500 cap with `.slice()` after merge. Real-time handler resets `pageRef.current = 0` to prevent page-skip gaps.
+**Prevention:** Every hook that subscribes to Tauri events and paginates must apply all three guards. The debounce + fetchingRef + cap trio is now the canonical pattern.
+
+---
+
+### OS-BL-023: `@keyframes` Must Be Self-Provided Per Panel
+**Discovered:** 2026-04-04 | **Domain:** frontend | **Severity:** gotcha | **Tag:** `[frontend]`
+**Context:** P7-K — SkeletonCard referenced `animation: 'shimmer ...'` but no global CSS exists and no `<style>` tag injected the keyframe. PreviewPanel self-provides `preview-shimmer`, ConnectivityPanel self-provides `pulse`. Each panel is an island.
+**Solution:** Inject `<style>{SHIMMER_KEYFRAME}</style>` adjacent to the skeleton usage. Name keyframes uniquely per panel to avoid collisions.
+**Prevention:** No shared CSS file for animations. Every panel must self-provide its keyframes via inline `<style>` tags. Grep for `animation:` and verify the referenced keyframe exists in the same file.
+
+---
