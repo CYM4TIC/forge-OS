@@ -42,6 +42,9 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-016 | `[design-system]` `[canvas]` | gotcha | StatusBadge glyph at 20x20px: dot radius is only 4px at 1x DPR. Glyph size formula must cap to dot boundary (`dotRadius * 1.4`), not grow independently. Small canvas components need size-aware rendering, not fixed minimums. |
 | OS-BL-017 | `[frontend]` `[design-system]` | pattern | WAI-ARIA Tabs require roving tabindex (tabIndex 0/-1 + arrow keys + Home/End + all panels rendered). TeamPanel is the canonical template. Copy this pattern for all future tabbed panels. |
 | OS-BL-018 | `[frontend]` `[design-system]` | drift | @keyframes (spin, pulse) must be explicitly injected per-component when using inline React styles. Three components now duplicate them (TeamPanel, ConnectivityPanel, ActionPalette). Future: centralize in globals.css and remove per-component `<style>` injections. |
+| OS-BL-019 | `[rust]` `[governance]` | pattern | Dismissal ≠ rejection — distinct state semantics require distinct guards. Gate both evaluate and resolve against dismissed proposals. |
+| OS-BL-020 | `[rust]` | pattern | chrono_now() duplicated across hud/findings.rs and proposals/decisions.rs. Extract to shared util on next touch. |
+| OS-BL-021 | `[rust]` | gotcha | SQLite LIKE wildcards (%, _) must be escaped in user-supplied search. Use ESCAPE '\\' clause. |
 
 ---
 
@@ -216,5 +219,29 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Problem:** In a `UNION ALL` query with shared `WHERE` clauses, `?1` in branch 2 binds to the same value as `?1` in branch 1 — parameters are global to the prepared statement, not per-branch. Tripling params caused LIMIT/OFFSET to bind to wrong values.
 **Solution:** Pass filter params once, then append LIMIT/OFFSET at the correct indices.
 **Prevention:** When writing UNION ALL with shared filters, always pass params once. `?N` is statement-global.
+
+---
+
+### OS-BL-019: Dismissal ≠ Rejection — Distinct Guards Required
+**Discovered:** 2026-04-03 | **Domain:** rust, governance | **Severity:** architecture | **Tag:** `[rust]` `[governance]`
+**Context:** P7-J — Pierce + Kehinde both flagged CRIT: dismiss_proposal created records without status guards, allowing dismissal of already-resolved proposals and continued evaluation of dismissed proposals.
+**Problem:** Dismissal is a separate semantic from rejection ("deprioritized" vs "declined"), but without guards, the governance audit trail becomes contradictory — a proposal simultaneously dismissed and accepted.
+**Solution:** Guard dismiss_proposal (reject Accepted/Rejected), guard evaluate_proposal and resolve_proposal (check for existing dismissals). One dismissal per proposal.
+**Prevention:** Any new lifecycle action on proposals must check BOTH the status enum AND the dismissals table. Two state dimensions require two checks.
+
+---
+
+### OS-BL-020: chrono_now() Duplicated — Extract to Shared Util
+**Discovered:** 2026-04-03 | **Domain:** rust | **Severity:** pattern | **Tag:** `[rust]`
+**Context:** P7-J — `chrono_now()` defined identically in `hud/findings.rs` and `proposals/decisions.rs`. Same format string, same chrono::Utc dependency.
+**Action:** On next module that needs UTC timestamps, extract to `utils::chrono_now()` and import from both locations.
+
+---
+
+### OS-BL-021: SQLite LIKE Wildcards Must Be Escaped
+**Discovered:** 2026-04-03 | **Domain:** rust | **Severity:** gotcha | **Tag:** `[rust]`
+**Context:** P7-J — search_proposals used `format!("%{}%", query)` without escaping. Pierce flagged CRIT: `%` and `_` in user input treated as wildcards, not literals.
+**Solution:** Escape `%` → `\%`, `_` → `\_`, `\` → `\\` before wrapping. Add `ESCAPE '\'` to LIKE clause.
+**Prevention:** Any future LIKE query with user input must escape wildcards. Parameterized queries prevent injection but NOT wildcard interpretation.
 
 ---
