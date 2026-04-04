@@ -356,7 +356,7 @@ projects/{name}/
 | `docs/ECOSYSTEM-PATTERNS.md` | Token optimization, anti-drift, self-learning loop, quality enforcement |
 | `forge/EXECUTION-PROTOCOL.md` | **THE COMPILER — mechanical enforcement of all rules, contracts, and gates. Load every session.** |
 | `docs/ARCHITECTURE-PLAN.md` | Overall Tauri v2 architecture plan |
-| `docs/TAURI-BUILD-PLAN.md` | 9 phases, 29 sessions — full build sequence |
+| `docs/TAURI-BUILD-PLAN.md` | 11 phases, 38 sessions — full build sequence |
 
 ## Reference Sources
 
@@ -402,5 +402,5 @@ Full catalog: `forge/ENTITY-CATALOG.md`
 **Phase 3 next:** Agent Runtime — KAIROS memory, Swarm dispatch, SQLite state, auto-compact.
 **Build state tracked at:** `BOOT.md` (repo root)
 **Batch manifests:** `BATCH-MANIFESTS.md` (repo root)
-**Full build plan:** `docs/TAURI-BUILD-PLAN.md` (9 phases, 29 sessions)
+**Full build plan:** `docs/TAURI-BUILD-PLAN.md` (11 phases, 38 sessions)
 **Phase 3 architecture:** `docs/PHASE-3-ARCHITECTURE.md` (synthesized from Claude Code source + ecosystem research)

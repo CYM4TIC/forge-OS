@@ -83,7 +83,7 @@ phase_4_complete: true
 - **GitHub:** `CYM4TIC/forge-OS` (main)
 
 ## Build Plan Reference
-- **Full plan:** `docs/TAURI-BUILD-PLAN.md` (9 phases, 30 sessions — single source of truth)
+- **Full plan:** `docs/TAURI-BUILD-PLAN.md` (11 phases, 38 sessions — single source of truth)
 - **Execution protocol:** `forge/EXECUTION-PROTOCOL.md` — **THE COMPILER. Load every build session. No exceptions.**
 - **Batch manifests:** `BATCH-MANIFESTS.md` (repo root)
 - **Source repo:** CYM4TIC/forge-OS
