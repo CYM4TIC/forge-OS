@@ -14,7 +14,7 @@
 | Intelligences | 10 | 1 high, 8 medium, 1 fast |
 | Orchestrators | 10 | 3 high, 7 medium |
 | Utilities | 11 | 4 medium, 7 fast |
-| Sub-Agents | 34 | 34 fast |
+| Sub-Agents | 35 | 35 fast |
 | **Total** | **75** | **10 high, 23 medium, 42 fast** |
 
 ---
@@ -80,7 +80,7 @@
 | 40 | Dependency Audit | `agents/dep-audit.md` | fast | Supply chain inspection |
 | 41 | Env Validator | `agents/env-validator.md` | fast | Environment variable audit |
 
-## Sub-Agents (34)
+## Sub-Agents (35)
 
 All sub-agents are `model: fast`. Dispatched by parent agents for focused checks.
 
@@ -120,59 +120,60 @@ All sub-agents are `model: fast`. Dispatched by parent agents for focused checks
 | 56 | TCPA Check | `agents/sub-agents/tanaka-tcpa-check.md` | Tanaka |
 | 57 | PII Scan | `agents/sub-agents/tanaka-pii-scan.md` | Tanaka |
 
-### Wraith Sub-Agents (3)
+### Wraith Sub-Agents (4)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
 | 58 | Input Fuzzer | `agents/sub-agents/wraith-input-fuzzer.md` | Wraith |
 | 59 | Auth Probe | `agents/sub-agents/wraith-auth-probe.md` | Wraith |
 | 60 | Concurrency | `agents/sub-agents/wraith-concurrency.md` | Wraith |
+| 61 | Parseltongue | `agents/sub-agents/wraith-parseltongue.md` | Wraith |
 
 ### Sable Sub-Agents (1)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 61 | Voice Consistency | `agents/sub-agents/sable-voice-consistency.md` | Sable |
+| 62 | Voice Consistency | `agents/sub-agents/sable-voice-consistency.md` | Sable |
 
 ### Calloway Sub-Agents (1)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 62 | Competitive Scan | `agents/sub-agents/calloway-competitive-scan.md` | Calloway |
+| 63 | Competitive Scan | `agents/sub-agents/calloway-competitive-scan.md` | Calloway |
 
 ### Meridian Sub-Agents (1)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 63 | Pattern Scan | `agents/sub-agents/meridian-pattern-scan.md` | Meridian |
+| 64 | Pattern Scan | `agents/sub-agents/meridian-pattern-scan.md` | Meridian |
 
 ### Instrumentation (1)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 64 | Instrumentation Audit | `agents/sub-agents/instrumentation-audit.md` | Nyx |
+| 65 | Instrumentation Audit | `agents/sub-agents/instrumentation-audit.md` | Nyx |
 
 ### Compass Sub-Agents (2)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 65 | Dependency Map | `agents/sub-agents/compass-dependency-map.md` | Compass |
-| 66 | Change Impact | `agents/sub-agents/compass-change-impact.md` | Compass |
+| 66 | Dependency Map | `agents/sub-agents/compass-dependency-map.md` | Compass |
+| 67 | Change Impact | `agents/sub-agents/compass-change-impact.md` | Compass |
 
 ### Kiln Sub-Agents (2)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 67 | Query Profiler | `agents/sub-agents/kiln-query-profiler.md` | Kiln |
-| 68 | Bundle Analyzer | `agents/sub-agents/kiln-bundle-analyzer.md` | Kiln |
+| 68 | Query Profiler | `agents/sub-agents/kiln-query-profiler.md` | Kiln |
+| 69 | Bundle Analyzer | `agents/sub-agents/kiln-bundle-analyzer.md` | Kiln |
 
 ### Beacon Sub-Agents (2)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 69 | Error Watch | `agents/sub-agents/beacon-error-watch.md` | Beacon |
-| 70 | Performance Watch | `agents/sub-agents/beacon-performance-watch.md` | Beacon |
+| 70 | Error Watch | `agents/sub-agents/beacon-error-watch.md` | Beacon |
+| 71 | Performance Watch | `agents/sub-agents/beacon-performance-watch.md` | Beacon |
 
 ### Council Advisors (5)
 | # | Agent | File | Parent |
 |---|-------|------|--------|
-| 71 | Contrarian | `agents/sub-agents/council-contrarian.md` | Decision Council |
-| 72 | First Principles | `agents/sub-agents/council-first-principles.md` | Decision Council |
-| 73 | Expansionist | `agents/sub-agents/council-expansionist.md` | Decision Council |
-| 74 | Outsider | `agents/sub-agents/council-outsider.md` | Decision Council |
-| 75 | Executor | `agents/sub-agents/council-executor.md` | Decision Council |
+| 72 | Contrarian | `agents/sub-agents/council-contrarian.md` | Decision Council |
+| 73 | First Principles | `agents/sub-agents/council-first-principles.md` | Decision Council |
+| 74 | Expansionist | `agents/sub-agents/council-expansionist.md` | Decision Council |
+| 75 | Outsider | `agents/sub-agents/council-outsider.md` | Decision Council |
+| 76 | Executor | `agents/sub-agents/council-executor.md` | Decision Council |
 
 ---
 

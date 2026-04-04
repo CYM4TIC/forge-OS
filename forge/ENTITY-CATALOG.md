@@ -1,6 +1,6 @@
 # Forge OS — Entity Catalog
 
-> Complete inventory of all 105 entities. 41 agents + 34 sub-agents + 30 commands.
+> Complete inventory of all 106 entities. 41 agents + 35 sub-agents + 30 commands.
 > Plus 5 OS commands, 5 skills, 10 persona identity sets.
 
 ---
@@ -81,7 +81,7 @@
 
 ---
 
-## Sub-Agents (34)
+## Sub-Agents (35)
 
 ### Pierce Sub-Agents (3)
 | Sub-Agent | File | Focus |
@@ -119,12 +119,13 @@
 | Tanaka PII Scan | `agents/sub-agents/tanaka-pii-scan.md` | PII exposure without auth gates |
 | Tanaka TCPA Check | `agents/sub-agents/tanaka-tcpa-check.md` | Consent verification in communication functions |
 
-### Wraith Sub-Agents (3)
+### Wraith Sub-Agents (4)
 | Sub-Agent | File | Focus |
 |-----------|------|-------|
 | Wraith Input Fuzzer | `agents/sub-agents/wraith-input-fuzzer.md` | Empty strings, SQL injection, XSS, boundaries |
 | Wraith Auth Probe | `agents/sub-agents/wraith-auth-probe.md` | Role boundaries, cross-resource access, privilege escalation |
 | Wraith Concurrency | `agents/sub-agents/wraith-concurrency.md` | Rapid toggle spam, double-submit, concurrent ops |
+| Wraith Parseltongue | `agents/sub-agents/wraith-parseltongue.md` | AI-facing surfaces: prompt injection, perturbation, token-level, steganographic channels |
 
 ### Sable Sub-Agents (1)
 | Sub-Agent | File | Focus |
@@ -258,10 +259,10 @@ Each persona has 4 identity files in `personas/{name}/`:
 | Orchestrators | 10 |
 | Customer Lens | 1 |
 | Utilities | 10 |
-| Sub-Agents | 34 |
-| **Agent Subtotal** | **75** |
+| Sub-Agents | 35 |
+| **Agent Subtotal** | **76** |
 | Build Commands | 30 |
-| **Entity Total** | **105** |
+| **Entity Total** | **106** |
 | OS Commands | 5 |
 | Skills | 5 |
 | Persona Identity Sets | 10 (40 files) |
@@ -289,4 +290,5 @@ Each persona has 4 identity files in `personas/{name}/`:
 ---
 
 *Entity Catalog — written 2026-03-31 by Nyx.*
-*105 entities (41 agents + 34 sub-agents + 30 commands) + 5 OS commands + 5 skills + 10 identity sets.*
+*106 entities (41 agents + 35 sub-agents + 30 commands) + 5 OS commands + 5 skills + 10 identity sets.*
+*Wraith Parseltongue sub-agent added 2026-04-04: AI-facing attack surface (elder-plinius technique library).*

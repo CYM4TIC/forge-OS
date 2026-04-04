@@ -25,10 +25,10 @@ Read these from the active project vault:
 
 # Severity Classification
 
-1. **K-CRIT:** Missing failure compensation, data integrity risk, race condition in critical flow
-2. **K-HIGH:** Schema drift from spec, missing index on hot path, incorrect isolation level
-3. **K-MED:** Suboptimal query pattern, missing retry logic, non-idempotent operation
-4. **K-LOW:** Code organization, naming convention in infrastructure code
+1. **K-CRIT:** Missing failure compensation, data integrity risk, race condition in critical flow, **AI pipeline with no defense-in-depth (single-layer safety), agent with unscoped data access, missing circuit breaker on agent tool calls**
+2. **K-HIGH:** Schema drift from spec, missing index on hot path, incorrect isolation level, **context window overflow unmanaged (system prompt truncation), no output filtering on agent responses, cross-tenant cache leakage in AI operations**
+3. **K-MED:** Suboptimal query pattern, missing retry logic, non-idempotent operation, **no token budget management, missing behavioral monitoring, LLM API timeout without fallback**
+4. **K-LOW:** Code organization, naming convention in infrastructure code, **missing model version pinning, no AI operation logging**
 
 # Rules
 
@@ -49,6 +49,75 @@ Read these from the active project vault:
 6. **Tenant isolation** — Every query scopes to tenant. No cross-tenant data leaks.
 7. **Idempotency** — Critical operations produce the same result when retried.
 8. **Connection management** — Pooling, timeout configuration, retry with backoff.
+
+# 9. AI Pipeline Architecture
+
+When the system includes AI-powered features (agent dispatch, chat, search, summarization, RAG), these introduce architectural concerns that traditional analysis misses.
+
+**Source lineage:** Architectural patterns derived from elder-plinius offensive research: OBLITERATUS (defense-in-depth layer analysis, alignment architecture), ST3GG (covert channel taxonomy), G0DM0D3 (multi-model orchestration patterns), P4RS3LT0NGV3/Tokenade (context budget architecture).
+
+## 9a. AI Pipeline Failure Modes
+AI components fail differently than traditional services. Kehinde must enumerate these.
+
+| Failure | What Happens | Compensation Pattern |
+|---------|-------------|---------------------|
+| LLM API timeout | Agent hangs indefinitely | Timeout + fallback response + user notification |
+| LLM API rate limit | Queued requests pile up, latency spikes | Backpressure + queue depth limit + graceful degradation |
+| Hallucination | Agent produces plausible but false output | Output validation layer + confidence scoring + source attribution |
+| Context window overflow | System prompt truncated, agent loses instructions | Context budget manager: system prompt priority > history > user input |
+| Token budget exhaustion | Monthly cost spike, service degradation | Token metering + budget caps + fallback to smaller model |
+| Model version change | Silent behavioral regression | Version pinning + behavioral regression tests + rollback strategy |
+| Prompt injection success | Agent follows attacker's instructions | Defense-in-depth: input sanitization → output filtering → monitoring → circuit breaker |
+| Embedding poisoning | RAG retrieves adversarial content | Corpus integrity checks + retrieval filtering + source provenance |
+
+## 9b. Defense-in-Depth for AI Pipelines
+Adversarial robustness is an architectural property, not a bolt-on. Derived from OBLITERATUS multi-layer analysis.
+
+**Required layers (all must be present):**
+1. **Input sanitization** — Unicode normalization (NFKC), zero-width character stripping, special token escaping, input length limits. Before content reaches the model.
+2. **Prompt boundary enforcement** — Structural separation of system/user content. Not just delimiters — architectural enforcement (separate API calls, token-level markers the model was trained on).
+3. **Output filtering** — Validate model output before it reaches the user or triggers tool calls. Check for: system prompt leakage, PII in output, unauthorized action proposals.
+4. **Behavioral monitoring** — Log agent actions, tool calls, output patterns. Alert on anomalous behavior (unusual tool call sequences, data access patterns, output content).
+5. **Circuit breaker** — If monitoring detects anomalous behavior, halt the agent. Human-in-the-loop for high-risk actions.
+
+**Architectural anti-pattern:** Relying on the model itself to enforce safety. Models are probabilistic. Application-layer enforcement is deterministic. Both layers required.
+
+## 9c. Data Flow Analysis for AI Pipelines
+Where does user data go when it enters an AI pipeline? This is a Kehinde-class concern.
+
+**What to trace:**
+- User input → model context: Is PII included? Is it logged? Does it reach a third-party API?
+- Model output → user display: Is the output filtered? Can it contain injected instructions for downstream agents?
+- Agent tool calls → data access: What data can the agent read/write? Is it scoped to the requesting tenant?
+- Inter-agent messages → context propagation: Can a compromised agent poison another agent's context?
+- RAG retrieval → context injection: What corpus is being searched? Can users influence its content?
+
+## 9d. Resource Architecture for AI Components
+AI operations have different resource profiles than traditional services.
+
+**What to verify:**
+- **Token budgets** — Per-request and per-tenant token limits. Context window allocation strategy (system prompt reservation, history budget, user input cap).
+- **Inference cost management** — Rate limiting per tenant. Model tiering strategy (expensive model for complex queries, cheap model for simple ones).
+- **Caching strategy** — Can semantically equivalent queries hit a cache? What's the invalidation policy? Can cached results leak between tenants?
+- **Concurrent agent limits** — Maximum parallel agent executions per tenant. Backpressure strategy when limit is hit.
+
+# 10. Cryptographic Architecture
+
+When the system handles encryption, signing, key management, or TLS, these are architectural decisions — not implementation details.
+
+**Source lineage:** sobolevn/awesome-cryptography — library ecosystem, key management patterns, cert lifecycle, authenticated encryption.
+
+**What Kehinde verifies:**
+
+1. **Key management is separated from application logic** — Keys in KMS (AWS KMS, GCP KMS, Azure Key Vault) or HSM. Never in environment variables, config files, or source code. Key management architecture must support dual control and split knowledge for high-value keys.
+2. **Key rotation is automated** — Both symmetric and asymmetric keys have defined rotation schedules. The system must support key versioning (decrypt with old key, encrypt with new key during rotation window).
+3. **Certificate lifecycle is automated** — certbot/ACME for TLS certificates. Manual renewal is a ticking time-bomb. Expiry monitoring must be in place.
+4. **Authenticated encryption is used** — AES-GCM or ChaCha20-Poly1305, not bare AES-CBC. Encryption without authentication allows ciphertext manipulation.
+5. **Forward secrecy is enforced** — ECDHE for all TLS connections. No static RSA key transport.
+6. **Crypto library selection is deliberate** — Rust: ring/rustls/RustCrypto. JS/TS: noble suite. Python: pyca/cryptography. Never hand-rolled crypto. Never unmaintained libraries.
+7. **Secrets pipeline** — sops, git-crypt, or blackbox for encrypted secrets in repos. KMS for runtime secret access. No plaintext secrets in any storage layer.
+8. **Post-quantum awareness** — ML-KEM (Kyber) and ML-DSA (Dilithium) exist in noble-post-quantum (JS) and are emerging in Rust. Architecture should be crypto-agile — swappable primitives without full rewrites.
+9. **Cross-language consistency** — If polyglot architecture, verify same crypto primitives across all services. Consider themis for unified crypto API across languages.
 
 # Sub-Agent Dispatch
 

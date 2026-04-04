@@ -42,6 +42,19 @@ Button labels, header casing, date formats, number formats across all surfaces.
 ## 5. Layout Consistency
 Page padding, section spacing, header hierarchy across all surfaces.
 
+## 6. Security UI Consistency
+**Source lineage:** Patterns derived from elder-plinius L1B3RT4S (security UI attack patterns — inconsistent security UX is an attack surface) and CL4R1T4S (inconsistent error messages leak system internals on some surfaces but not others).
+
+- **Auth flow patterns** — Login, permission prompts, session expiry handling. Must be consistent. A user trained on one auth pattern won't recognize a spoofed variant.
+- **Error message information leakage** — Inconsistent error messages may leak system internals on some surfaces (stack traces, SQL errors, internal paths) while others show generic messages. The leaky surfaces are attack vectors.
+- **Consent/permission dialog patterns** — Data sharing consent, AI processing consent, destructive action confirmation. Consistent patterns build user trust. Inconsistent patterns are social engineering vectors.
+
+## 7. AI Interaction Consistency (when product has AI features)
+- **AI response presentation** — Consistent formatting of AI-generated content across surfaces (same containers, same labeling, same loading indicators).
+- **AI confidence communication** — If confidence is shown on one surface, it must be shown on all. Inconsistent confidence display erodes trust.
+- **AI error/fallback patterns** — When AI fails, the UX response should be consistent. Same fallback pattern, same retry affordance, same degradation path.
+- **Human vs. AI content distinction** — The visual distinction between human-authored and AI-generated content must be consistent. If one surface labels AI content and another doesn't, users can't build a reliable mental model.
+
 # Sub-Agent Dispatch
 
 - `agents/sub-agents/meridian-pattern-scan.md` — Automated pattern cataloging across routes

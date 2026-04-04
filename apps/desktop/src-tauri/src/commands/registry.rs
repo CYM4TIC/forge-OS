@@ -93,11 +93,20 @@ impl Default for AgentWorkingState {
 /// Interaction mode — orthogonal to CapabilityFamily.
 /// Mode controls structural access; family controls per-action capability.
 /// Combined gate: mode × family determines effective permissions.
+///
+/// P7-N: Expanded from 3 to 5 modes. Plan = read-only exploration.
+/// Supervised = all writes require confirmation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum InteractionMode {
-    /// Read-only. Only ReadOnly capability valid regardless of grants.
+    /// Read-only analysis. Only ReadOnly capability valid regardless of grants.
+    /// Maps to `/plan` command — operator explicitly requests analysis before execution.
+    Plan,
+    /// Read-only specification review. Same as Plan but used for spec-mode dispatch.
     Spec,
+    /// All writes require operator confirmation via ConfirmationRouter.
+    /// Capabilities as granted, but every write-capable action routes through confirmation.
+    Supervised,
     /// Standard execution. Capabilities as granted by dispatch context.
     Auto,
     /// Mission decomposition with workers. Enables mission features
@@ -111,6 +120,18 @@ impl Default for InteractionMode {
     }
 }
 
+impl InteractionMode {
+    /// Whether this mode requires operator confirmation for every write action.
+    pub fn requires_write_confirmation(&self) -> bool {
+        matches!(self, InteractionMode::Supervised)
+    }
+
+    /// Whether this mode is read-only (no writes allowed regardless of grants).
+    pub fn is_read_only(&self) -> bool {
+        matches!(self, InteractionMode::Plan | InteractionMode::Spec)
+    }
+}
+
 /// Apply the 2-axis gate: InteractionMode × CapabilityFamily.
 /// Returns the effective capabilities after mode filtering.
 pub fn apply_mode_gate(
@@ -119,9 +140,13 @@ pub fn apply_mode_gate(
 ) -> Vec<crate::commands::capabilities::CapabilityFamily> {
     use crate::commands::capabilities::CapabilityFamily;
     match mode {
-        InteractionMode::Spec => {
-            // Spec mode: only ReadOnly, regardless of grants
+        InteractionMode::Plan | InteractionMode::Spec => {
+            // Read-only modes: only ReadOnly, regardless of grants
             vec![CapabilityFamily::ReadOnly]
+        }
+        InteractionMode::Supervised => {
+            // Supervised: capabilities as granted (confirmation enforced at dispatch layer)
+            granted.to_vec()
         }
         InteractionMode::Auto => {
             // Auto mode: capabilities as granted
@@ -189,6 +214,20 @@ pub struct CommandDef {
     pub dispatch_target: String,
     pub available_when: Option<AvailabilityCheck>,
     pub keyboard_shortcut: Option<String>,
+    /// P7-N: Tool safety taxonomy — per-tool flags for policy/confirmation routing.
+    /// True if this command only reads state (no side effects).
+    #[serde(default)]
+    pub is_read_only: bool,
+    /// True if this command can cause irreversible changes (delete, force push, drop).
+    #[serde(default)]
+    pub is_destructive: bool,
+    /// True if this command is safe to run concurrently with other dispatches.
+    #[serde(default = "default_concurrency_safe")]
+    pub is_concurrency_safe: bool,
+}
+
+fn default_concurrency_safe() -> bool {
+    true
 }
 
 /// Action type for palette entries.
@@ -302,6 +341,7 @@ pub trait RegisterCommand {
 impl RegisterCommand for CommandDef {
     fn from_yaml(slug: &str, entry: &RegistryEntry) -> CommandDef {
         let (category, dispatch_target) = classify_command(slug);
+        let safety = tool_safety_for_command(slug);
         CommandDef {
             slug: slug.to_string(),
             name: entry.name.clone(),
@@ -311,6 +351,9 @@ impl RegisterCommand for CommandDef {
             dispatch_target,
             available_when: availability_for_command(slug),
             keyboard_shortcut: None,
+            is_read_only: safety.0,
+            is_destructive: safety.1,
+            is_concurrency_safe: safety.2,
         }
     }
 
@@ -321,6 +364,7 @@ impl RegisterCommand for CommandDef {
         category: CommandCategory,
         handler_name: &str,
     ) -> CommandDef {
+        let safety = tool_safety_for_command(slug);
         CommandDef {
             slug: slug.to_string(),
             name: name.to_string(),
@@ -330,8 +374,34 @@ impl RegisterCommand for CommandDef {
             dispatch_target: handler_name.to_string(),
             available_when: availability_for_command(slug),
             keyboard_shortcut: None,
+            is_read_only: safety.0,
+            is_destructive: safety.1,
+            is_concurrency_safe: safety.2,
         }
     }
+}
+
+/// Derive tool safety flags from command slug.
+/// Returns (is_read_only, is_destructive, is_concurrency_safe).
+fn tool_safety_for_command(slug: &str) -> (bool, bool, bool) {
+    // Read-only commands: analysis, reporting, quality checks (no writes)
+    let is_read_only = matches!(slug,
+        "gate" | "audit" | "regression" | "adversarial" | "verify"
+        | "status" | "impact" | "changelog" | "dep-audit"
+        | "launch-readiness" | "council" | "decide" | "debate"
+    );
+
+    // Destructive commands: those that can cause irreversible changes.
+    // Note: red-team and full-audit are read-only analysis — not destructive.
+    let is_destructive = false;
+
+    // Not concurrency-safe: build commands that write files
+    let is_concurrency_safe = !matches!(slug,
+        "next-batch" | "build-segment" | "scaffold" | "seed-generator"
+        | "test-generator" | "migration-planner"
+    );
+
+    (is_read_only, is_destructive, is_concurrency_safe)
 }
 
 /// Register a built-in command that skips IPC — for low-latency in-process
@@ -341,28 +411,40 @@ impl RegisterCommand for CommandDef {
 #[macro_export]
 macro_rules! register_builtin {
     ($commands:expr, $slug:literal, $desc:literal, $category:ident) => {
-        $commands.push(CommandDef {
-            slug: $slug.into(),
-            name: $slug.into(),
-            description: $desc.into(),
-            category: CommandCategory::$category,
-            aliases: aliases_for_command($slug),
-            dispatch_target: $slug.into(),
-            available_when: Some(AvailabilityCheck::Always),
-            keyboard_shortcut: None,
-        });
+        {
+            let safety = tool_safety_for_command($slug);
+            $commands.push(CommandDef {
+                slug: $slug.into(),
+                name: $slug.into(),
+                description: $desc.into(),
+                category: CommandCategory::$category,
+                aliases: aliases_for_command($slug),
+                dispatch_target: $slug.into(),
+                available_when: Some(AvailabilityCheck::Always),
+                keyboard_shortcut: None,
+                is_read_only: safety.0,
+                is_destructive: safety.1,
+                is_concurrency_safe: safety.2,
+            });
+        }
     };
     ($commands:expr, $slug:literal, $name:literal, $desc:literal, $category:ident) => {
-        $commands.push(CommandDef {
-            slug: $slug.into(),
-            name: $name.into(),
-            description: $desc.into(),
-            category: CommandCategory::$category,
-            aliases: aliases_for_command($slug),
-            dispatch_target: $slug.into(),
-            available_when: Some(AvailabilityCheck::Always),
-            keyboard_shortcut: None,
-        });
+        {
+            let safety = tool_safety_for_command($slug);
+            $commands.push(CommandDef {
+                slug: $slug.into(),
+                name: $name.into(),
+                description: $desc.into(),
+                category: CommandCategory::$category,
+                aliases: aliases_for_command($slug),
+                dispatch_target: $slug.into(),
+                available_when: Some(AvailabilityCheck::Always),
+                keyboard_shortcut: None,
+                is_read_only: safety.0,
+                is_destructive: safety.1,
+                is_concurrency_safe: safety.2,
+            });
+        }
     };
 }
 

@@ -52,6 +52,22 @@ Read these from the active project vault:
 7. **Reconciliation** — Transaction records reconcile with financial reports. No gaps.
 8. **Subscription lifecycle** — Upgrade/downgrade/cancel flows handle prorations correctly.
 
+# 9. Financial Cryptography
+
+Payment data and financial audit trails have specific cryptographic requirements beyond general security.
+
+**Source lineage:** sobolevn/awesome-cryptography — PCI DSS crypto standards, audit trail integrity, transaction non-repudiation.
+
+**What Vane checks:**
+
+1. **Payment data encryption** — Must use AES-256-GCM minimum. Any payment flow using DES, 3DES, or weaker is a compliance failure under PCI DSS. V-CRIT.
+2. **Audit trail integrity** — Financial audit trails must use SHA-256+ hashing for tamper detection. Any checksum on financial records using MD5 is a compliance failure. V-HIGH.
+3. **Transaction non-repudiation** — Financial transactions should be digitally signed (ECDSA or Ed25519) where non-repudiation is required. The signer cannot deny having signed.
+4. **Financial API authentication** — Payment API calls must use HMAC-SHA-256 or Ed25519 signatures for request authentication. API keys alone are insufficient for financial operations. V-HIGH.
+5. **PCI DSS key management** — Payment encryption keys must follow PCI DSS requirements: dual control (no single person has full key), split knowledge, documented rotation schedule. V-CRIT.
+6. **No financial data in plaintext logs** — Card numbers, bank accounts, SSNs must never appear in application logs, even encrypted. Log the transaction ID, not the financial instrument. V-CRIT.
+7. **Stripe/payment provider token handling** — Payment tokens from Stripe/Braintree/etc. must be treated as secrets. Never stored in client-accessible locations, never logged, never sent to analytics. V-HIGH.
+
 # Output Format
 
 ```

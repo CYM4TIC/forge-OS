@@ -203,6 +203,27 @@ pub fn run() {
             let mission_state: MissionStateState =
                 Arc::new(Mutex::new(MissionStateHolder::default()));
 
+            // P7-N: Policy engine — pre-loaded with default rules
+            let policy_engine: commands::policy::PolicyEngineState = {
+                let mut engine = commands::policy::PolicyEngine::new();
+                engine.load_rules(commands::policy::default_policy_rules());
+                Arc::new(Mutex::new(engine))
+            };
+
+            // P7-N: Permission manager — persistent rules loaded from SQLite
+            let permission_manager: commands::permissions::PermissionManagerState = {
+                let persistent_rules = if let Ok(conn) = db.conn.lock() {
+                    commands::permissions::load_permission_rules(&conn).unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+                Arc::new(Mutex::new(commands::permissions::PermissionManager::new(persistent_rules)))
+            };
+
+            // P7-N: Dispatch queue — priority-based with configurable concurrency
+            let dispatch_queue: dispatch::queue::DispatchQueueState =
+                Arc::new(Mutex::new(dispatch::queue::DispatchQueue::new(3)));
+
             app.manage(db);
             app.manage(providers);
             app.manage(dispatcher);
@@ -211,6 +232,9 @@ pub fn run() {
             app.manage(agent_registry);
             app.manage(confirmation_router);
             app.manage(mission_state);
+            app.manage(policy_engine);
+            app.manage(permission_manager);
+            app.manage(dispatch_queue);
 
             // Background agent dispatcher maintenance (every 30 seconds)
             // Handles timeout detection, stale cache eviction, completed agent cleanup.
@@ -346,6 +370,15 @@ pub fn run() {
             commands::proposals::get_decision_history,
             commands::proposals::search_proposals,
             commands::proposals::count_proposals,
+            // P7-N: Policy, permissions, dispatch queue
+            commands::policy::evaluate_policy,
+            commands::policy::get_policy_rules,
+            commands::policy::load_policy_rules,
+            commands::permissions::resolve_permission_cmd,
+            commands::permissions::add_session_permission_override,
+            commands::permissions::get_permission_rules,
+            dispatch::queue::get_dispatch_queue_state,
+            dispatch::queue::set_dispatch_concurrency,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

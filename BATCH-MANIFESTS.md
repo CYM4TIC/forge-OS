@@ -1,6 +1,8 @@
 # Forge OS — Batch Manifests
 
 > Phase-level batch sequences. Written before each phase starts. Nyx reads this on "next batch."
+>
+> **Manifest writing rule:** Before writing a new phase's manifests, grep `docs/TAURI-BUILD-PLAN.md` Integration Map for all patterns targeting sessions in that phase. Every pattern must be accounted for in a batch — either as a file/feature in the manifest, or as a design constraint annotated on the batch. Unaccounted patterns = orphaned research.
 
 ---
 
@@ -2574,15 +2576,99 @@ HudEvent { BuildStateChanged(BuildStateSnapshot), PipelineStageChanged(PipelineS
 
 | Metric | Value |
 |---|---|
-| **Batches** | 14 (P7-A through P7-M + P7-C.1 research patch) |
-| **Sessions** | 3 (7.1, 7.2, 7.3) |
-| **New Tauri commands** | ~14 (registry: 5, proposals: 7, confirmation: 1, specification: 1) |
+| **Batches** | 15 (P7-A through P7-N + P7-C.1 research patch) |
+| **Sessions** | 3 + backfill (7.1, 7.2, 7.3, 7.4-backfill) |
+| **New Tauri commands** | ~14 + ~5 backfill (registry: 5, proposals: 7, confirmation: 1, specification: 1, backfill: ~5) |
 | **New React hooks** | 5 (useAgentRegistry, usePersonaSelection, useActionPalette, useProposalFeed, useDispatchQueue) |
 | **New panel types** | 3 net new (DispatchQueue, ProposalFeed + TeamPanel rebuild) |
 | **Workspace presets** | 7 total (+1 new: team) |
 | **Carried risks resolved** | 5 (R-DS-02, R-DS-03, R-DS-05, M-1 HIGH, R-DS-04) |
 | **Carried risks tracked** | 1 (R-DS-01 → Phase 9) |
-| **Estimated totals** | ~88 Tauri commands, ~21 hooks, ~17 panel types |
+| **Estimated totals** | ~93 Tauri commands, ~21 hooks, ~17 panel types |
+
+---
+
+### Session 7.4 — Integration Map Backfill (P7-N)
+
+**Goal:** Backfill Phase 8 prerequisites that were in the Integration Map but missed during 7.1-7.3. These are dispatch architecture foundations that Phase 8.1/8.2 depend on.
+
+**Why now:** Audit (2026-04-04) found 17 unimplemented Integration Map patterns targeting Phases 1-7. Of those, 5-7 are Phase 8 prerequisites. The rest are deferred to their natural sessions (8.1/8.2/10+). This batch closes the prerequisite gap.
+
+---
+
+### P7-N: Phase 8 Prerequisite Backfill
+
+**Goal:** Implement 5 missing patterns that Phase 8.1/8.2 dispatch architecture depends on. Complete 4 partially-implemented patterns to production quality.
+
+**Must-build (5 new):**
+
+1. **Policy Engine — rule-based ALLOW/DENY access** (Source: ByteRover CLI)
+   - `apps/desktop/src-tauri/src/commands/policy.rs` (NEW)
+   - Rule struct: `{ pattern: String, action: Allow|Deny|Confirm, scope: Persona|Global, priority: u32 }`
+   - First-match-wins evaluation. Global rules, then persona-specific overlays.
+   - `evaluate_policy(tool_name, persona, context) -> PolicyDecision`
+   - Load rules from grimoire config (Phase 8.1 will expand this to full Grimoire).
+   - Wire into `ConfirmationRouter` — policy evaluation runs BEFORE confirmation modal.
+
+2. **Permission rule sources — layered settings** (Source: Claude Code permission-model)
+   - `apps/desktop/src-tauri/src/commands/permissions.rs` (NEW)
+   - 4-tier precedence: `session_override > persona_config > project_settings > defaults`
+   - `PermissionRule { tool_pattern: String, action: Allow|Deny|Ask, source: PermissionSource }`
+   - `resolve_permission(tool_name, persona, session) -> PermissionDecision`
+   - Integrates with policy engine: policy = structural rules, permissions = user-configured overrides.
+
+3. **Tool-specific permission rules** (Source: Claude Code permission-model)
+   - Extend `PermissionRule` with glob pattern matching on tool names (e.g., `"git *"` matches all git commands)
+   - `match_tool_pattern(pattern, tool_name) -> bool` with glob semantics
+   - Store rules in SQLite `permission_rules` table (session-scoped + persistent tiers)
+
+4. **Capability widening / dynamic open-close** (Source: Excalibur Spellbook)
+   - `apps/desktop/src-tauri/src/commands/capabilities.rs` (EDIT — extend existing)
+   - Add `CapabilityGrant { family: CapabilityFamily, scope: GrantScope, expires: Option<Instant> }`
+   - `widen_capabilities(persona, grants)` / `narrow_capabilities(persona, families)`
+   - Per-dispatch capability snapshot: widen at dispatch start, narrow at dispatch end.
+   - Existing `ResolvedCapabilities` becomes the snapshot; widening/narrowing mutates the persona's active grants.
+
+5. **Tool safety taxonomy — per-tool flags** (Source: Claude Code tool-interface)
+   - `apps/desktop/src-tauri/src/commands/registry.rs` (EDIT — extend `CommandDef`)
+   - Add to `CommandDef`: `is_read_only: bool`, `is_destructive: bool`, `is_concurrency_safe: bool`
+   - Derive from existing `CapabilityFamily` classification + explicit overrides in command YAML.
+   - Policy engine and confirmation router use these flags for automatic decisions.
+
+**Must-complete (4 partial → production):**
+
+6. **allowedTools prefix-matching** (EDIT `capabilities.rs`)
+   - Replace exact match in `get_allowed_tools()` with prefix-match: `"git"` matches `"git_status"`, `"git_diff"`, etc.
+   - Add `matches_tool_pattern(pattern: &str, tool_name: &str) -> bool` (shared with permission rules).
+
+7. **Priority-based invocation queue — Rust backend** (EDIT existing dispatch)
+   - `apps/desktop/src-tauri/src/commands/dispatch.rs` (EDIT or NEW)
+   - 4-tier priority enum: `Critical > High > Normal > Low`
+   - `DispatchQueue` with `BinaryHeap<PrioritizedDispatch>`, concurrency limit (configurable, default 3).
+   - Existing `useDispatchQueue.ts` already has UI — wire it to Rust backend via Tauri commands.
+
+8. **Checkpoint validation at phase transitions** (EDIT `checkpoints.rs`)
+   - Add `validate_checkpoint(session_id, required_gates) -> ValidationResult`
+   - Check: all batches in session marked complete, all gate findings resolved, tsc clean.
+   - Wire into dispatch queue: mission cannot advance past checkpoint until validation passes.
+
+9. **Permission mode taxonomy — expand to 5 modes** (EDIT `registry.rs`)
+   - Current: `Spec | Auto | Orchestrator`
+   - Add: `Plan` (read-only exploration, no writes), `Supervised` (all writes require confirmation)
+   - `InteractionMode` now 5 variants. `apply_mode_gate()` updated for new modes.
+
+**Gate:** All 5 new files compile. `tsc --noEmit` = 0. Policy engine evaluates test rules correctly. Capability widening/narrowing round-trips. Priority queue dispatches in order. Permission rules resolve with correct precedence.
+**Depends on:** P7-M (Phase 7 integration complete)
+**Push:** Yes
+
+---
+
+| Metric | Value |
+|---|---|
+| **Batches** | 1 (P7-N backfill) |
+| **New files** | ~3 (policy.rs, permissions.rs, dispatch.rs or inline) |
+| **Edited files** | ~4 (capabilities.rs, registry.rs, checkpoints.rs, confirmation.rs) |
+| **New Tauri commands** | ~5 (evaluate_policy, resolve_permission, widen_capabilities, narrow_capabilities, validate_checkpoint) |
 
 ---
 

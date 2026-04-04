@@ -2,6 +2,7 @@ pub mod types;
 pub mod cache;
 pub mod context;
 pub mod lifecycle;
+pub mod queue;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;

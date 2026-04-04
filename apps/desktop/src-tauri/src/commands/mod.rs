@@ -20,3 +20,5 @@ pub mod registry;
 pub mod capabilities;
 pub mod confirmation;
 pub mod proposals;
+pub mod policy;
+pub mod permissions;

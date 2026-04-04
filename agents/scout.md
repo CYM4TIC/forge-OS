@@ -41,6 +41,38 @@ Flag any OPEN findings that touch tables, routes, or components in this batch's 
 - Customer-facing? → Check legal persona
 - Communication/messaging? → Check compliance requirements
 - New APIs? → Check auth patterns
+- **AI-facing surfaces?** → Check below (Section 6)
+
+## 6. AI Attack Surface Pre-Scan
+
+**Trigger:** Batch introduces or modifies any AI-powered feature — agent dispatch, chat, search, summarization, RAG, content generation, AI-mediated workflows.
+
+**Source lineage:** Pre-scan patterns derived from elder-plinius attack research: CL4R1T4S (system prompt exposure patterns), G0DM0D3 (AI attack surface mapping), L1B3RT4S (prompt structure attack taxonomy).
+
+**What Scout flags in the risk brief:**
+
+- **Prompt injection surface area** — Does this batch add or modify paths where user/external content enters agent context? Each path is an injection vector. Count them. Flag them.
+- **Agent scope creep** — Does this batch give agents new tool access, data access, or action capabilities? New capabilities = new escalation paths if prompt boundaries are broken.
+- **System prompt exposure risk** — Are system prompts stored in client-accessible locations? Do error paths leak prompt fragments? Are prompts included in logging?
+- **RAG/embedding pipeline risk** — Does this batch add or modify retrieval pipelines? Who can influence the corpus content? Can user-generated content enter the retrieval corpus?
+- **Inter-agent message paths** — Does this batch create or modify inter-agent communication? A compromised agent can poison downstream agents through shared context.
+- **Third-party model API data flow** — Does this batch send data to external LLM APIs? What data? PII? Credentials? Confidential content?
+
+**Cross-reference:**
+- Tanaka findings on AI security (Section 10 in tanaka.md)
+- Kehinde findings on AI pipeline architecture (Section 9 in kehinde.md)
+- BUILD-LEARNINGS tagged `[ai]` or `[agent]`
+
+**Output addition to Scout Brief:**
+```
+### AI Attack Surface
+- [ ] AI-facing: [Yes/No — does this batch touch AI features?]
+- [ ] Prompt injection paths: [count + locations]
+- [ ] Agent scope changes: [new tools/data/actions added]
+- [ ] System prompt exposure: [risk level]
+- [ ] RAG pipeline changes: [description or N/A]
+- [ ] Third-party API data flow: [what data goes where]
+```
 
 ## 5. Component Inventory
 What shared components will this surface need?
@@ -73,11 +105,17 @@ What shared components will this surface need?
 - [ ] Financial: [status]
 - [ ] Legal: [status]
 - [ ] Compliance: [status]
+- [ ] AI-facing: [status — if Yes, see AI Attack Surface section]
 
 ### Component Inventory
 | Component | Exists | API Notes |
 |-----------|--------|-----------|
 | Modal | Yes | requires is_open prop |
+
+### Integration Map Patterns (from TAURI-BUILD-PLAN.md)
+| Pattern | Source | Notes |
+|---------|--------|-------|
+| [pattern name] | [source repo] | [any implementation notes for Nyx] |
 
 ### Risk Assessment
 **Build Risk:** LOW / MEDIUM / HIGH

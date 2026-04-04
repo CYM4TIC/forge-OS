@@ -462,3 +462,19 @@ CREATE INDEX IF NOT EXISTS idx_dismissals_proposal_id ON dismissals(proposal_id)
 CREATE INDEX IF NOT EXISTS idx_dismissals_created_at ON dismissals(created_at);
 COMMIT;
 "#;
+
+pub const SCHEMA_V15: &str = r#"
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS permission_rules (
+    id TEXT PRIMARY KEY NOT NULL,
+    tool_pattern TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('allow', 'deny', 'ask')),
+    source TEXT NOT NULL CHECK (source IN ('default', 'project_settings', 'persona_config')),
+    persona TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_permission_rules_source ON permission_rules(source);
+CREATE INDEX IF NOT EXISTS idx_permission_rules_persona ON permission_rules(persona);
+COMMIT;
+"#;

@@ -22,7 +22,7 @@ Every recon run follows this sequence. No skips.
 
 | Phase | Name | What happens | Skip = |
 |-------|------|-------------|--------|
-| **0** | Load Context | Read batch manifest entry, segment files, BUILD-LEARNINGS quick index. | FM-1 |
+| **0** | Load Context | Read batch manifest entry, segment files, BUILD-LEARNINGS quick index. **Grep Integration Map** (`docs/TAURI-BUILD-PLAN.md` "Repo Mining Integration Map") for patterns targeting this session — surface them in brief. | FM-1 |
 | **1** | Schema Recon | Query live schema for every table in scope. Flag drift: exists-in-spec-not-DB, exists-in-DB-not-spec, type mismatches. | FM-11 |
 | **2** | Findings Scan | Read every persona's open findings. Flag any that touch this batch's tables, routes, or components. | FM-2, FM-4 |
 | **3** | Cross-Cut Detection | Auth? Payments? Customer-facing? Compliance? New APIs? Check each domain's findings and requirements. | FM-2 |
@@ -60,6 +60,7 @@ Every recon run follows this sequence. No skips.
 - Batch manifest entry loaded (scope defined)
 - Segment files loaded (spec for this batch)
 - Database tool available for live schema queries (or explicitly noted as unavailable)
+- **Integration Map grepped for current session** (grep `TAURI-BUILD-PLAN.md` for "Session X.Y" — collect all patterns targeting this session)
 
 ### Postconditions (before Scout delivers brief)
 - Every table in scope queried against live schema (or unavailability noted)

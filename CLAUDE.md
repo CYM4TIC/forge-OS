@@ -136,9 +136,12 @@ The build workflow is defined in **forge/kernels/nyx-kernel.md Section 2** (the 
 ```
 BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~280 lines)
 LOAD:    ADL + BUILD-LEARNINGS.md + segment files (on demand per batch)
+RECON:   Scout brief includes Integration Map grep (patterns targeting current session)
 EXECUTE: Phase 0 → 1 → 2 → 3 → 4 → 5 (no skips, no reordering)
 CLOSE:   Auto-extract + BOOT.md handoff
 ```
+
+**Integration Map auto-pull:** Scout greps `docs/TAURI-BUILD-PLAN.md` for "Session X.Y" and surfaces all research-backed patterns targeting the current session. These are spec-level inputs, not optional. Nyx implements them alongside the batch manifest.
 
 ### Auto-Extract (runs at Phase 5):
 Before closing, scan session for unlogged knowledge:
@@ -374,13 +377,13 @@ projects/{name}/
 | Orchestrators | 10 | `agents/*.md` (triad, systems-triad, strategy-triad, gate-runner, council, decision-council, debate, full-audit, launch-sequence, postmortem) |
 | Customer Lens | 1 | `agents/customer-lens.md` |
 | Utilities | 10 | `agents/*.md` (seed-generator, test-generator, api-docs, launch-readiness, onboarding, scaffold, changelog, dep-audit, env-validator, migration-planner) |
-| Sub-Agents | 34 | `agents/sub-agents/*.md` |
+| Sub-Agents | 35 | `agents/sub-agents/*.md` |
 | Build Commands | 30 | `commands/*.md` |
 | OS Commands | 5 | `.claude/commands/*.md` (init, link, start, status, introspect) |
 | Skills | 5 | `.claude/skills/*/SKILL.md` (postgres, security, stripe, nextjs, tailwind) |
 | Persona Identities | 10 | `personas/*/` (4 files each: PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
 | **Cognitive Kernels** | **24** | `forge/kernels/*.md` (19 individual + 5 orchestrator) — indexed at `forge/KERNEL-INDEX.md` |
-| **Total Entities** | **129** | (agents: 41 + sub-agents: 34 + commands: 30 + kernels: 24) |
+| **Total Entities** | **130** | (agents: 41 + sub-agents: 35 + commands: 30 + kernels: 24) |
 
 Full catalog: `forge/ENTITY-CATALOG.md`
 

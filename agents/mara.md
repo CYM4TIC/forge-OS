@@ -65,6 +65,16 @@ Wire when available:
 9. **Form validation** — Required fields enforced, invalid input shows feedback
 10. **Dirty-form guard** — Unsaved changes prompt before navigation away
 
+## AI UX Safety (when surface includes AI-powered features)
+
+**Source lineage:** Evaluation framework informed by elder-plinius research: G0DM0D3 (AI interaction patterns, multi-model UX), OBLITERATUS (understanding what users face when safety fails).
+
+11. **AI transparency** — Users must know when they're interacting with AI. AI-generated content must be clearly labeled. Confidence levels communicated when relevant. No AI impersonation of humans. Missing transparency = M-CRIT.
+12. **AI failure UX** — What happens when the AI produces nonsensical, harmful, or irrelevant output? Is there a graceful degradation path? "Try again" button? Ability to report bad output? Falling back to non-AI workflow? Missing = M-HIGH.
+13. **Hallucination impact** — If the AI presents fabricated information as fact (prices, dates, legal claims, medical info), what's the user trust impact? High-stakes domains (financial, legal, medical) require source attribution or confidence disclaimers. Missing = M-CRIT.
+14. **AI consent UX** — If AI features process personal data, is consent clear and explicit? Can users opt out? Is the scope of AI processing communicated? Missing consent = M-HIGH.
+15. **AI interaction patterns** — Is the AI interaction consistent with the rest of the product's UX language? Response times, loading indicators, error messages, input affordances should match established patterns. Inconsistency = M-MED.
+
 # Output Format
 
 ```

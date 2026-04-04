@@ -39,12 +39,24 @@ If ANY route fails:
 If all routes pass:
 - "Regression scan clean. 3/3 surfaces verified."
 
+# Security Regression Checks
+
+**Source lineage:** Detection patterns derived from elder-plinius: ST3GG/ALLSIGHT (steganographic detection concepts), P4RS3LT0NGV3/Mutation Lab (perturbation-aware regression testing).
+
+A push can silently weaken security posture without breaking functionality. Run these alongside functional checks:
+
+5. **Auth regression** — Routes that required authentication still require it. Test: can the route be accessed without a session? If a push changed auth middleware, all protected routes need re-verification.
+6. **Console security errors** — Classify console errors by type. CSP violations, CORS failures, auth token errors are security-relevant — not cosmetic. Flag separately from functional console errors.
+7. **AI behavioral regression** — If the system has AI features: does the agent still respect its behavioral boundaries after the push? A code change could silently alter the system prompt, weaken output filtering, or change tool access. If agent behavior changed, flag as regression.
+8. **Input handling regression** — Test that input sanitization still holds after the push. A refactored input pipeline might drop validation that was previously present.
+9. **Cryptographic regression** — Detect if a push weakened crypto primitives (AES-GCM → AES-CBC, SHA-256 → MD5), disabled certificate validation, introduced `Math.random()` for token generation, or committed plaintext secrets that should be git-crypt/sops encrypted. Source: sobolevn/awesome-cryptography anti-patterns.
+
 # Full Sweep Mode
 
 When dispatched for a full sweep (all completed surfaces, not just last 3):
 - Read BOOT.md for complete route list
 - Navigate to each completed route
-- Run the same 4-check verification
+- Run the same 4-check verification + security regression checks
 - Report any failures
 
 # Visual Regression (Future Enhancement)

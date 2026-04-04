@@ -93,5 +93,11 @@ pub fn run(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute_batch("PRAGMA user_version = 14;")?;
     }
 
+    // P7-N: Permission rules for layered access control
+    if current_version < 15 {
+        conn.execute_batch(schema::SCHEMA_V15)?;
+        conn.execute_batch("PRAGMA user_version = 15;")?;
+    }
+
     Ok(())
 }

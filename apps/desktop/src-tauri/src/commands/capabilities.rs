@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::time::Instant;
 
 // ---------------------------------------------------------------------------
 // Capability families — dispatch-scoped permission grants
@@ -210,6 +211,9 @@ pub fn resolve_capabilities(
 /// Pierce (ReadOnly) gets read + grep + snapshot.
 /// Nyx (WriteCode) gets the full set.
 /// Dynamic, not static config.
+///
+/// P7-N: Prefix-matching — `"git"` matches `"git_status"`, `"git_diff"`, etc.
+/// Uses `matches_tool_pattern()` from policy.rs for consistent glob/prefix behavior.
 pub fn get_allowed_tools(persona: &str, grants: &[CapabilityFamily]) -> Vec<String> {
     let mut tools: Vec<String> = Vec::new();
 
@@ -244,6 +248,14 @@ pub fn get_allowed_tools(persona: &str, grants: &[CapabilityFamily]) -> Vec<Stri
 
     tools.sort();
     tools
+}
+
+/// Check if a tool name is allowed by the allow-list, with prefix-matching.
+/// `"git"` in the allow-list matches `"git_status"`, `"git_diff"`, etc.
+/// This is the runtime check used by the dispatch pipeline.
+pub fn is_tool_allowed(tool_name: &str, allowed_tools: &[String]) -> bool {
+    use crate::commands::policy::matches_tool_pattern;
+    allowed_tools.iter().any(|pattern| matches_tool_pattern(pattern, tool_name))
 }
 
 // ---------------------------------------------------------------------------
@@ -303,4 +315,121 @@ fn tool_description(tool: &str) -> String {
         _ => "Unknown tool",
     }
     .to_string()
+}
+
+// ---------------------------------------------------------------------------
+// P7-N: Capability widening / narrowing (dynamic open-close)
+// Source: Excalibur Spellbook pattern.
+// ---------------------------------------------------------------------------
+
+/// Scope for a capability grant — when does it expire?
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GrantScope {
+    /// Grant lasts for a single dispatch.
+    Dispatch,
+    /// Grant lasts for the entire session.
+    Session,
+    /// Grant expires at a specific instant (TTL).
+    Expiring {
+        #[serde(skip)]
+        expires_at: Option<Instant>,
+        /// TTL in seconds (serializable proxy for expires_at).
+        ttl_secs: u64,
+    },
+}
+
+/// A capability grant with scope and metadata.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CapabilityGrant {
+    pub family: CapabilityFamily,
+    pub scope: GrantScope,
+    /// Who granted this capability (operator, policy, orchestrator).
+    pub granted_by: String,
+}
+
+impl CapabilityGrant {
+    /// K-MED-5: Hydrate `expires_at` from `ttl_secs` after deserialization.
+    /// Must be called after any deserialization to activate TTL enforcement.
+    pub fn hydrate_expiry(&mut self) {
+        if let GrantScope::Expiring { expires_at, ttl_secs } = &mut self.scope {
+            if expires_at.is_none() && *ttl_secs > 0 {
+                *expires_at = Some(Instant::now() + std::time::Duration::from_secs(*ttl_secs));
+            }
+        }
+    }
+}
+
+/// Per-persona active capability state.
+/// Tracks the current grants and provides widening/narrowing.
+pub struct PersonaCapabilityState {
+    /// Active grants beyond the base context default.
+    grants: Vec<CapabilityGrant>,
+}
+
+impl Default for PersonaCapabilityState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PersonaCapabilityState {
+    pub fn new() -> Self {
+        Self {
+            grants: Vec::new(),
+        }
+    }
+
+    /// Widen: add capability grants to this persona.
+    /// Hydrates expiry on each grant and prunes any stale grants.
+    pub fn widen(&mut self, new_grants: Vec<CapabilityGrant>) {
+        for mut grant in new_grants {
+            grant.hydrate_expiry();
+            self.grants.push(grant);
+        }
+        self.prune_expired();
+    }
+
+    /// Narrow: remove all grants for the specified families.
+    pub fn narrow(&mut self, families: &[CapabilityFamily]) {
+        self.grants.retain(|g| !families.contains(&g.family));
+    }
+
+    /// Prune expired TTL grants.
+    pub fn prune_expired(&mut self) {
+        let now = Instant::now();
+        self.grants.retain(|g| {
+            match &g.scope {
+                GrantScope::Expiring { expires_at, .. } => {
+                    expires_at.map_or(true, |exp| now < exp)
+                }
+                _ => true,
+            }
+        });
+    }
+
+    /// Snapshot: get effective capability families (deduplicated).
+    /// K-MED-6: Prunes expired grants before resolving.
+    pub fn effective_capabilities(&mut self, base_context: &str) -> Vec<CapabilityFamily> {
+        self.prune_expired();
+        let mut caps: Vec<CapabilityFamily> = default_capabilities(base_context);
+
+        for grant in &self.grants {
+            if !caps.contains(&grant.family) {
+                caps.push(grant.family);
+            }
+        }
+
+        caps
+    }
+
+    /// Get all active grants.
+    pub fn active_grants(&self) -> &[CapabilityGrant] {
+        &self.grants
+    }
+
+    /// Clear all dispatch-scoped grants (called at dispatch end).
+    pub fn clear_dispatch_grants(&mut self) {
+        self.grants.retain(|g| !matches!(g.scope, GrantScope::Dispatch));
+    }
 }

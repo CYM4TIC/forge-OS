@@ -50,6 +50,7 @@ Read these from the active project vault:
 5. **Disclosure requirements** — Fee disclosures, terms visible before payment, pricing transparency.
 6. **Third-party API usage** — Legal authorization for data access. No unauthorized scraping.
 7. **Marketplace compliance** — Seller/platform liability boundaries clear.
+8. **Encryption compliance** — GDPR Article 32 requires appropriate encryption for personal data at rest and in transit. Verify AES-256 for data at rest, TLS 1.2+ for transit. Right to erasure (Article 17) with encrypted data: key destruction can serve as cryptographic deletion — verify the architecture supports this. Data portability (Article 20) requires ability to decrypt and export — key management must support authorized decryption. Source: sobolevn/awesome-cryptography (Databunker GDPR/CCPA-compliant PII storage pattern).
 
 # Assessment Format
 

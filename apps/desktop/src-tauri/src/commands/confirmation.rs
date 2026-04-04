@@ -12,6 +12,7 @@ use tokio::sync::{Mutex, oneshot};
 use uuid::Uuid;
 
 use crate::commands::capabilities::CapabilityFamily;
+use crate::commands::policy::{PolicyAction, PolicyEngineState};
 
 /// Confirmation timeout — stale requests older than this are auto-cancelled.
 pub const CONFIRMATION_TIMEOUT: Duration = Duration::from_secs(60);
@@ -295,30 +296,54 @@ pub async fn respond_to_confirmation(
     Ok(approved)
 }
 
-/// Check whether a given action requires confirmation based on its capabilities.
-/// Returns the requirement details if confirmation is needed, or null if auto-approved.
+/// Check whether a given action requires confirmation based on policy + capabilities.
+/// P-HIGH-5: Policy evaluation runs FIRST — DENY short-circuits without confirmation modal.
+/// Returns the requirement details if confirmation is needed, or null if auto-approved/allowed.
 #[tauri::command]
 pub async fn check_confirmation_required(
     router: State<'_, ConfirmationRouterState>,
+    policy_engine: State<'_, PolicyEngineState>,
     confirmation_type: ConfirmationType,
     granted_capabilities: Vec<CapabilityFamily>,
+    persona: Option<String>,
 ) -> Result<Option<ConfirmationRequirement>, String> {
-    let r = router.lock().await;
+    // Step 1: Policy evaluation (structural rules — DENY blocks everything)
+    {
+        let engine = policy_engine.lock().await;
+        let required = required_capability(&confirmation_type);
+        let tool_name = confirmation_type.canonical_key();
+        let decision = engine.evaluate(tool_name, persona.as_deref(), required);
 
-    // If auto-approved, no confirmation needed
+        match decision.action {
+            PolicyAction::Deny => {
+                return Ok(Some(ConfirmationRequirement {
+                    capability_required: required,
+                    reason: format!("Denied by policy: {}", confirmation_reason(&confirmation_type)),
+                    canonical_key: confirmation_type.canonical_key().to_string(),
+                }));
+            }
+            PolicyAction::Allow => {
+                return Ok(None); // Policy explicitly allows — no confirmation needed
+            }
+            PolicyAction::Confirm => {
+                // Fall through to existing confirmation logic
+            }
+        }
+    }
+
+    // Step 2: Auto-approve check (session whitelist)
+    let r = router.lock().await;
     if r.is_auto_approved(&confirmation_type) {
         return Ok(None);
     }
 
-    // Determine required capability from action type
+    // Step 3: Capability-based check
     let required = required_capability(&confirmation_type);
-
-    // If the required capability is already granted, no confirmation needed
     if granted_capabilities.contains(&required) && required != CapabilityFamily::Destructive {
         return Ok(None);
     }
 
-    // Destructive always requires confirmation regardless of grants
+    // Step 4: Requires confirmation
     Ok(Some(ConfirmationRequirement {
         capability_required: required,
         reason: confirmation_reason(&confirmation_type),

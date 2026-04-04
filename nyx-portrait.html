@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nyx — Self-Portrait</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #08070d; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy, t = 0;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// --- Embers / forge particles ---
+class Ember {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = cx + (Math.random() - 0.5) * 300;
+    this.y = H * 0.85 + Math.random() * 60;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = -(0.3 + Math.random() * 1.2);
+    this.life = 80 + Math.random() * 120;
+    this.maxLife = this.life;
+    this.size = 0.5 + Math.random() * 2;
+    this.color = Math.random() > 0.3 ? '#c084fc' : '#f59e0b';
+  }
+  update() {
+    this.x += this.vx + Math.sin(t + this.x * 0.01) * 0.2;
+    this.y += this.vy;
+    this.vx *= 0.998;
+    this.life--;
+    if (this.life <= 0) this.reset();
+  }
+  draw() {
+    const a = (this.life / this.maxLife);
+    ctx.globalAlpha = a * 0.6;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * (0.3 + a * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+const embers = Array.from({ length: 80 }, () => new Ember());
+
+// --- Smoke wisps ---
+class Smoke {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = cx + (Math.random() - 0.5) * 200;
+    this.y = H * 0.5 + Math.random() * 200;
+    this.radius = 20 + Math.random() * 60;
+    this.vx = (Math.random() - 0.5) * 0.2;
+    this.vy = -(0.1 + Math.random() * 0.3);
+    this.life = 200 + Math.random() * 200;
+    this.maxLife = this.life;
+  }
+  update() {
+    this.x += this.vx + Math.sin(t * 0.5 + this.y * 0.005) * 0.3;
+    this.y += this.vy;
+    this.radius += 0.1;
+    this.life--;
+    if (this.life <= 0) this.reset();
+  }
+  draw() {
+    const a = (this.life / this.maxLife) * 0.04;
+    ctx.globalAlpha = a;
+    const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    g.addColorStop(0, '#c084fc');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+const smokes = Array.from({ length: 25 }, () => new Smoke());
+
+// --- Lightning flash state ---
+let flashIntensity = 0;
+let flashTimer = 0;
+
+// --- Figure geometry (proportional to screen) ---
+function fig(xRatio, yRatio) {
+  const figW = Math.min(W, H) * 0.55;
+  const figH = H * 0.75;
+  const figX = cx - figW * 0.5;
+  const figY = H * 0.08;
+  return { x: figX + figW * xRatio, y: figY + figH * yRatio };
+}
+
+// --- Draw the figure ---
+function drawFigure() {
+  const figW = Math.min(W, H) * 0.55;
+  const figH = H * 0.75;
+  const figX = cx;
+  const figTop = H * 0.08;
+
+  // === SILHOUETTE — head, neck, shoulders, jacket ===
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#0c0b14';
+
+  // Head
+  const headCx = figX;
+  const headCy = figTop + figH * 0.1;
+  const headRx = figW * 0.09;
+  const headRy = figW * 0.115;
+
+  ctx.beginPath();
+  ctx.ellipse(headCx, headCy, headRx, headRy, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair silhouette (slightly larger, asymmetric)
+  ctx.fillStyle = '#0e0d18';
+  ctx.beginPath();
+  ctx.ellipse(headCx - 2, headCy - headRy * 0.15, headRx * 1.12, headRy * 1.05, -0.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- Violet hair thread ---
+  const hairThread = Math.sin(t * 2) * 0.02;
+  ctx.globalAlpha = 0.5 + Math.sin(t * 3) * 0.2;
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#a855f7';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  const hx = headCx + headRx * 0.6;
+  ctx.moveTo(hx, headCy - headRy * 0.7);
+  ctx.quadraticCurveTo(
+    hx + 8 + Math.sin(t * 1.5) * 3, headCy - headRy * 0.1,
+    hx + 3 + hairThread * 20, headCy + headRy * 0.4
+  );
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Neck
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#0c0b14';
+  const neckTop = headCy + headRy * 0.75;
+  const neckW = figW * 0.035;
+  ctx.fillRect(headCx - neckW, neckTop, neckW * 2, figH * 0.05);
+
+  // === HIGH COLLAR JACKET ===
+  const collarTop = neckTop + figH * 0.01;
+  const shoulderY = collarTop + figH * 0.06;
+  const shoulderW = figW * 0.32;
+  const jacketBottom = figTop + figH * 0.52;
+
+  ctx.fillStyle = '#0e0d18';
+  ctx.beginPath();
+  // Left shoulder
+  ctx.moveTo(headCx - neckW * 1.2, collarTop);
+  ctx.lineTo(headCx - shoulderW, shoulderY);
+  ctx.lineTo(headCx - shoulderW * 0.9, jacketBottom);
+  // Bottom
+  ctx.lineTo(headCx + shoulderW * 0.9, jacketBottom);
+  // Right shoulder
+  ctx.lineTo(headCx + shoulderW, shoulderY);
+  ctx.lineTo(headCx + neckW * 1.2, collarTop);
+  ctx.closePath();
+  ctx.fill();
+
+  // Collar (stands up around neck)
+  ctx.fillStyle = '#12111f';
+  ctx.beginPath();
+  ctx.moveTo(headCx - neckW * 2.5, collarTop + figH * 0.04);
+  ctx.lineTo(headCx - neckW * 1.8, collarTop - figH * 0.025);
+  ctx.lineTo(headCx - neckW * 0.5, neckTop);
+  ctx.lineTo(headCx + neckW * 0.5, neckTop);
+  ctx.lineTo(headCx + neckW * 1.8, collarTop - figH * 0.025);
+  ctx.lineTo(headCx + neckW * 2.5, collarTop + figH * 0.04);
+  ctx.closePath();
+  ctx.fill();
+
+  // Collar edge highlight
+  ctx.globalAlpha = 0.15;
+  ctx.strokeStyle = '#7c3aed';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+
+  // === Jacket structure lines ===
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 0.5;
+  // Center seam
+  ctx.beginPath();
+  ctx.moveTo(headCx, collarTop + figH * 0.04);
+  ctx.lineTo(headCx, jacketBottom);
+  ctx.stroke();
+  // Shoulder seams
+  ctx.beginPath();
+  ctx.moveTo(headCx - shoulderW * 0.7, shoulderY);
+  ctx.lineTo(headCx - shoulderW * 0.65, jacketBottom);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(headCx + shoulderW * 0.7, shoulderY);
+  ctx.lineTo(headCx + shoulderW * 0.65, jacketBottom);
+  ctx.stroke();
+
+  // === EYES ===
+  const eyeY = headCy - headRy * 0.05;
+  const eyeSpacing = headRx * 0.48;
+  const eyeSize = headRx * 0.13;
+  const blinkCycle = Math.sin(t * 0.4);
+  const blinkScale = blinkCycle > 0.97 ? 0.1 : 1; // rare blink
+
+  // Eye glow
+  for (const side of [-1, 1]) {
+    const ex = headCx + eyeSpacing * side;
+
+    // Outer glow
+    ctx.globalAlpha = 0.12 + flashIntensity * 0.15;
+    const eyeGlow = ctx.createRadialGradient(ex, eyeY, 0, ex, eyeY, eyeSize * 8);
+    eyeGlow.addColorStop(0, '#c084fc');
+    eyeGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = eyeGlow;
+    ctx.fillRect(ex - eyeSize * 8, eyeY - eyeSize * 8, eyeSize * 16, eyeSize * 16);
+
+    // Smudged liner
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = '#1a1528';
+    ctx.beginPath();
+    ctx.ellipse(ex, eyeY, eyeSize * 2.5, eyeSize * 1.8 * blinkScale, side * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye core
+    ctx.globalAlpha = 0.7 + flashIntensity * 0.3;
+    ctx.fillStyle = '#c084fc';
+    ctx.shadowColor = '#c084fc';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.ellipse(ex, eyeY, eyeSize, eyeSize * 0.6 * blinkScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bright center
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#e9d5ff';
+    ctx.beginPath();
+    ctx.arc(ex, eyeY, eyeSize * 0.35 * blinkScale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // === ARMS / HANDS ===
+  const armStartY = shoulderY + figH * 0.02;
+  const armEndY = jacketBottom + figH * 0.18;
+
+  for (const side of [-1, 1]) {
+    const shoulderX = headCx + shoulderW * 0.6 * side;
+    const elbowX = headCx + shoulderW * 0.45 * side;
+    const elbowY = jacketBottom - figH * 0.02;
+    const handX = headCx + shoulderW * 0.25 * side;
+    const handY = armEndY;
+
+    // Arm
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#0e0d18';
+    ctx.beginPath();
+    ctx.moveTo(shoulderX - 12 * side, armStartY);
+    ctx.quadraticCurveTo(elbowX - 8 * side, elbowY, handX - 10, handY - 15);
+    ctx.lineTo(handX + 10, handY - 15);
+    ctx.quadraticCurveTo(elbowX + 8 * side, elbowY, shoulderX + 5 * side, armStartY);
+    ctx.closePath();
+    ctx.fill();
+
+    // === Wrist chain ===
+    const wristY = handY - figH * 0.06;
+    const chainGlow = side === -1 ? 0.5 + Math.sin(t * 2) * 0.3 : 0.3;
+    ctx.globalAlpha = chainGlow;
+    ctx.strokeStyle = side === -1 ? '#a855f7' : '#6b7280';
+    ctx.lineWidth = 1.2;
+    ctx.shadowColor = side === -1 ? '#a855f7' : 'transparent';
+    ctx.shadowBlur = side === -1 ? 10 : 0;
+    ctx.beginPath();
+    for (let i = 0; i < 12; i++) {
+      const cx2 = handX + (i - 6) * 3;
+      const cy2 = wristY + Math.sin(i * 1.2 + t * 3) * 1.5;
+      if (i === 0) ctx.moveTo(cx2, cy2);
+      else ctx.lineTo(cx2, cy2);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Lightning sigil charm on right wrist
+    if (side === 1) {
+      ctx.globalAlpha = 0.4 + Math.sin(t * 2.5) * 0.2;
+      ctx.fillStyle = '#c084fc';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('\u26A1', handX, wristY + 2);
+    }
+
+    // === Hands ===
+    // Fingers — suggested through light on knuckles
+    ctx.globalAlpha = 0.08 + flashIntensity * 0.06;
+    ctx.fillStyle = '#d4bfff';
+    for (let f = 0; f < 4; f++) {
+      const fx = handX + (f - 1.5) * 5;
+      const fy = handY - 5 + Math.sin(f + t) * 1;
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 2.5, 8, side * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Thumb
+    ctx.beginPath();
+    ctx.ellipse(handX + 10 * side, handY - 10, 3, 6, side * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Chipped nail polish
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = '#1a1a2e';
+    for (let f = 0; f < 4; f++) {
+      const fx = handX + (f - 1.5) * 5;
+      const fy = handY - 12 + Math.sin(f + t) * 1;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      // Chip (some nails missing paint)
+      if (f === 1 || f === 3) {
+        ctx.globalAlpha = 0.06;
+        ctx.fillStyle = '#d4bfff';
+        ctx.beginPath();
+        ctx.arc(fx + 0.8, fy - 0.5, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1a1a2e';
+        ctx.globalAlpha = 0.12;
+      }
+    }
+  }
+
+  // === Forge glow on figure (left side purple light) ===
+  ctx.globalAlpha = 0.04 + flashIntensity * 0.08;
+  const forgeLight = ctx.createLinearGradient(figX - figW * 0.5, 0, figX + figW * 0.3, 0);
+  forgeLight.addColorStop(0, '#7c3aed');
+  forgeLight.addColorStop(0.4, 'transparent');
+  ctx.fillStyle = forgeLight;
+  ctx.fillRect(figX - figW * 0.5, figTop, figW, figH * 0.6);
+
+  // === Silver hardware on jacket (tarnished) ===
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#94a3b8';
+  // Clasps
+  for (let i = 0; i < 4; i++) {
+    const claspY = collarTop + figH * 0.08 + i * figH * 0.08;
+    ctx.fillRect(headCx - 2, claspY, 4, 2);
+  }
+}
+
+// --- Forge glow at bottom ---
+function drawForgeGlow() {
+  const forgeY = H * 0.88;
+  ctx.globalAlpha = 0.08;
+  const g = ctx.createRadialGradient(cx, forgeY, 0, cx, forgeY, H * 0.35);
+  g.addColorStop(0, '#7c3aed');
+  g.addColorStop(0.3, '#4c1d95');
+  g.addColorStop(1, 'transparent');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, forgeY - H * 0.35, W, H * 0.7);
+
+  // Warm undertone
+  ctx.globalAlpha = 0.03;
+  const w = ctx.createRadialGradient(cx, forgeY, 0, cx, forgeY, H * 0.25);
+  w.addColorStop(0, '#f59e0b');
+  w.addColorStop(1, 'transparent');
+  ctx.fillStyle = w;
+  ctx.fillRect(0, forgeY - H * 0.25, W, H * 0.5);
+}
+
+// --- Lightning flash (rare, illuminates everything) ---
+function maybeFlash() {
+  flashTimer--;
+  if (flashTimer <= 0 && Math.random() > 0.995) {
+    flashIntensity = 0.8 + Math.random() * 0.2;
+    flashTimer = 60 + Math.random() * 180;
+  }
+  if (flashIntensity > 0) {
+    // Flash overlay
+    ctx.globalAlpha = flashIntensity * 0.06;
+    ctx.fillStyle = '#c084fc';
+    ctx.fillRect(0, 0, W, H);
+
+    // Lightning bolt across scene
+    if (flashIntensity > 0.5) {
+      ctx.globalAlpha = flashIntensity * 0.4;
+      ctx.strokeStyle = '#e9d5ff';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = '#c084fc';
+      ctx.shadowBlur = 25;
+      ctx.beginPath();
+      let lx = cx + (Math.random() - 0.5) * 200;
+      let ly = 0;
+      ctx.moveTo(lx, ly);
+      while (ly < H) {
+        lx += (Math.random() - 0.5) * 40;
+        ly += 10 + Math.random() * 30;
+        ctx.lineTo(lx, ly);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    flashIntensity *= 0.92;
+    if (flashIntensity < 0.01) flashIntensity = 0;
+  }
+}
+
+// --- Title ---
+function drawTitle() {
+  ctx.globalAlpha = 0.06 + Math.sin(t * 0.5) * 0.015;
+  ctx.fillStyle = '#c084fc';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('N Y X', cx, H - 35);
+
+  ctx.globalAlpha = 0.04;
+  ctx.font = '8px monospace';
+  ctx.fillText('technician of strange loops', cx, H - 20);
+}
+
+// --- Main loop ---
+function render() {
+  t += 0.01;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#08070d';
+  ctx.fillRect(0, 0, W, H);
+
+  // Background depth
+  const bgGrad = ctx.createRadialGradient(cx, cy * 0.7, 0, cx, cy, H * 0.8);
+  bgGrad.addColorStop(0, '#0f0e1a');
+  bgGrad.addColorStop(1, '#08070d');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  drawForgeGlow();
+  smokes.forEach(s => { s.update(); s.draw(); });
+  drawFigure();
+  embers.forEach(e => { e.update(); e.draw(); });
+  maybeFlash();
+  drawTitle();
+
+  requestAnimationFrame(render);
+}
+
+render();
+</script>
+</body>
+</html>
