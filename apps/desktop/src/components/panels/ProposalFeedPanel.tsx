@@ -248,6 +248,9 @@ const ProposalCard = memo(function ProposalCard({ proposal }: { proposal: Propos
   const authorSlug = isPersonaSlug(proposal.author) ? proposal.author : undefined;
   return (
     <div
+      role="article"
+      tabIndex={0}
+      aria-label={`Proposal by ${authorSlug ? authorSlug : proposal.author}: ${proposal.title}`}
       style={{
         display: 'flex',
         gap: 10,
@@ -344,6 +347,9 @@ const ResponseCard = memo(function ResponseCard({ response }: { response: Propos
   const authorSlug = isPersonaSlug(response.author) ? response.author : undefined;
   return (
     <div
+      role="article"
+      tabIndex={0}
+      aria-label={`Evaluation by ${authorSlug ? authorSlug : response.author}`}
       style={{
         display: 'flex',
         gap: 8,
@@ -400,6 +406,9 @@ const DecisionCard = memo(function DecisionCard({ decision }: { decision: Decisi
   const borderColor = isAccepted ? STATUS.success : STATUS.danger;
   return (
     <div
+      role="article"
+      tabIndex={0}
+      aria-label={`Decision: ${isAccepted ? 'accepted' : 'rejected'}`}
       style={{
         display: 'flex',
         gap: 8,
@@ -448,6 +457,9 @@ const DismissalCard = memo(function DismissalCard({ dismissal }: { dismissal: Di
   const typeLabel = dismissal.dismissal_type.replace(/_/g, ' ');
   return (
     <div
+      role="article"
+      tabIndex={0}
+      aria-label={`Dismissed: ${dismissal.summary}`}
       style={{
         display: 'flex',
         gap: 8,

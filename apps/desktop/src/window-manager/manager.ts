@@ -108,23 +108,25 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
   {
     id: 'build',
     name: 'Build Mode',
-    description: 'Canvas big, chat + team docked',
+    description: 'Canvas big, chat + team + dispatch queue docked',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'canvas_hud', state: 'docked', position: { x: 320, y: 0 }, size: { width: 640, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'team', state: 'docked', position: { x: 960, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'canvas_hud', state: 'docked', position: { x: 320, y: 0 }, size: { width: 540, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'team', state: 'docked', position: { x: 860, y: 0 }, size: { width: 260, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'dispatch_queue', state: 'docked', position: { x: 860, y: 300 }, size: { width: 260, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {
     id: 'review',
     name: 'Review Mode',
-    description: 'Preview + chat big, canvas minimized',
+    description: 'Chat + findings + dispatch queue + agora for gate review',
     isBuiltIn: true,
     panels: [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'preview', state: 'floating', position: { x: 340, y: 20 }, size: { width: 560, height: 550 }, tabGroupId: null, tabOrder: 0 },
-      { type: 'canvas_hud', state: 'minimized', position: { x: 0, y: 0 }, size: { width: 640, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'findings', state: 'docked', position: { x: 320, y: 0 }, size: { width: 400, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'dispatch_queue', state: 'docked', position: { x: 720, y: 0 }, size: { width: 280, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'proposal_feed', state: 'docked', position: { x: 720, y: 300 }, size: { width: 280, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
   {
@@ -167,6 +169,18 @@ const BUILT_IN_PRESETS: WorkspacePreset[] = [
       { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
       { type: 'preview', state: 'docked', position: { x: 320, y: 0 }, size: { width: 560, height: 360 }, tabGroupId: null, tabOrder: 0 },
       { type: 'connectivity', state: 'docked', position: { x: 320, y: 360 }, size: { width: 560, height: 240 }, tabGroupId: null, tabOrder: 0 },
+    ],
+  },
+  {
+    id: 'team',
+    name: 'Team Mode',
+    description: 'Chat + team + dispatch queue + agora for team coordination',
+    isBuiltIn: true,
+    panels: [
+      { type: 'chat', state: 'docked', position: { x: 0, y: 0 }, size: { width: 320, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'team', state: 'docked', position: { x: 320, y: 0 }, size: { width: 360, height: 600 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'dispatch_queue', state: 'docked', position: { x: 680, y: 0 }, size: { width: 320, height: 300 }, tabGroupId: null, tabOrder: 0 },
+      { type: 'proposal_feed', state: 'docked', position: { x: 680, y: 300 }, size: { width: 320, height: 300 }, tabGroupId: null, tabOrder: 0 },
     ],
   },
 ];

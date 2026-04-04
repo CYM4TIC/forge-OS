@@ -7,8 +7,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { PanelInstance, PanelType } from './types';
 import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
-import { getFindingCounts, getServiceStatus } from '../lib/tauri';
-import type { HudSeverityCounts, ServiceHealth } from '../lib/tauri';
+import { getFindingCounts, getServiceStatus, listProposals, listActiveAgents, onProposalFeedUpdated } from '../lib/tauri';
+import type { HudSeverityCounts, ServiceHealth, AgentSummary } from '../lib/tauri';
 import { CANVAS, TIMING, DOCK as DOCK_TOKENS, BADGE_COLORS } from '@forge-os/canvas-components';
 
 interface DockBarProps {
@@ -87,7 +87,29 @@ function connectivityBadge(services: ServiceHealth[]): { count: number; style: B
   };
 }
 
-function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCounts | null, findingsLoading: boolean, connectivityServices: ServiceHealth[]): DockPillData[] {
+/** Count unresolved proposals for Agora dock pill badge.
+ *  Unresolved = status 'open' or 'evaluating'. Uses BADGE_COLORS.info (neutral attention). */
+function proposalBadge(openCount: number): { count: number; style: BadgeStyle | null; tooltip: string } {
+  if (openCount === 0) return { count: 0, style: null, tooltip: 'No open proposals' };
+  return {
+    count: openCount,
+    style: BADGE_COLORS.info,
+    tooltip: `${openCount} unresolved proposal${openCount === 1 ? '' : 's'}`,
+  };
+}
+
+/** Active dispatch count for Crucible Queue dock pill badge.
+ *  Active = status 'running'. Uses BADGE_COLORS.accent. */
+function dispatchBadge(activeCount: number): { count: number; style: BadgeStyle | null; tooltip: string } {
+  if (activeCount === 0) return { count: 0, style: null, tooltip: 'No active dispatches' };
+  return {
+    count: activeCount,
+    style: BADGE_COLORS.accent,
+    tooltip: `${activeCount} active dispatch${activeCount === 1 ? '' : 'es'}`,
+  };
+}
+
+function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCounts | null, findingsLoading: boolean, connectivityServices: ServiceHealth[], openProposalCount: number, activeDispatchCount: number): DockPillData[] {
   const allTypes = ForgeWindowManager.getAllPanelTypes();
   const pills: DockPillData[] = [];
 
@@ -102,6 +124,30 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
     const isConnectivity = typeInfo.type === 'connectivity';
     const cBadge = isConnectivity ? connectivityBadge(connectivityServices) : null;
 
+    const isProposals = typeInfo.type === 'proposal_feed';
+    const pBadge = isProposals ? proposalBadge(openProposalCount) : null;
+
+    const isDispatch = typeInfo.type === 'dispatch_queue';
+    const dBadge = isDispatch ? dispatchBadge(activeDispatchCount) : null;
+
+    // Resolve badge values — special pills override generic badgeCount
+    const resolvedCount = isFindings ? fBadgeCount
+      : isConnectivity ? (cBadge?.count ?? 0)
+      : isProposals ? (pBadge?.count ?? 0)
+      : isDispatch ? (dBadge?.count ?? 0)
+      : 0;
+    const resolvedStyle = isFindings ? fBadgeStyle
+      : isConnectivity ? (cBadge?.style ?? null)
+      : isProposals ? (pBadge?.style ?? null)
+      : isDispatch ? (dBadge?.style ?? null)
+      : null;
+    const resolvedPosition: BadgePosition = isConnectivity ? 'top-left' : 'top-right';
+    const resolvedGlyph = isConnectivity ? (cBadge?.glyph ?? '') : '';
+    const resolvedTooltip = isConnectivity ? (cBadge?.tooltip ?? null)
+      : isProposals ? (pBadge?.tooltip ?? null)
+      : isDispatch ? (dBadge?.tooltip ?? null)
+      : null;
+
     if (instances.length === 0) {
       pills.push({
         type: typeInfo.type,
@@ -109,12 +155,12 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
         icon: typeInfo.icon,
         state: 'closed',
         panelId: null,
-        badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : 0,
-        badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
+        badgeCount: resolvedCount,
+        badgeStyle: resolvedStyle,
         isActive: isFindings && findingsLoading ? true : false,
-        badgePosition: isConnectivity ? 'top-left' : 'top-right',
-        badgeGlyph: isConnectivity ? (cBadge?.glyph ?? '') : '',
-        tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
+        badgePosition: resolvedPosition,
+        badgeGlyph: resolvedGlyph,
+        tooltip: resolvedTooltip,
       });
     } else {
       for (const inst of instances) {
@@ -124,12 +170,12 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
           icon: typeInfo.icon,
           state: inst.state === 'minimized' ? 'minimized' : 'active',
           panelId: inst.id,
-          badgeCount: isFindings ? fBadgeCount : isConnectivity ? (cBadge?.count ?? 0) : inst.badgeCount,
-          badgeStyle: isFindings ? fBadgeStyle : isConnectivity ? (cBadge?.style ?? null) : null,
+          badgeCount: resolvedCount || inst.badgeCount,
+          badgeStyle: resolvedStyle,
           isActive: inst.isActive,
-          badgePosition: isConnectivity ? 'top-left' : 'top-right',
-          badgeGlyph: isConnectivity ? (cBadge?.glyph ?? '') : '',
-          tooltip: isConnectivity ? (cBadge?.tooltip ?? null) : null,
+          badgePosition: resolvedPosition,
+          badgeGlyph: resolvedGlyph,
+          tooltip: resolvedTooltip,
         });
       }
     }
@@ -269,7 +315,49 @@ export function DockBar({
     return () => { cancelled = true; clearTimeout(startId); if (intervalId) clearInterval(intervalId); };
   }, []);
 
-  const pills = buildDockPills(panels, findingsCounts, findingsLoading, connectivityServices);
+  // Poll open proposal count for Agora dock pill badge.
+  // Polls open + evaluating proposals. Event-driven refresh via proposals:feed-updated.
+  const [openProposalCount, setOpenProposalCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCount = () => {
+      Promise.all([
+        listProposals({ status: 'open' }),
+        listProposals({ status: 'evaluating' }),
+      ]).then(([open, evaluating]) => {
+        if (!cancelled) setOpenProposalCount(open.length + evaluating.length);
+      }).catch(() => { /* retain last-known count */ });
+    };
+    fetchCount();
+    // Event-driven: refresh on feed updates instead of blind polling
+    let unlisten: (() => void) | null = null;
+    onProposalFeedUpdated(() => { fetchCount(); }).then((fn) => {
+      if (!cancelled) unlisten = fn; else fn();
+    });
+    // Fallback poll every 30s in case events are missed
+    const interval = setInterval(fetchCount, 30000);
+    return () => { cancelled = true; clearInterval(interval); if (unlisten) unlisten(); };
+  }, []);
+
+  // Poll active dispatch count for Crucible Queue dock pill badge.
+  // Staggered 3.75s from findings poll.
+  const [activeDispatchCount, setActiveDispatchCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const poll = () => {
+      listActiveAgents().then((agents: AgentSummary[]) => {
+        if (!cancelled) setActiveDispatchCount(agents.filter((a) => a.status === 'running').length);
+      }).catch(() => { /* retain last-known count */ });
+    };
+    const startId = setTimeout(() => {
+      poll();
+      intervalId = setInterval(poll, 5000);
+    }, 3750);
+    return () => { cancelled = true; clearTimeout(startId); if (intervalId) clearInterval(intervalId); };
+  }, []);
+
+  const pills = buildDockPills(panels, findingsCounts, findingsLoading, connectivityServices, openProposalCount, activeDispatchCount);
 
   const handlePillClick = useCallback(
     (pill: DockPillData) => {
