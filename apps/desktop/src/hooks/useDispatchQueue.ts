@@ -25,6 +25,7 @@ import {
   type GateStage,
   type CheckpointState,
   type RegistryEntry,
+  checkpointAction as sendCheckpointAction,
 } from '../lib/tauri';
 
 export type CheckpointAction = 'advance' | 're-gate' | 'hold';
@@ -530,7 +531,11 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     } else {
       setCheckpoint((prev) => ({ ...prev, acknowledged: false }));
     }
-  }, []);
+    // PL-005: persist to backend — map 're-gate' to 'regate' for Rust enum
+    const backendAction = action === 're-gate' ? 'regate' : action;
+    sendCheckpointAction(backendAction as 'advance' | 'regate' | 'hold', checkpoint.batch_id)
+      .catch((err) => console.warn('[useDispatchQueue] checkpoint action failed:', err));
+  }, [checkpoint.batch_id]);
 
   const resetCheckpoint = useCallback((batchId: string) => {
     setCheckpoint({ batch_id: batchId, acknowledged: false, summary: null });

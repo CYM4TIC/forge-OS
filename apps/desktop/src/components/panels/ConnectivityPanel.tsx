@@ -7,7 +7,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useConnectivity } from '../../hooks/useConnectivity';
 import { checkService, type ServiceHealth, type ServiceStatus } from '../../lib/tauri';
 import { StatusBadge, type BadgeStatus } from '@forge-os/canvas-components';
-import { CANVAS, STATUS, RADIUS, TINT, FONT } from '@forge-os/canvas-components';
+import { CANVAS, STATUS, RADIUS, TINT, FONT, BADGE_COLORS } from '@forge-os/canvas-components';
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -147,8 +147,7 @@ const BTN_PRIMARY: React.CSSProperties = {
   ...BTN,
   background: STATUS.accent,
   borderColor: STATUS.accent,
-  // RIVEN-NOTE: needs CANVAS.onAccent token (white text on accent bg)
-  color: '#fff',
+  color: BADGE_COLORS.accent.text,
 };
 
 const CARDS_GRID: React.CSSProperties = {
@@ -275,9 +274,8 @@ function ServiceCard({ service, expanded, onToggle }: ServiceCardProps) {
     return (
       <div
         style={UNCONFIGURED_CARD}
-        role="region"
-        tabIndex={0}
-        aria-label={`${service.serviceName} — not configured`}
+        role="group"
+        aria-label={`${service.serviceName}: not configured`}
       >
         <div style={CARD_HEADER}>
           <span style={CARD_ICON} aria-hidden="true">{serviceIcon(service.serviceType)}</span>

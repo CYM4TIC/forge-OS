@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { PanelInstance, PanelType } from './types';
 import { ForgeWindowManager } from './manager';
 import { DOCK_BAR_HEIGHT } from './snapping';
-import { getFindingCounts, getServiceStatus, listProposals, listActiveAgents, onProposalFeedUpdated } from '../lib/tauri';
+import { getFindingCounts, getServiceStatus, countProposals, listActiveAgents, onProposalFeedUpdated } from '../lib/tauri';
 import type { HudSeverityCounts, ServiceHealth, AgentSummary } from '../lib/tauri';
 import { CANVAS, TIMING, DOCK as DOCK_TOKENS, BADGE_COLORS } from '@forge-os/canvas-components';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -173,7 +173,7 @@ function buildDockPills(panels: PanelInstance[], findingsCounts: HudSeverityCoun
         panelId: null,
         badgeCount: resolvedCount,
         badgeStyle: resolvedStyle,
-        isActive: isFindings && findingsLoading ? true : false,
+        isActive: isFindings && findingsLoading && findingsCounts !== null ? true : false,
         badgePosition: resolvedPosition,
         badgeGlyph: resolvedGlyph,
         tooltip: resolvedTooltip,
@@ -207,8 +207,8 @@ const PILL_BASE: React.CSSProperties = {
   gap: 6,
   paddingLeft: 10,
   paddingRight: 10,
-  paddingTop: 4,
-  paddingBottom: 4,
+  paddingTop: 6,
+  paddingBottom: 6,
   borderRadius: 9999,
   border: '1px solid',
   fontSize: 12,
@@ -249,7 +249,7 @@ function DockPill({
     <button
       onClick={onClick}
       aria-pressed={pill.state === 'active'}
-      aria-label={`${pill.label} — ${pill.state}${pill.badgeCount > 0 ? `, ${pill.tooltip ?? `${pill.badgeCount} items`}` : ''}`}
+      aria-label={`${pill.label}: ${pill.state}${pill.badgeCount > 0 ? `, ${pill.tooltip ?? `${pill.badgeCount} items`}` : ''}`}
       style={{
         ...PILL_BASE,
         ...PILL_STATES[pill.state],
@@ -344,11 +344,8 @@ export function DockBar({
     let seq = 0;
     const fetchCount = () => {
       const mySeq = ++seq;
-      Promise.all([
-        listProposals({ status: 'open' }),
-        listProposals({ status: 'evaluating' }),
-      ]).then(([open, evaluating]) => {
-        if (!cancelled && mySeq === seq) setOpenProposalCount(open.length + evaluating.length);
+      countProposals(['open', 'evaluating']).then((count) => {
+        if (!cancelled && mySeq === seq) setOpenProposalCount(count);
       }).catch(() => { /* retain last-known count */ });
     };
     fetchCount();

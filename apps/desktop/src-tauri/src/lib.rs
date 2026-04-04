@@ -264,6 +264,7 @@ pub fn run() {
             commands::dispatch::get_agent_status,
             commands::dispatch::list_active_agents,
             commands::dispatch::cancel_agent,
+            commands::dispatch::checkpoint_action,
             commands::build_state::get_build_state,
             commands::build_state::create_batch,
             commands::build_state::complete_batch,
@@ -344,6 +345,7 @@ pub fn run() {
             commands::proposals::dismiss_proposal,
             commands::proposals::get_decision_history,
             commands::proposals::search_proposals,
+            commands::proposals::count_proposals,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

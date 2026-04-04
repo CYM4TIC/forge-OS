@@ -110,7 +110,7 @@ export const BADGE_COLORS = {
   critical: { bg: STATUS.critical, text: CANVAS.bg },    // dark text — white on #f97316 is only 3.2:1
   neutral:  { bg: STATUS.neutral,  text: '#ffffff' },
   accent:   { bg: STATUS.accent,   text: '#ffffff' },
-  info:     { bg: STATUS.accent,   text: '#ffffff' },
+  info:     { bg: '#3b82f6',       text: '#ffffff' },       // blue-500 — distinct from accent (indigo)
 } as const;
 
 /** Pipeline stage colors (Hyperdrive build loop) */

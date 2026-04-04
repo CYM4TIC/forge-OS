@@ -465,9 +465,8 @@ const DismissalCard = memo(function DismissalCard({ dismissal }: { dismissal: Di
         gap: 8,
         padding: '8px 12px',
         marginLeft: 34,
-        borderLeft: `2px solid ${STATUS.neutral}`,
+        borderLeft: `2px solid ${STATUS.neutral}80`,
         background: 'transparent',
-        opacity: 0.75,
       }}
     >
       <div style={{ flexShrink: 0, paddingTop: 2 }}>
@@ -588,6 +587,9 @@ export default function ProposalFeedPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRafRef = useRef(0);
+
+  // P-LOW-3: cancel pending rAF on unmount
+  useEffect(() => () => { if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current); }, []);
 
   // ── Scroll-to-load-more (rAF throttled — P-LOW-2 fix) ──
   const handleScroll = useCallback(() => {
@@ -927,6 +929,7 @@ function formatRelative(iso: string): string {
     const date = new Date(iso);
     const now = Date.now();
     const diffMs = now - date.getTime();
+    if (diffMs < 0) return STRINGS.timeJustNow;
     const diffMin = Math.floor(diffMs / 60_000);
     if (diffMin < 1) return STRINGS.timeJustNow;
     if (diffMin < 60) return STRINGS.timeMinsAgo(diffMin);

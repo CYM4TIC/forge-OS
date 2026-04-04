@@ -530,31 +530,52 @@ export class ForgeWindowManager {
     return this.activePresetId;
   }
 
-  applyPreset(presetId: string): void {
+  applyPreset(presetId: string, viewportWidth?: number, viewportHeight?: number): void {
     const preset = this.presets.get(presetId);
     if (!preset) return;
 
-    // Minimize all current panels
+    // K-MED-4: emit per-panel state_changed when minimizing
     for (const panel of this.panels.values()) {
-      panel.state = 'minimized';
-      panel.visible = false;
+      if (panel.state !== 'minimized') {
+        panel.state = 'minimized';
+        panel.visible = false;
+        this.emit({ type: 'panel_state_changed', panelId: panel.id, state: 'minimized' });
+      }
     }
 
-    // Apply preset entries
+    // Apply preset entries with K-MED-2 viewport clamping
     for (const entry of preset.panels) {
+      const pos = { ...entry.position };
+      const sz = { ...entry.size };
+
+      // Clamp to viewport bounds if dimensions are known
+      if (viewportWidth && viewportHeight) {
+        if (pos.x + sz.width > viewportWidth) pos.x = Math.max(0, viewportWidth - sz.width);
+        if (pos.y + sz.height > viewportHeight) pos.y = Math.max(0, viewportHeight - sz.height);
+        if (sz.width > viewportWidth) sz.width = viewportWidth;
+        if (sz.height > viewportHeight) sz.height = viewportHeight;
+      }
+
+      // Clamp to registered minWidth/minHeight constraints
+      const typeInfo = PANEL_TYPE_REGISTRY.get(entry.type);
+      if (typeInfo) {
+        sz.width = Math.max(sz.width, typeInfo.defaultConstraints.minWidth);
+        sz.height = Math.max(sz.height, typeInfo.defaultConstraints.minHeight);
+      }
+
       const existing = this.getPanelsByType(entry.type);
       if (existing.length > 0) {
         const panel = existing[0];
         panel.state = entry.state;
-        panel.position = { ...entry.position };
-        panel.size = { ...entry.size };
+        panel.position = pos;
+        panel.size = sz;
         panel.visible = entry.state !== 'minimized';
         panel.zOrder = this.nextZOrder++;
       } else {
         this.addPanel(entry.type, {
           state: entry.state,
-          position: { ...entry.position },
-          size: { ...entry.size },
+          position: pos,
+          size: sz,
           visible: entry.state !== 'minimized',
         });
       }

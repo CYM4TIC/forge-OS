@@ -59,24 +59,29 @@ export type CapabilityTier = 'high' | 'medium' | 'fast';
 // ── Session commands ──
 
 export function listSessions(): Promise<SessionRow[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_sessions');
 }
 
 export function getSession(id: string): Promise<SessionRow | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('get_session', { id });
 }
 
 export function createSession(title?: string): Promise<SessionRow> {
+  if (!isTauriRuntime) return Promise.resolve({ id: '', title: title ?? '', created_at: '', updated_at: '' } as SessionRow);
   return invoke('create_session', { title });
 }
 
 export function deleteSession(id: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('delete_session', { id });
 }
 
 // ── Chat commands ──
 
 export function listMessages(sessionId: string): Promise<MessageRow[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_messages', { sessionId });
 }
 
@@ -86,22 +91,26 @@ export function sendMessage(request: {
   provider_id?: string;
   tier?: CapabilityTier;
 }): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('send_message', { request });
 }
 
 // ── Provider commands ──
 
 export function listProviders(): Promise<ProviderInfo[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_providers');
 }
 
 export function setDefaultProvider(providerId: string): Promise<boolean> {
+  if (!isTauriRuntime) return Promise.resolve(false);
   return invoke('set_default_provider', { providerId });
 }
 
 // ── Agent commands ──
 
 export function listAgents(agentsDir?: string): Promise<AgentInfo[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_agents', { agentsDir });
 }
 
@@ -195,6 +204,30 @@ export function listActiveAgents(): Promise<AgentSummary[]> {
 export function cancelAgent(dispatchId: string): Promise<boolean> {
   if (!isTauriRuntime) return Promise.resolve(false);
   return invoke('cancel_agent', { dispatchId });
+}
+
+// ── PL-005: Checkpoint Actions ──
+
+export type CheckpointAction = 'advance' | 'regate' | 'hold';
+
+export interface CheckpointActionEvent {
+  action: CheckpointAction;
+  batch_id: string;
+  timestamp: string;
+}
+
+/** PL-005: Send a checkpoint action to the backend. Persists and emits event. */
+export function checkpointAction(action: CheckpointAction, batchId: string): Promise<CheckpointActionEvent> {
+  if (!isTauriRuntime) return Promise.resolve({ action, batch_id: batchId, timestamp: new Date().toISOString() });
+  return invoke('checkpoint_action', { action, batchId });
+}
+
+/** Listen for checkpoint action events from the dispatch system. */
+export function onCheckpointAction(
+  callback: (event: CheckpointActionEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
+  return listen<CheckpointActionEvent>('dispatch:checkpoint-action', (e) => callback(e.payload));
 }
 
 // ── Event listeners ──
@@ -324,6 +357,7 @@ export function appendMemory(request: {
   content: string;
   log_date?: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('append_memory', { request });
 }
 
@@ -334,22 +368,27 @@ export function queryMemory(request: {
   date_to?: string;
   limit?: number;
 }): Promise<MemoryLogEntry[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('query_memory', { request });
 }
 
 export function getMemoryIndex(): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('get_memory_index');
 }
 
 export function getDailyLog(logDate: string): Promise<MemoryLogEntry[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('get_daily_log', { logDate });
 }
 
 export function triggerDream(): Promise<DreamResult> {
+  if (!isTauriRuntime) return Promise.resolve({ run_id: '', topics_created: 0, topics_updated: 0, topics_pruned: 0, logs_processed: 0, memory_index: '' });
   return invoke('trigger_dream');
 }
 
 export function getDreamStatus(): Promise<DreamStatus> {
+  if (!isTauriRuntime) return Promise.resolve({ is_running: false, last_run_at: null, last_run_status: null, sessions_since_last: 0, can_trigger: false, cooldown_remaining_hours: null });
   return invoke('get_dream_status');
 }
 
@@ -389,6 +428,7 @@ export function getContextUsage(request: {
   content: string;
   context_window_size?: number;
 }): Promise<ThresholdStatus> {
+  if (!isTauriRuntime) return Promise.resolve({ current_tokens: 0, context_window_size: 200000, usage_fraction: 0, should_compact: false, threshold: 0.8, zone: 'comfortable' as UsageZone });
   return invoke('get_context_usage', { request });
 }
 
@@ -398,6 +438,7 @@ export function triggerCompact(request: {
   variant?: string;
   context_window_size?: number;
 }): Promise<TriggerCompactResponse> {
+  if (!isTauriRuntime) return Promise.resolve({ summary_id: '', summary_prompt: '', conversation_tokens: 0 });
   return invoke('trigger_compact', { request });
 }
 
@@ -407,10 +448,12 @@ export function storeCompactResult(request: {
   content: string;
   variant?: string;
 }): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('store_compact_result', { request });
 }
 
 export function getLastSummary(sessionId: string): Promise<CompactionSummary | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('get_last_summary', { sessionId });
 }
 
@@ -469,6 +512,7 @@ export interface BuildStateOverview {
 // ── Build State commands ──
 
 export function getBuildState(): Promise<BuildStateOverview> {
+  if (!isTauriRuntime) return Promise.resolve({ batches: [], open_findings: [], open_risks: [], severity_counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 } });
   return invoke('get_build_state');
 }
 
@@ -476,6 +520,7 @@ export function createBatch(request: {
   batch_id: string;
   session_id?: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('create_batch', { request });
 }
 
@@ -484,6 +529,7 @@ export function completeBatch(request: {
   files_modified: string;
   handoff?: string;
 }): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('complete_batch', { request });
 }
 
@@ -496,14 +542,17 @@ export function addFinding(request: {
   session_id?: string;
   batch_ref?: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('add_finding', { request });
 }
 
 export function resolveFinding(id: string, status: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('resolve_finding', { id, status });
 }
 
 export function generateBootMd(): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('generate_boot_md');
 }
 
@@ -553,6 +602,7 @@ export interface ResumeCandidate {
 // ── Team Config commands ──
 
 export function getTeamConfig(): Promise<TeamFile> {
+  if (!isTauriRuntime) return Promise.resolve({ lead_agent_id: '', team_allowed_paths: [], members: [] });
   return invoke('get_team_config');
 }
 
@@ -564,6 +614,7 @@ export function updateTeamMember(request: {
   subscriptions?: string[];
   permission_mode?: PermissionMode;
 }): Promise<TeamFile> {
+  if (!isTauriRuntime) return Promise.resolve({ lead_agent_id: '', team_allowed_paths: [], members: [] });
   return invoke('update_team_member', { request });
 }
 
@@ -576,18 +627,22 @@ export function saveCheckpoint(request: {
   context_tokens?: number;
   checkpoint_data: string;
 }): Promise<string> {
+  if (!isTauriRuntime) return Promise.resolve('');
   return invoke('save_checkpoint', { request });
 }
 
 export function getResumeCandidate(): Promise<ResumeCandidate[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('get_resume_candidate');
 }
 
 export function getCheckpoint(sessionId: string): Promise<CheckpointRow | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('get_checkpoint', { sessionId });
 }
 
 export function clearCheckpoint(sessionId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('clear_checkpoint', { sessionId });
 }
 
@@ -603,16 +658,19 @@ export interface SearchResult {
 }
 
 export function searchSessions(query: string, limit?: number): Promise<SearchResult[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('search_sessions', { query, limit });
 }
 
 // ── Finding Checkout (atomic task checkout for parallel agents) ──
 
 export function checkoutFinding(findingId: string, agentSlug: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('checkout_finding', { findingId, agentSlug });
 }
 
 export function releaseFinding(findingId: string): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('release_finding', { findingId });
 }
 
@@ -640,10 +698,12 @@ export interface PresetRow {
 }
 
 export function savePanelLayout(request: SaveLayoutRequest): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('save_panel_layout', { request });
 }
 
 export function loadPanelLayout(): Promise<LoadLayoutResponse | null> {
+  if (!isTauriRuntime) return Promise.resolve(null);
   return invoke('load_panel_layout');
 }
 
@@ -654,10 +714,12 @@ export function saveWorkspacePreset(request: {
   is_built_in: boolean;
   panels_json: string;
 }): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('save_workspace_preset', { request });
 }
 
 export function loadWorkspacePresets(): Promise<PresetRow[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('load_workspace_presets');
 }
 
@@ -679,14 +741,17 @@ export interface PanelWindowInfo {
 }
 
 export function createPanelWindow(request: CreatePanelWindowRequest): Promise<PanelWindowInfo> {
+  if (!isTauriRuntime) return Promise.resolve({ panel_id: request.panel_id, label: request.title });
   return invoke('create_panel_window', { request });
 }
 
 export function closePanelWindow(panelId: string): Promise<boolean> {
+  if (!isTauriRuntime) return Promise.resolve(false);
   return invoke('close_panel_window', { panelId });
 }
 
 export function listPanelWindows(): Promise<string[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('list_panel_windows');
 }
 
@@ -757,18 +822,22 @@ export interface FindingResolvedEvent {
 }
 
 export function getBuildStateSnapshot(bootPath: string): Promise<BuildStateSnapshot> {
+  if (!isTauriRuntime) return Promise.resolve({ project: '', architecture: '', phase: '', current_session: '', current_batch: '', batches_done: 0, phases_total: 0, sessions_total: 0, last_commit: '', last_updated: '', phase_complete: false });
   return invoke('get_build_state_snapshot', { bootPath });
 }
 
 export function getPipelineStages(): Promise<PipelineStage[]> {
+  if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('get_pipeline_stages');
 }
 
 export function refreshBuildState(bootPath: string): Promise<BuildStateSnapshot> {
+  if (!isTauriRuntime) return Promise.resolve({ project: '', architecture: '', phase: '', current_session: '', current_batch: '', batches_done: 0, phases_total: 0, sessions_total: 0, last_commit: '', last_updated: '', phase_complete: false });
   return invoke('refresh_build_state', { bootPath });
 }
 
 export function updatePipelineStage(stage: PipelineStage): Promise<void> {
+  if (!isTauriRuntime) return Promise.resolve();
   return invoke('update_pipeline_stage', { stage });
 }
 
@@ -822,30 +891,35 @@ interface HudEventEnvelope<T> { type: string; payload: T }
 export function onBuildStateChanged(
   callback: (snapshot: BuildStateSnapshot) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<BuildStateSnapshot>>('hud:build-state-changed', (e) => callback(e.payload.payload));
 }
 
 export function onPipelineStageChanged(
   callback: (stage: PipelineStage) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<PipelineStage>>('hud:pipeline-stage-changed', (e) => callback(e.payload.payload));
 }
 
 export function onAgentStatusChanged(
   callback: (event: AgentStatusEvent) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<AgentStatusEvent>>('hud:agent-status-changed', (e) => callback(e.payload.payload));
 }
 
 export function onFindingAdded(
   callback: (finding: HudFinding) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<HudFinding>>('hud:finding-added', (e) => callback(e.payload.payload));
 }
 
 export function onFindingResolved(
   callback: (event: FindingResolvedEvent) => void,
 ): Promise<UnlistenFn> {
+  if (!isTauriRuntime) return Promise.resolve(() => {});
   return listen<HudEventEnvelope<FindingResolvedEvent>>('hud:finding-resolved', (e) => callback(e.payload.payload));
 }
 
@@ -1422,6 +1496,12 @@ export function getDecisionHistory(
 export function searchProposals(query: string): Promise<Proposal[]> {
   if (!isTauriRuntime) return Promise.resolve([]);
   return invoke('search_proposals', { request: { query } });
+}
+
+/** P-MED-4: count proposals by multiple statuses in a single IPC call. */
+export function countProposals(statuses: string[]): Promise<number> {
+  if (!isTauriRuntime) return Promise.resolve(0);
+  return invoke('count_proposals', { request: { statuses } });
 }
 
 /** Subscribe to proposal feed updates (new entries from any source).

@@ -231,8 +231,9 @@ export function useWindowManager(): UseWindowManagerReturn {
   }, []);
 
   const applyPreset = useCallback((presetId: string) => {
-    managerRef.current.applyPreset(presetId);
-  }, []);
+    managerRef.current.applyPreset(presetId, frameSize.current.width, frameSize.current.height);
+    syncState();
+  }, [syncState]);
 
   const savePreset = useCallback((name: string, description: string) => {
     managerRef.current.savePreset(name, description);

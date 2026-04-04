@@ -391,3 +391,30 @@ pub fn search_proposals(
     let conn = db.conn.lock().map_err(|e| e.to_string())?;
     store::search_proposals(&conn, &request.query).map_err(|e| e.to_string())
 }
+
+/// P-MED-4: count proposals by multiple statuses in a single query.
+/// Avoids the double-IPC pattern of calling list_proposals twice.
+#[derive(Debug, Deserialize)]
+pub struct CountProposalsRequest {
+    pub statuses: Vec<String>,
+}
+
+#[tauri::command]
+pub fn count_proposals(
+    db: State<'_, Database>,
+    request: CountProposalsRequest,
+) -> Result<usize, String> {
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    let mut total = 0usize;
+    for status_str in &request.statuses {
+        let filter = ProposalFilter {
+            author: None,
+            proposal_type: None,
+            status: Some(status_str.clone()),
+            source: None,
+        };
+        let proposals = store::list_proposals(&conn, &filter).map_err(|e| e.to_string())?;
+        total += proposals.len();
+    }
+    Ok(total)
+}

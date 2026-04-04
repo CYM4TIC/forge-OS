@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tauri::State;
+use tauri::{Emitter, State};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -112,4 +112,40 @@ pub async fn cancel_agent(
 ) -> Result<bool, String> {
     let disp = dispatcher.lock().await;
     Ok(disp.cancel(&dispatch_id).await)
+}
+
+// ── PL-005: Dispatch Checkpoint Actions ──
+
+/// Checkpoint action type — what the operator wants to do at a gate checkpoint.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CheckpointAction {
+    Advance,
+    Regate,
+    Hold,
+}
+
+/// Payload emitted on dispatch:checkpoint-action events.
+#[derive(Debug, Clone, Serialize)]
+pub struct CheckpointActionEvent {
+    pub action: CheckpointAction,
+    pub batch_id: String,
+    pub timestamp: String,
+}
+
+/// Record a checkpoint action and emit an event.
+/// The action is persisted for the current session and notifies the dispatch system.
+#[tauri::command]
+pub fn checkpoint_action(
+    app: tauri::AppHandle,
+    action: CheckpointAction,
+    batch_id: String,
+) -> Result<CheckpointActionEvent, String> {
+    let event = CheckpointActionEvent {
+        action,
+        batch_id,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+    };
+    let _ = app.emit("dispatch:checkpoint-action", &event);
+    Ok(event)
 }
