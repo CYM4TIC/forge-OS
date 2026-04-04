@@ -214,10 +214,10 @@ Block built top-down (strip hierarchy, replace with intelligence). Forge OS buil
 **New insights for Forge OS roadmap:**
 
 1. **Single dispatch entrypoint** — ~~Consider a unified `forge review` that routes to the right agent combination based on what changed.~~ **INTEGRATED** → Session 7.1 Smart Review CommandDef + smart-review orchestrator with diff-aware routing table.
-2. **Automated learning extraction** — ~~Phase 8/9: system watches gate failures and proposes new checks/rules without human initiation.~~ **INTEGRATED** → Session 8.3b `policy_evolution.rs` — categorical pattern detection on gate findings, auto-files proposals through ADL-005 Proposal Feed.
+2. **Automated learning extraction** — ~~Phase 8/9: system watches gate failures and proposes new checks/rules without human initiation.~~ **INTEGRATED** → Session 8.3b `policy_evolution.rs` — categorical pattern detection on gate findings, auto-files proposals through ADL-005 Agora.
 3. **Inter-agent negotiation** — ~~Neither Block nor Forge OS addresses what happens when agents' findings conflict.~~ **INTEGRATED** → Session 8.2 CONSORTIUM trade-off pattern index — typed conflict traces, empirical win/loss tracking, Arbiter prompt includes historical pattern data.
 4. **Skills marketplace granularity** — ~~Revisit Session 8.1 spec for hundreds of atomic skills.~~ **INTEGRATED** → Session 8.1 atomic skill decomposition rule (>8 steps → propose split via ADL-005) + Skills Browser marketplace panel.
-5. **Agent social feed / ADL-005 implementation** — **INTEGRATED** → Session 7.3 Proposal Feed panel + Rust backend (`src-tauri/src/proposals/`). Personas file proposals, evaluate each other, threaded responses with glyph attribution. Connects policy evolution (8.3b), CONSORTIUM (8.2), and skills (8.1) into one visible feed.
+5. **Agent social feed / ADL-005 implementation** — **INTEGRATED** → Session 7.3 Agora panel + Rust backend (`src-tauri/src/proposals/`). Personas file proposals, evaluate each other, threaded responses with glyph attribution. Connects policy evolution (8.3b), CONSORTIUM (8.2), and skills (8.1) into one visible feed.
 
 ---
 
@@ -229,7 +229,7 @@ Block built top-down (strip hierarchy, replace with intelligence). Forge OS buil
 4. What's the minimum viable self-directing loop? (Smallest version that closes the cycle without human initiation) *Partially answered: policy evolution (8.3b) closes the BUILD-LEARNINGS loop automatically. Full self-directing loop requires 8.1 + 8.3 + 8.3b all connected.*
 5. How does this reshape the BUILD-PLAN.md phase structure? *Answered: no structural changes needed — all five Block insights fit into existing sessions as spec enrichments.*
 6. What's the data model for decision traces as first-class graph edges? *Answered: Session 8.1 trace schema with ULID, observation→reasoning→action→outcome, causal edges.*
-7. What's the architecture for automated policy/rule proposal from gate failure patterns? *Answered: Session 8.3b policy_evolution.rs → ADL-005 Proposal Feed.*
+7. What's the architecture for automated policy/rule proposal from gate failure patterns? *Answered: Session 8.3b policy_evolution.rs → ADL-005 Agora.*
 8. How should inter-agent conflict resolution use decision history for trade-off reasoning? *Answered: Session 8.2 trade-off pattern index with typed conflicts and empirical confidence.*
 9. What's the right granularity for the skills system — dozens or hundreds of atomic skills? *Answered: Session 8.1 atomic decomposition at >8 steps, targeting hundreds of fine-grained skills.*
 10. Should there be a unified dispatch entrypoint that infers which agents to invoke from the change set? *Answered: Session 7.1 Smart Review command with static routing table, upgraded to full pipeline intelligence in 8.2.*
@@ -239,5 +239,5 @@ Block built top-down (strip hierarchy, replace with intelligence). Forge OS buil
 ## Status
 **Type:** Research session — no code written, no build protocol engaged.
 **Sessions:** 3 (2026-04-01, 2026-04-02, 2026-04-02)
-**Session 3 action:** All 5 Block engineering insights + ADL-005 Proposal Feed integrated into TAURI-BUILD-PLAN.md.
+**Session 3 action:** All 5 Block engineering insights + ADL-005 Agora integrated into TAURI-BUILD-PLAN.md.
 **Next action:** Continue building. P5-P remains, then Phases 6-9 with enriched specs.

@@ -111,6 +111,7 @@ The base palette below remains the structural foundation. The visual direction a
 | vault_browser | Vault | 🗝️ | Vault |
 | graph_viewer | Ley Lines | ✨ | Graph |
 | context_meter | Vessel | 🏺 | Context |
+| proposal_feed (P7-K) | Agora | 🏛️ | Proposal Feed |
 | action_palette (P7-F) | Invocation | TBD | — |
 | media_gallery (8.8) | Atelier | 🎨 | Media Gallery |
 

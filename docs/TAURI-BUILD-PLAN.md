@@ -698,7 +698,7 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 - `src/components/team/ActionPalette.tsx` — grouped action list with click-to-dispatch rows
 - Modified: `AgentPresence.tsx` (click-to-select), `TeamPanel.tsx` (third tab + hook wiring), `tauri.ts` (new types + invoke wrappers)
 
-### Session 7.3 — Agent Orchestration UI + Proposal Feed
+### Session 7.3 — Agent Orchestration UI + Agora
 
 **Dispatch Queue:**
 - **Dispatch Queue** — **separate panel type.** What's pending, what's running. Can float alongside Canvas HUD or pop out.
@@ -711,7 +711,7 @@ Matching algorithm: for each orchestrator, check if the selected persona set is 
 - "Export Report" button → generates PDF via document generation engine
 - **Protocol enforcement point #1:** Gate dispatch is a pipeline stage, not an option. The dispatch queue refuses to advance a batch past "Build" until Triad agents have been dispatched and the findings table (P5-G) shows zero open items. No silent skipping.
 
-**Proposal Feed — ADL-005 Implementation (Internal Feedback Loop)**
+**Agora — ADL-005 Implementation (Internal Feedback Loop)**
 
 The OS has a formalized internal communication system where personas propose changes, evaluate each other's proposals, and build organizational judgment collectively. This is the "social media for agents" — a visible feed of inter-agent reasoning.
 
@@ -747,14 +747,14 @@ The OS has a formalized internal communication system where personas propose cha
   **`ProposalOutcome` enum (from Factory-AI FeatureSuccessState):** Success, Partial, Failure. Stored on decision resolution — `Partial` means accepted and partially implemented (verification incomplete). Enables outcome quality tracking over time.
 - `triage.rs` — auto-routes proposals to scope-appropriate personas for evaluation. Security proposal → Tanaka evaluates. UX proposal → Mara evaluates. Architecture → Kehinde. Cross-cutting → Council. Uses Agent Registry (7.1) for persona→domain mapping. Proposals can also be manually assigned. **(ByteRover: Policy Engine with first-match-wins rule evaluation informs the triage mechanism — ordered rules route proposals by scope pattern, first match determines evaluator assignment.)**
 - `decisions.rs` — accepted proposals become decisions in `.forge/decisions/`. Rejected proposals preserve reasoning (why not). Both indexed by LightRAG (Phase 8.3) when available. Decision schema mirrors proposal but adds: resolution rationale, implementing batch, outcome tracking, **`outcome: ProposalOutcome`** (Success/Partial/Failure from Factory-AI FeatureSuccessState).
-  - **`DismissalRecord` struct (from Factory-AI DismissalRecord pattern):** `{ dismissal_type: DismissalType, source_proposal_id, summary, justification }`. `DismissalType` enum: DiscoveredIssue, CriticalContext, IncompleteWork. When a proposal is dismissed rather than resolved, the dismissal is recorded with explicit justification. No silent drops — every dismissed item has a paper trail. Dismissals are distinct from rejections: rejection = "evaluated and declined"; dismissal = "acknowledged but deprioritized with documented reasoning." Dismissals visible in the Proposal Feed with distinct visual treatment.
+  - **`DismissalRecord` struct (from Factory-AI DismissalRecord pattern):** `{ dismissal_type: DismissalType, source_proposal_id, summary, justification }`. `DismissalType` enum: DiscoveredIssue, CriticalContext, IncompleteWork. When a proposal is dismissed rather than resolved, the dismissal is recorded with explicit justification. No silent drops — every dismissed item has a paper trail. Dismissals are distinct from rejections: rejection = "evaluated and declined"; dismissal = "acknowledged but deprioritized with documented reasoning." Dismissals visible in the Agora with distinct visual treatment.
   - Tauri command: `dismiss_proposal(id, dismissal_type, justification) -> DismissalRecord`
 - `feed.rs` — aggregates proposals + responses + decisions into a chronological feed. Supports pagination, filtering, search. Emits Tauri events on new activity.
 - Rate limit enforcement: 3 proposals per persona per session (per ADL-005). Automated proposals (Phase 8.3b policy evolution) are exempt from rate limit but tagged `source: Automated`.
 - SQLite migration: `proposals` table, `proposal_responses` table, `decisions` table.
 - Tauri commands: `list_proposals`, `file_proposal`, `evaluate_proposal`, `resolve_proposal`, `get_proposal_feed`, `get_decision_history`, `search_proposals`
 
-**Proposal Feed panel** — new panel type, registrable with window manager:
+**Agora panel** — new panel type, registrable with window manager:
 - Timeline/feed layout — newest at top, infinite scroll with virtualized rendering
 - **Persona glyph attribution** on every entry — author's glyph (bolt, crosshair, eye, etc.) renders next to their proposal/response
 - Proposal cards: author glyph + title + proposal type badge + severity badge + status indicator
@@ -768,7 +768,7 @@ The OS has a formalized internal communication system where personas propose cha
 - **Pop-out friendly** — great for monitoring during builds. Dock pill shows unresolved proposal count badge.
 - Canvas-rendered cards with Pretext text measurement for zero-waste layouts
 
-**New panel types registered in this phase:** Team Panel (rebuilt, with Action Palette as internal tab), Dispatch Queue, Proposal Feed (3 net new panel types, total ~18)
+**New panel types registered in this phase:** Team Panel (rebuilt, with Action Palette as internal tab), Dispatch Queue, Agora (3 net new panel types, total ~18)
 
 **Factory-AI Integration Summary (Session 7.3):**
 - `MissionState` (6-state orchestrator lifecycle) drives Dispatch Queue and overall build orchestration
@@ -1017,7 +1017,7 @@ The OS has a formalized internal communication system where personas propose cha
     - New Tauri command: `get_tradeoff_pattern(conflict_type, domain)` → returns all prior resolutions for that conflict type in that domain + win/loss record + empirical confidence score
     - Arbiter's CONSORTIUM prompt auto-includes pattern data when available: "In auth-surface security-vs-ux conflicts, security-favored resolutions held 83% of the time (5/6 validated). UX-favored resolutions held 50% (1/2 validated). Recommend security-favored with UX scoping constraints."
     - Over time, the system develops **empirical trade-off judgment** — not just "what should we do" but "what has worked when we faced this before, and how confident are we"
-    - Resolutions also file to `.forge/decisions/` through the Proposal Feed (Phase 7.3) with `source: Consortium` — visible in the feed as resolved inter-agent conflicts
+    - Resolutions also file to `.forge/decisions/` through the Agora (Phase 7.3) with `source: Consortium` — visible in the feed as resolved inter-agent conflicts
     - SQLite: `tradeoff_patterns` view aggregating from `traces` table filtered by `trace_type = 'conflict-resolution'`
 
 - **Injection Scanning on Context Files (from Hermes pattern)**
@@ -1116,7 +1116,7 @@ The OS has a formalized internal communication system where personas propose cha
     - Proposed check: either a new deterministic rule (add to persona kernel) or a new skill (auto-crystallize)
     - Target persona (who should enforce this check going forward)
     - Confidence score (based on pattern frequency + outcome validation data)
-  - **Files through ADL-005 Proposal Feed** (Phase 7.3) with `source: Automated`. Same triage flow, same evaluation by scope-appropriate personas, same feed visibility. Operator sees both human-triggered and system-generated proposals in one timeline.
+  - **Files through ADL-005 Agora** (Phase 7.3) with `source: Automated`. Same triage flow, same evaluation by scope-appropriate personas, same feed visibility. Operator sees both human-triggered and system-generated proposals in one timeline.
   - **Proposal lifecycle:**
     - Operator approves → system auto-generates skill file (if check type) OR patches persona kernel rules (if rule type) OR files ADL update (if architectural)
     - Operator dismisses → trace filed with dismissal reasoning. Pattern still tracked — if it recurs with higher confidence, re-proposed.
@@ -1126,7 +1126,7 @@ The OS has a formalized internal communication system where personas propose cha
     - Policy evolution (above) detects recurring *finding* patterns. The scrying ritual extends this to the *knowledge base itself*:
     - Weekly vault integrity scan (scheduled ritual, see 8.1)
     - Detects: BUILD-LEARNINGS contradictions, skills referencing removed tools, ADL decisions not validated against current code, knowledge gaps where surfaces exist without vault coverage, stale persona relationship edges
-    - Produces: integrity findings filed through the Proposal Feed (7.3) with `source: Automated`
+    - Produces: integrity findings filed through the Agora (7.3) with `source: Automated`
     - Can impute missing data via web search (External capability granted)
     - Files connection candidates as proposals: "Findings from Tanaka and Kehinde on auth RPCs share a root cause — propose linked skill"
   - Surfaces on `RecommendationSurface` alongside forecast recommendations — same panel, different source tag (forecast vs. policy)
@@ -1134,7 +1134,7 @@ The OS has a formalized internal communication system where personas propose cha
 
 **New panel types:** RecommendationSurface, SignalCharts, TraceExplorer, ContextHealth (4 new)
 
-**Depends on:** Session 8.1 (trace store + signal store + skills system), Session 8.3 (LightRAG for reasoning queries), Phase 7.3 (Proposal Feed for filing policy proposals)
+**Depends on:** Session 8.1 (trace store + signal store + skills system), Session 8.3 (LightRAG for reasoning queries), Phase 7.3 (Agora for filing policy proposals)
 **New ADL:** OS-ADL-024 (TimesFM as predictive sidecar — domain-agnostic forecasting), OS-ADL-025 (decision traces as first-class graph edges), OS-ADL-027 (incident-driven policy evolution — system proposes new checks from gate failure patterns)
 
 ### Session 8.4 — /init + /link Flows + Customer Simulator Generator
@@ -1392,7 +1392,7 @@ The persona evolution data feeds the Canvas HUD:
   - Gate report PDF → architecture diagram embedded via Mermaid
   - `/init` or `/link` → project architecture diagram generated during discovery
   - BOOT.md phase transitions → pipeline progress diagram updated
-- **Persona integration:** Kehinde's kernel extended with diagram generation instructions. When Kehinde produces architecture findings, the dispatch pipeline auto-renders any Mermaid/D2 code blocks in the findings to SVG. Embedded in gate reports and Proposal Feed entries.
+- **Persona integration:** Kehinde's kernel extended with diagram generation instructions. When Kehinde produces architecture findings, the dispatch pipeline auto-renders any Mermaid/D2 code blocks in the findings to SVG. Embedded in gate reports and Agora entries.
 - Tauri commands: `generate_diagram(source: String, format: DiagramFormat) -> MediaResult`
 
 **Tier 2: Image Generation (API, free tier)**
@@ -1401,7 +1401,7 @@ The persona evolution data feeds the Canvas HUD:
 - `src-tauri/src/media/providers/together.rs` — Together.ai: Flux Schnell. Free credits. Fast inference.
 - **Provider selection:** Registry tries providers in preference order. If free tier exhausted on one, falls back to next. All three offer Flux variants — consistent quality across fallbacks.
 - **Forge OS internal use:**
-  - **Persona portraits:** Generated once during first `/init` using persona descriptions from PERSONALITY.md. Stored in `personas/{name}/portrait.png`. Rendered in Team Panel, gate reports, Proposal Feed attribution. Style: alchemical fantasy aesthetic consistent with design directive — "(32/64-bit) arcade mystical fantasy alchemical neon rave video game."
+  - **Persona portraits:** Generated once during first `/init` using persona descriptions from PERSONALITY.md. Stored in `personas/{name}/portrait.png`. Rendered in Team Panel, gate reports, Agora attribution. Style: alchemical fantasy aesthetic consistent with design directive — "(32/64-bit) arcade mystical fantasy alchemical neon rave video game."
   - **Project branding:** Sable + Calloway collaborate during `/init` to generate project logo, color palette preview, social card template. Stored in `vault/brand/`.
   - **Mockup generation:** Riven generates UI mockups before Nyx builds. Operator describes a surface → Riven produces a reference image → Nyx builds to match. Mockup stored as echo attachment, linked in dispatch context.
   - **Finding illustrations:** Mara annotates screenshots with UX findings overlaid — generates comparison images (current vs recommended) for gate reports.
@@ -1488,8 +1488,8 @@ The persona evolution data feeds the Canvas HUD:
   - Notifications: configure Telegram → verify gate completion notification received
   - Goal ancestry: verify dispatched agent context includes full why-chain
   - Smart Review: make changes across Rust + TSX files → `/review` auto-dispatches Kehinde + Mara + Riven without manual selection
-  - Proposal Feed: Pierce files a proposal → Tanaka evaluates → response appears in feed → accept → skill auto-generated
-  - Proposal Feed pop-out: detach to second monitor, verify real-time updates via Tauri events
+  - Agora: Pierce files a proposal → Tanaka evaluates → response appears in feed → accept → skill auto-generated
+  - Agora pop-out: detach to second monitor, verify real-time updates via Tauri events
   - Media generation: Kehinde generates architecture diagram via Mermaid → embedded in gate report. Riven generates UI mockup via HF Inference API → cached, shown in Media Gallery. Edge TTS narrates build summary. Pipeline visualization exported as GIF. Persona portraits rendered in Team Panel.
   - Media provider fallback: exhaust one free tier → verify auto-fallback to next provider
   - Ritual sounds: heartbeat chime fires on ritual tick, gate pass/fail tones audible
@@ -1520,9 +1520,9 @@ The persona evolution data feeds the Canvas HUD:
   - Trace schema works for non-development data (file a test "operations" trace → stored correctly, signals extracted)
   - **The system can project where the DMS build is headed and recommend actions before the next batch starts**
 - **v2 proposal feed + policy evolution verification:**
-  - Proposal Feed shows historical proposals from DMS build (if any were filed during DMS development)
+  - Agora shows historical proposals from DMS build (if any were filed during DMS development)
   - Policy evolution: inject 3 repeated finding patterns across simulated gate events → system auto-proposes new check → proposal appears in feed with `source: Automated` → approve → skill file generated
-  - CONSORTIUM trade-off test: dispatch Triad with conflicting findings → Arbiter synthesizes → trade-off pattern filed → `get_tradeoff_pattern` returns empirical data → resolution visible in Proposal Feed with `source: Consortium`
+  - CONSORTIUM trade-off test: dispatch Triad with conflicting findings → Arbiter synthesizes → trade-off pattern filed → `get_tradeoff_pattern` returns empirical data → resolution visible in Agora with `source: Consortium`
   - Skills Marketplace: verify Skills Browser panel shows all skills with usage stats, filterable by domain. Verify atomic decomposition proposal fires when a large skill is crystallized
 
 **Depends on:** All prior phases complete
@@ -1565,7 +1565,7 @@ The persona evolution data feeds the Canvas HUD:
 | 4 | Dock Bar (always visible, not a panel) | 4 + dock |
 | 5 | Canvas HUD (real), Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer, **Intelligence Network** | ~11 |
 | 6 | Dev Server Preview (multi-instance), Connectivity | ~12 |
-| 7 | Team Panel (rebuilt), Action Palette, Dispatch Queue, **Proposal Feed** | ~16 |
+| 7 | Team Panel (rebuilt), Action Palette, Dispatch Queue, **Agora** | ~16 |
 | 8 | LightRAG Graph, Vault Watcher, Persona Evolution Graph, Skills Browser, Notification Log, **RecommendationSurface, SignalCharts, TraceExplorer, ContextHealth** | ~25 |
 | 9+ | Per-agent detail views, document previews, report viewers... | 20+ |
 
@@ -1602,7 +1602,7 @@ Patterns adopted from external repo analysis (2026-04-01):
 | Self-modification architecture (config/source/plugin) | Novel | Phase 8 Session 8.7 |
 | Intelligence glyphs + colors | Novel | Phase 5 Session 5.3 |
 | Smart Review unified dispatch (`sq agents review`) | Block engineering | Phase 7 Session 7.1 |
-| Proposal Feed / agent social media (ADL-005) | Block engineering + ADL-005 | Phase 7 Session 7.3 |
+| Agora / agent social media (ADL-005) | Block engineering + ADL-005 | Phase 7 Session 7.3 |
 | Atomic skill decomposition (Skills Marketplace) | Block engineering | Phase 8 Session 8.1 |
 | Inter-agent trade-off pattern index | Block engineering + Novel | Phase 8 Session 8.2 |
 | Incident-driven policy evolution | Block engineering | Phase 8 Session 8.3b |
@@ -1725,4 +1725,4 @@ After each phase:
 - Canvas renders at 60fps (no jank)
 - All code pushed to CYM4TIC/forge-OS
 
-Final verification (Phase 9): Alex opens Forge, links the DMS project, backfill engine seeds 57 decision traces + signals, TimesFM calibrates on real history, LightRAG indexes it, and resumes the L4-J.2c build entirely from within the app. Gate reports export as typeset PDFs. Intelligence network shows chain propagation in real time. Recommendations surface proactive intelligence before the next batch starts. Policy evolution proposes new checks from recurring gate patterns. The Proposal Feed shows agents debating, evaluating, and building organizational judgment in real time. CONSORTIUM resolves inter-agent conflicts with empirical trade-off data from prior resolutions. `/review` auto-dispatches the right agents from a diff. The OS can modify its own dashboard config and register new plugins. All 105 agents respond in character through any configured provider. The system remembers, reasons, predicts, recommends, proposes, debates, and learns from its own decisions.
+Final verification (Phase 9): Alex opens Forge, links the DMS project, backfill engine seeds 57 decision traces + signals, TimesFM calibrates on real history, LightRAG indexes it, and resumes the L4-J.2c build entirely from within the app. Gate reports export as typeset PDFs. Intelligence network shows chain propagation in real time. Recommendations surface proactive intelligence before the next batch starts. Policy evolution proposes new checks from recurring gate patterns. The Agora shows agents debating, evaluating, and building organizational judgment in real time. CONSORTIUM resolves inter-agent conflicts with empirical trade-off data from prior resolutions. `/review` auto-dispatches the right agents from a diff. The OS can modify its own dashboard config and register new plugins. All 105 agents respond in character through any configured provider. The system remembers, reasons, predicts, recommends, proposes, debates, and learns from its own decisions.

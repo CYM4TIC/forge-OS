@@ -317,7 +317,7 @@ Policy evolution (above) detects recurring *finding* patterns. The scrying ritua
 
 - Weekly vault integrity scan (scheduled ritual, see 8.1)
 - Detects: BUILD-LEARNINGS contradictions, skills referencing removed tools, ADL decisions not validated against current code, knowledge gaps where surfaces exist without vault coverage, stale persona relationship edges
-- Produces: integrity findings filed through the Proposal Feed (7.3) with `source: Automated`
+- Produces: integrity findings filed through the Agora (7.3) with `source: Automated`
 - Can impute missing data via web search (External capability granted)
 - Files connection candidates as proposals: "Findings from Tanaka and Kehinde on auth RPCs share a root cause — propose linked skill"
 

@@ -2400,9 +2400,9 @@ HudEvent { BuildStateChanged(BuildStateSnapshot), PipelineStageChanged(PipelineS
 
 ---
 
-### Session 7.3 — Agent Orchestration UI + Proposal Feed (P7-I through P7-M)
+### Session 7.3 — Agent Orchestration UI + Agora (P7-I through P7-M)
 
-**Goal:** Proposal system backend (file, evaluate, resolve proposals), Proposal Feed panel, Dispatch Queue panel with protocol enforcement, and full Phase 7 integration.
+**Goal:** Proposal system backend (file, evaluate, resolve proposals), Agora panel, Dispatch Queue panel with protocol enforcement, and full Phase 7 integration.
 
 ---
 
@@ -2451,7 +2451,7 @@ HudEvent { BuildStateChanged(BuildStateSnapshot), PipelineStageChanged(PipelineS
   - Rejected: creates entry preserving rejection reasoning
   - Both emit Tauri event `proposals:decision-made`
   - **`DismissalRecord` struct (from Factory-AI DismissalRecord pattern):** `{ dismissal_type: DismissalType, source_proposal_id: Ulid, summary: String, justification: String }`. `DismissalType` enum: DiscoveredIssue, CriticalContext, IncompleteWork. When a proposal or finding is dismissed rather than resolved, the dismissal is recorded with explicit justification. No silent drops — every dismissed item has a paper trail.
-  - **`dismiss_proposal(id, dismissal_type, justification) -> DismissalRecord`** — creates dismissal record in SQLite. Distinct from rejection: rejection means "evaluated and declined." Dismissal means "acknowledged but deprioritized with documented reasoning." Dismissals visible in Proposal Feed (P7-K) with distinct visual treatment.
+  - **`dismiss_proposal(id, dismissal_type, justification) -> DismissalRecord`** — creates dismissal record in SQLite. Distinct from rejection: rejection means "evaluated and declined." Dismissal means "acknowledged but deprioritized with documented reasoning." Dismissals visible in Agora (P7-K) with distinct visual treatment.
 - Create `apps/desktop/src-tauri/src/proposals/feed.rs`:
   - `get_feed(page, per_page, filters) -> Vec<FeedEntry>` — aggregates proposals + responses + decisions + **dismissals** chronologically
   - `FeedEntry` enum: ProposalFiled, ResponseAdded, DecisionMade, **ProposalDismissed** — each variant carries relevant data
@@ -2471,7 +2471,7 @@ HudEvent { BuildStateChanged(BuildStateSnapshot), PipelineStageChanged(PipelineS
 
 ### P7-K: Proposal Bridge + Feed Panel
 
-**Goal:** Frontend bridge for proposal system and Proposal Feed panel with persona glyph attribution and evaluation threads.
+**Goal:** Frontend bridge for proposal system and Agora panel with persona glyph attribution and evaluation threads.
 
 **Files:**
 - Update `apps/desktop/src/lib/tauri.ts`:
@@ -2548,13 +2548,13 @@ HudEvent { BuildStateChanged(BuildStateSnapshot), PipelineStageChanged(PipelineS
   - Register 4 new panel types: TeamPanel (rebuilt), DispatchQueuePanel, ProposalFeedPanel (3 net new — TeamPanel replaces existing)
   - Note: ActionPalette is a tab inside TeamPanel, not a separate panel type
 - Update `apps/desktop/src/components/dock/DockBar.tsx`:
-  - Unresolved proposal count badge on Proposal Feed dock pill (uses `proposals:feed-updated` event)
+  - Unresolved proposal count badge on Agora dock pill (uses `proposals:feed-updated` event)
   - Active dispatch count indicator on Dispatch Queue dock pill
   - Both badges use BADGE_COLORS tokens
 - Update window manager presets:
-  - New preset: `team` — Chat + Team + Dispatch Queue + Proposal Feed (4-panel layout for team coordination)
+  - New preset: `team` — Chat + Team + Dispatch Queue + Agora (4-panel layout for team coordination)
   - Update `build` preset to include Dispatch Queue (Chat + Canvas + Preview + Dispatch Queue)
-  - Update `review` preset: Chat + Findings + Dispatch Queue + Proposal Feed
+  - Update `review` preset: Chat + Findings + Dispatch Queue + Agora
   - Total: 7 workspace presets (build, review, focus, observatory, gate_review, dev, team)
 - Create `docs/adl/OS-ADL-019.md` — Agent Registry architecture decision (single command registry, availability gating, capability families)
 - Create `docs/adl/OS-ADL-020.md` — Proposal system architecture decision (internal feedback loop, rate limiting, decision tracking)
