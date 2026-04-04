@@ -19,7 +19,7 @@ import {
   type BadgeStatus,
 } from '@forge-os/canvas-components';
 import { isPersonaSlug } from '@forge-os/shared';
-import { useDispatchQueue } from '../../hooks/useDispatchQueue';
+import { useDispatchQueue, type CheckpointAction } from '../../hooks/useDispatchQueue';
 import type {
   DispatchQueueEntry,
   DispatchPriority,
@@ -47,8 +47,11 @@ const STRINGS = {
   completedSection: 'Completed',
   gateStatusTitle: 'Gate Status',
   checkpointTitle: 'Batch Checkpoint',
-  checkpointAcknowledge: 'Acknowledge \u2014 ready to advance',
+  checkpointAdvance: 'Advance to next batch',
+  checkpointRegate: 'Re-gate this batch',
+  checkpointHold: 'Hold position',
   checkpointBlocked: 'Advancement blocked',
+  concurrencyLimit: (n: number) => `Max ${n} concurrent`,
   findingsOpen: (n: number) => `${n} open finding${n === 1 ? '' : 's'}`,
   triadRequired: 'Build Triad must be dispatched',
   checkpointRequired: 'Checkpoint must be acknowledged',
@@ -130,30 +133,27 @@ function formatAgentName(slug: string): string {
 
 interface DispatchCardProps {
   entry: DispatchQueueEntry;
+  /** K-L-011: parent-level tick counter for shared timer. */
+  tick: number;
 }
 
-const DispatchCard = memo(function DispatchCard({ entry }: DispatchCardProps) {
+const DispatchCard = memo(function DispatchCard({ entry, tick }: DispatchCardProps) {
   const isActive = entry.status === 'running' || entry.status === 'queued';
   const isError = entry.status === 'error' || entry.status === 'timeout';
   const persona = isPersonaSlug(entry.agent_slug) ? entry.agent_slug : null;
 
-  // Live timer for active dispatches
-  const [elapsed, setElapsed] = useState(entry.elapsed_ms);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (entry.status === 'running' && entry.started_at) {
-      const tick = () => setElapsed(Date.now() - (entry.started_at ?? Date.now()));
-      timerRef.current = setInterval(tick, 1000);
-      tick();
-      return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }
-    setElapsed(entry.elapsed_ms);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [entry.status, entry.started_at, entry.elapsed_ms]);
+  // K-L-011: derive elapsed from parent tick counter instead of per-card interval
+  const elapsed = entry.status === 'running' && entry.started_at
+    ? Date.now() - entry.started_at
+    : entry.elapsed_ms;
+  // Use tick to force re-render from parent — suppress unused var warning
+  void tick;
 
   return (
     <div
+      role="listitem"
+      tabIndex={0}
+      aria-label={`${formatAgentName(entry.agent_slug)}, ${agentStatusLabel(entry.status)}, priority ${priorityLabel(entry.priority)}`}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -277,8 +277,9 @@ const GateRow = memo(function GateRow({ label, stage }: GateRowProps) {
 
 function SectionHeader({ title, count }: { title: string; count: number }) {
   return (
-    <div
+    <h4
       style={{
+        margin: 0,
         fontSize: 10,
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -288,7 +289,7 @@ function SectionHeader({ title, count }: { title: string; count: number }) {
       }}
     >
       {title} ({count})
-    </div>
+    </h4>
   );
 }
 
@@ -363,14 +364,26 @@ interface CheckpointCardProps {
   gateStatus: GateStatus;
   canAdvance: boolean;
   acknowledged: boolean;
-  onAcknowledge: () => void;
+  onAction: (action: CheckpointAction) => void;
 }
 
-function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAcknowledge }: CheckpointCardProps) {
+const CHECKPOINT_BTN: React.CSSProperties = {
+  padding: '6px 12px',
+  fontSize: 11,
+  fontWeight: 600,
+  borderRadius: RADIUS.pill,
+  border: `1px solid ${CANVAS.border}`,
+  cursor: 'pointer',
+  minHeight: 32,
+};
+
+function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAction }: CheckpointCardProps) {
   const blockers: string[] = [];
   if (gateStatus.triad !== 'pass') blockers.push(STRINGS.triadRequired);
   if (gateStatus.open_findings > 0) blockers.push(STRINGS.findingsOpen(gateStatus.open_findings));
   if (!acknowledged) blockers.push(STRINGS.checkpointRequired);
+
+  const ready = gateStatus.triad === 'pass' && gateStatus.open_findings === 0;
 
   return (
     <div
@@ -383,8 +396,9 @@ function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAcknowledge }:
         border: `1px solid ${canAdvance ? BADGE_COLORS.success.bg : BADGE_COLORS.warning.bg}`,
       }}
     >
-      <div
+      <h4
         style={{
+          margin: 0,
           fontSize: 12,
           fontWeight: 700,
           color: CANVAS.text,
@@ -393,7 +407,7 @@ function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAcknowledge }:
         }}
       >
         {STRINGS.checkpointTitle}
-      </div>
+      </h4>
 
       {canAdvance ? (
         <div style={{ fontSize: 11, color: BADGE_COLORS.success.text }}>
@@ -426,23 +440,28 @@ function CheckpointCard({ gateStatus, canAdvance, acknowledged, onAcknowledge }:
         </>
       )}
 
-      {!acknowledged && gateStatus.triad === 'pass' && gateStatus.open_findings === 0 && (
-        <button
-          onClick={onAcknowledge}
-          style={{
-            marginTop: 8,
-            padding: '6px 12px',
-            fontSize: 11,
-            fontWeight: 600,
-            borderRadius: RADIUS.pill,
-            background: STATUS.accent,
-            color: CANVAS.bg,
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          {STRINGS.checkpointAcknowledge}
-        </button>
+      {/* PL-005: 3 checkpoint actions — advance, re-gate, hold */}
+      {ready && (
+        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onAction('advance')}
+            style={{ ...CHECKPOINT_BTN, background: STATUS.accent, color: CANVAS.bg, borderColor: STATUS.accent }}
+          >
+            {STRINGS.checkpointAdvance}
+          </button>
+          <button
+            onClick={() => onAction('re-gate')}
+            style={{ ...CHECKPOINT_BTN, background: CANVAS.bgElevated, color: CANVAS.text }}
+          >
+            {STRINGS.checkpointRegate}
+          </button>
+          <button
+            onClick={() => onAction('hold')}
+            style={{ ...CHECKPOINT_BTN, background: CANVAS.bgElevated, color: CANVAS.muted }}
+          >
+            {STRINGS.checkpointHold}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -506,12 +525,20 @@ export default function DispatchQueuePanel() {
   const reducedMotion = useReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // K-L-011: single shared interval for all dispatch card timers
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const {
     queue,
     gateStatus,
     canAdvance,
     checkpoint,
-    acknowledgeCheckpoint,
+    setCheckpointAction,
+    maxConcurrent,
     loading,
     error,
     refresh,
@@ -718,7 +745,7 @@ export default function DispatchQueuePanel() {
               padding: 24,
             }}
           >
-            <span style={{ fontSize: 28 }} aria-hidden="true">⚙️</span>
+            <span style={{ fontSize: 28, opacity: 0.4 }} aria-hidden="true">⚙️</span>
             <span style={{ fontSize: 12, color: CANVAS.muted, textAlign: 'center' }}>
               {STRINGS.emptyDefault}
             </span>
@@ -739,8 +766,8 @@ export default function DispatchQueuePanel() {
             {pending.length > 0 && (
               <>
                 <SectionHeader title={STRINGS.pendingSection} count={pending.length} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
-                  {pending.map((e) => <DispatchCard key={e.dispatch_id} entry={e} />)}
+                <div role="list" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
+                  {pending.map((e) => <DispatchCard key={e.dispatch_id} entry={e} tick={tick} />)}
                 </div>
               </>
             )}
@@ -749,21 +776,25 @@ export default function DispatchQueuePanel() {
             {active.length > 0 && (
               <>
                 <SectionHeader title={STRINGS.activeSection} count={active.length} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
-                  {active.map((e) => <DispatchCard key={e.dispatch_id} entry={e} />)}
+                <div role="list" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
+                  {active.map((e) => <DispatchCard key={e.dispatch_id} entry={e} tick={tick} />)}
                 </div>
               </>
             )}
 
             {/* Completed section */}
-            {completed.length > 0 && (
+            {completed.length > 0 ? (
               <>
                 <SectionHeader title={STRINGS.completedSection} count={completed.length} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
-                  {completed.map((e) => <DispatchCard key={e.dispatch_id} entry={e} />)}
+                <div role="list" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 8px' }}>
+                  {completed.map((e) => <DispatchCard key={e.dispatch_id} entry={e} tick={tick} />)}
                 </div>
               </>
-            )}
+            ) : (pending.length > 0 || active.length > 0) ? (
+              <div style={{ padding: '8px 12px', fontSize: 11, color: CANVAS.muted }}>
+                {STRINGS.emptyCompleted}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
@@ -788,8 +819,9 @@ export default function DispatchQueuePanel() {
             gap: 8,
           }}
         >
-          <div
+          <h4
             style={{
+              margin: 0,
               fontSize: 10,
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -799,7 +831,7 @@ export default function DispatchQueuePanel() {
             }}
           >
             {STRINGS.gateStatusTitle}
-          </div>
+          </h4>
 
           <div role="list" aria-label={STRINGS.gateStatusTitle}>
             <div role="listitem"><GateRow label="Build" stage={gateStatus.build} /></div>
@@ -814,7 +846,7 @@ export default function DispatchQueuePanel() {
               gateStatus={gateStatus}
               canAdvance={canAdvance}
               acknowledged={checkpoint.acknowledged}
-              onAcknowledge={acknowledgeCheckpoint}
+              onAction={setCheckpointAction}
             />
           </div>
 
@@ -850,7 +882,8 @@ export default function DispatchQueuePanel() {
                 completed.map((e) => (
                   <div
                     key={e.dispatch_id}
-                    title={`${formatAgentName(e.agent_slug)} — ${agentStatusLabel(e.status)}`}
+                    role="img"
+                    aria-label={`${formatAgentName(e.agent_slug)} — ${agentStatusLabel(e.status)}`}
                     style={{
                       flex: 1,
                       background: e.status === 'complete' ? BADGE_COLORS.success.bg
@@ -889,7 +922,7 @@ export default function DispatchQueuePanel() {
       </div>
       )}
 
-      {/* SR live region for active dispatch count */}
+      {/* SR live region for queue state announcements (M-MED-2) */}
       <div
         role="status"
         aria-live="polite"
@@ -903,7 +936,12 @@ export default function DispatchQueuePanel() {
           whiteSpace: 'nowrap',
         }}
       >
-        {active.length > 0 ? STRINGS.activeCount(active.length) : ''}
+        {active.length > 0 ? STRINGS.activeCount(active.length) + '. ' : ''}
+        {completed.filter((e) => e.status === 'error').length > 0
+          ? `${completed.filter((e) => e.status === 'error').length} dispatch error${completed.filter((e) => e.status === 'error').length === 1 ? '' : 's'}. `
+          : ''}
+        {completed.length > 0 ? `${completed.length} completed. ` : ''}
+        {STRINGS.concurrencyLimit(maxConcurrent)}
       </div>
     </div>
   );

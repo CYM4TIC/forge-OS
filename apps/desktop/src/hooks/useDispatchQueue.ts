@@ -27,6 +27,8 @@ import {
   type RegistryEntry,
 } from '../lib/tauri';
 
+export type CheckpointAction = 'advance' | 're-gate' | 'hold';
+
 export interface UseDispatchQueueReturn {
   /** All queue entries (pending + active + recent completed), sorted by priority then time. */
   queue: DispatchQueueEntry[];
@@ -38,10 +40,12 @@ export interface UseDispatchQueueReturn {
   canAdvance: boolean;
   /** Checkpoint state for current batch. */
   checkpoint: CheckpointState;
-  /** Acknowledge the current checkpoint (operator reviewed batch summary). */
-  acknowledgeCheckpoint: () => void;
+  /** Set checkpoint action: advance, re-gate, or hold (PL-005). */
+  setCheckpointAction: (action: CheckpointAction) => void;
   /** Reset checkpoint for a new batch. */
   resetCheckpoint: (batchId: string) => void;
+  /** Max concurrent dispatches allowed. */
+  maxConcurrent: number;
   /** Whether the initial load is in progress. */
   loading: boolean;
   /** Last error message. */
@@ -54,6 +58,14 @@ export interface UseDispatchQueueReturn {
 
 const MAX_COMPLETED = 10;
 const MAX_ENTRIES = 100;
+/** Dispatches running longer than this are marked as timed out (PL-003). */
+const STALE_DISPATCH_TIMEOUT_MS = 60_000;
+/** Stale-dispatch sweep interval. */
+const STALE_SWEEP_INTERVAL_MS = 10_000;
+/** Default max concurrent dispatches (PL-004). 3 for triad, 1 for sequential. */
+const MAX_CONCURRENT_DEFAULT = 3;
+/** SessionStorage key for checkpoint persistence (K-L-012). */
+const CHECKPOINT_STORAGE_KEY = 'forge-dispatch-checkpoint';
 
 /** Map agent category to dispatch priority. */
 function derivePriority(category: AgentCategory | undefined): DispatchPriority {
@@ -80,11 +92,14 @@ function priorityWeight(p: DispatchPriority): number {
 }
 
 /** Convert an AgentSummary to a DispatchQueueEntry. */
+/** Convert an AgentSummary to a DispatchQueueEntry. K-L-008: started_at null for queued. */
 function summaryToEntry(
   summary: AgentSummary,
   categoryMap: Map<string, AgentCategory>,
 ): DispatchQueueEntry {
   const category = categoryMap.get(summary.agent_slug);
+  const isTerminal = summary.status === 'complete' || summary.status === 'error'
+    || summary.status === 'timeout' || summary.status === 'cancelled';
   return {
     dispatch_id: summary.dispatch_id,
     agent_slug: summary.agent_slug,
@@ -92,9 +107,12 @@ function summaryToEntry(
     priority: derivePriority(category),
     elapsed_ms: summary.elapsed_ms,
     queued_at: Date.now() - summary.elapsed_ms,
-    started_at: summary.status === 'queued' ? null : Date.now() - summary.elapsed_ms,
-    completed_at: (summary.status === 'complete' || summary.status === 'error' || summary.status === 'timeout' || summary.status === 'cancelled')
-      ? Date.now() : null,
+    // K-L-008: only set started_at for non-queued agents
+    started_at: summary.status === 'queued' ? null
+      : summary.status === 'running' ? Date.now() - summary.elapsed_ms
+      : null,
+    // K-L-006: set completed_at on ALL terminal states
+    completed_at: isTerminal ? Date.now() : null,
     error: null,
   };
 }
@@ -108,13 +126,13 @@ function sortEntries(entries: DispatchQueueEntry[]): DispatchQueueEntry[] {
   });
 }
 
-/** Derive gate stage from dispatch tracking. */
+/** Derive gate stage from dispatch tracking. PL-010: exact or prefix match, not substring. */
 function deriveGateStage(
   entries: DispatchQueueEntry[],
   slugPatterns: string[],
 ): GateStage {
   const matching = entries.filter((e) =>
-    slugPatterns.some((p) => e.agent_slug.includes(p)),
+    slugPatterns.some((p) => e.agent_slug === p || e.agent_slug.startsWith(p + '-')),
   );
   if (matching.length === 0) return 'not_started';
   const hasRunning = matching.some((e) => e.status === 'queued' || e.status === 'running');
@@ -131,11 +149,22 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openFindings, setOpenFindings] = useState(0);
-  const [checkpoint, setCheckpoint] = useState<CheckpointState>({
-    batch_id: '',
-    acknowledged: false,
-    summary: null,
+  // K-L-012: persist checkpoint to sessionStorage to survive remounts
+  const [checkpoint, setCheckpoint] = useState<CheckpointState>(() => {
+    try {
+      const stored = sessionStorage.getItem(CHECKPOINT_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch { /* ignore parse errors */ }
+    return { batch_id: '', acknowledged: false, summary: null };
   });
+  const [, setCheckpointActionState] = useState<CheckpointAction | null>(null);
+
+  // Sync checkpoint to sessionStorage on change
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHECKPOINT_STORAGE_KEY, JSON.stringify(checkpoint));
+    } catch { /* quota exceeded — non-fatal */ }
+  }, [checkpoint]);
 
   const mountedRef = useRef(true);
   const fetchingRef = useRef(false);
@@ -176,7 +205,8 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
         if (!cancelled) {
           const mapped = agents.map((a) => summaryToEntry(a, categoryMapRef.current));
           setEntries(sortEntries(mapped));
-          setOpenFindings(findings.critical + findings.high + findings.medium + findings.low);
+          // PL-009: only critical+high+medium block advancement — low findings don't block
+          setOpenFindings(findings.critical + findings.high + findings.medium);
           setLoading(false);
         }
       } catch (e) {
@@ -210,7 +240,11 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
         // Update or insert the entry for this dispatch
         setEntries((prev) => {
           const dispatchId = event.dispatch_id;
-          if (!dispatchId) return prev;
+          if (!dispatchId) {
+            // K-L-003: log null dispatch_id events for diagnostics
+            console.warn('[useDispatchQueue] Received working-state event with null dispatch_id:', event.agent_slug, event.state);
+            return prev;
+          }
 
           const idx = prev.findIndex((e) => e.dispatch_id === dispatchId);
           if (idx >= 0) {
@@ -304,7 +338,7 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       cancelled = true;
       unlisten?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshFindings is stable (useCallback with [] deps)
   }, []);
 
   // ── Subscribe to dispatch flow events (inter-agent coordination) ──
@@ -328,7 +362,28 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       cancelled = true;
       unlisten?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshQueue is stable (useCallback with [] deps)
+  }, []);
+
+  // ── PL-003: Stale dispatch sweep — mark entries running > 60s as timeout ──
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!mountedRef.current) return;
+      const now = Date.now();
+      setEntries((prev) => {
+        let changed = false;
+        const updated = prev.map((e) => {
+          if (e.status === 'running' && e.started_at && (now - e.started_at) > STALE_DISPATCH_TIMEOUT_MS) {
+            changed = true;
+            return { ...e, status: 'timeout' as const, completed_at: now, error: 'Dispatch timed out (60s)' };
+          }
+          return e;
+        });
+        return changed ? sortEntries(trimCompleted(updated)) : prev;
+      });
+    }, STALE_SWEEP_INTERVAL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   // ── Subscribe to finding events for reactive gate updates (K-L-005 fix) ──
@@ -370,10 +425,11 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     try {
       const findings = await getFindingCounts();
       if (mountedRef.current) {
-        setOpenFindings(findings.critical + findings.high + findings.medium + findings.low);
+        // PL-009: only critical+high+medium block advancement — low findings don't block
+          setOpenFindings(findings.critical + findings.high + findings.medium);
       }
-    } catch {
-      // Non-fatal
+    } catch (e) {
+      console.warn('[useDispatchQueue] refreshFindings failed:', e);
     }
   }, []);
 
@@ -385,10 +441,14 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       if (mountedRef.current) {
         setEntries((prev) => {
           const activeIds = new Set(agents.map((a) => a.dispatch_id));
-          // Keep completed entries not in active list, add/update active entries
+          // Keep completed entries not in active list
           const completed = prev.filter(
             (e) => !activeIds.has(e.dispatch_id) &&
               (e.status === 'complete' || e.status === 'error' || e.status === 'timeout' || e.status === 'cancelled'),
+          );
+          // K-L-007: retain recently-running entries for one cycle to prevent vanishing
+          const recentlyRunning = prev.filter(
+            (e) => !activeIds.has(e.dispatch_id) && e.status === 'running',
           );
           const active = agents.map((a) => {
             const existing = prev.find((e) => e.dispatch_id === a.dispatch_id);
@@ -397,11 +457,11 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
             }
             return summaryToEntry(a, categoryMapRef.current);
           });
-          return sortEntries([...active, ...completed].slice(0, MAX_ENTRIES));
+          return sortEntries([...active, ...recentlyRunning, ...completed].slice(0, MAX_ENTRIES));
         });
       }
-    } catch {
-      // Non-fatal
+    } catch (e) {
+      console.warn('[useDispatchQueue] refreshQueue failed:', e);
     } finally {
       fetchingRef.current = false;
     }
@@ -419,7 +479,8 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
       if (mountedRef.current) {
         const mapped = agents.map((a) => summaryToEntry(a, categoryMapRef.current));
         setEntries(sortEntries(mapped));
-        setOpenFindings(findings.critical + findings.high + findings.medium + findings.low);
+        // PL-009: only critical+high+medium block advancement — low findings don't block
+          setOpenFindings(findings.critical + findings.high + findings.medium);
       }
     } catch (e) {
       if (mountedRef.current) {
@@ -460,14 +521,20 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
 
   const canAdvance = gateStatus.can_advance;
 
-  // ── Checkpoint management ──
+  // ── Checkpoint management (PL-005: 3 actions — advance, re-gate, hold) ──
 
-  const acknowledgeCheckpoint = useCallback(() => {
-    setCheckpoint((prev) => ({ ...prev, acknowledged: true }));
+  const setCheckpointAction = useCallback((action: CheckpointAction) => {
+    setCheckpointActionState(action);
+    if (action === 'advance') {
+      setCheckpoint((prev) => ({ ...prev, acknowledged: true }));
+    } else {
+      setCheckpoint((prev) => ({ ...prev, acknowledged: false }));
+    }
   }, []);
 
   const resetCheckpoint = useCallback((batchId: string) => {
     setCheckpoint({ batch_id: batchId, acknowledged: false, summary: null });
+    setCheckpointActionState(null);
   }, []);
 
   // Stub — wired when document generation engine ships (Phase 8+)
@@ -481,8 +548,9 @@ export function useDispatchQueue(): UseDispatchQueueReturn {
     gateStatus,
     canAdvance,
     checkpoint,
-    acknowledgeCheckpoint,
+    setCheckpointAction,
     resetCheckpoint,
+    maxConcurrent: MAX_CONCURRENT_DEFAULT,
     loading,
     error,
     refresh,
@@ -506,13 +574,16 @@ function mapWorkingStateToStatus(state: string): DispatchQueueEntry['status'] {
   }
 }
 
-/** Trim completed entries to keep only the most recent MAX_COMPLETED. */
+/** Trim completed entries to keep only the most recent MAX_COMPLETED.
+ *  K-L-006: ensure completed_at is set on all terminal entries for stable sort. */
 function trimCompleted(entries: DispatchQueueEntry[]): DispatchQueueEntry[] {
+  const now = Date.now();
   const active = entries.filter(
     (e) => e.status === 'queued' || e.status === 'running',
   );
   const completed = entries
     .filter((e) => e.status !== 'queued' && e.status !== 'running')
+    .map((e) => e.completed_at ? e : { ...e, completed_at: now })
     .sort((a, b) => (b.completed_at ?? 0) - (a.completed_at ?? 0))
     .slice(0, MAX_COMPLETED);
   return [...active, ...completed];
