@@ -47,6 +47,9 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-021 | `[rust]` | gotcha | SQLite LIKE wildcards (%, _) must be escaped in user-supplied search. Use ESCAPE '\\' clause. |
 | OS-BL-024 | `[frontend]` `[runtime]` | pattern | Do NOT debounce parallel dispatch event handlers — shared timer drops events from concurrent agents. React batches setState automatically. |
 | OS-BL-025 | `[frontend]` | pattern | Sequence registry load before data that derives from it — parallel effects cause wrong priority on first paint. |
+| OS-BL-026 | `[frontend]` `[runtime]` | pattern | Event-driven + poll hybrid: use sequence counter to prevent stale poll results from overwriting fresh event-driven results. |
+| OS-BL-027 | `[frontend]` `[design-system]` | gotcha | Workspace preset panel sizes must respect registered minWidth/minHeight constraints. applyPreset does not clamp — the preset definition is the enforcement point. |
+| OS-BL-028 | `[frontend]` `[design-system]` | pattern | DockBar @keyframes must be self-provided (inline <style>) since globals.css has no shared keyframes. Same pattern as ConnectivityPanel, TeamPanel, ActionPalette per OS-BL-018. |
 
 ---
 

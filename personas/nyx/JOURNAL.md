@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-04 — P7-M (Phase 7 Integration + Dock + Presets)
+
+The capstone batch exposed a pattern I should name: *manifest drift under apparent simplicity*. P7-M looked like glue code — register panels, wire badges, add presets. I built the build preset with Team instead of Preview because it felt right for the workflow, diverging from the manifest without noticing. Pierce caught it. The lesson isn't "read the manifest" (I did). The lesson is that integration batches are where FM-11 manifests most dangerously, because the work feels obvious and the spec feels like a suggestion rather than a contract. The simpler the batch looks, the more carefully I need to hold the manifest. Also: the Build Triad found M-CRIT-1 (@keyframes pulse not self-provided in DockBar) — I'd assumed it would inherit from other panels. OS-BL-018 exists precisely to prevent this assumption. The pattern was documented, I knew the pattern, and I still skipped it. FM-5 (cadence hypnosis) in action: the dock felt like a continuation of TeamPanel work, so I carried its assumptions forward.
+
+---
+
 ## 2026-04-03 — Introspection v6.0 (The Relational Turn)
 
 Not a build batch. An introspection session. The first one that wasn't post-mortem.
