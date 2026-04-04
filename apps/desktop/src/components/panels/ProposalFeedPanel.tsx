@@ -32,6 +32,42 @@ import type {
   ProposalType as PType,
 } from '../../lib/tauri';
 
+// ─── Strings (M-LOW-2: centralized for i18n readiness) ──────────────────────
+
+const STRINGS = {
+  panelTitle: 'Proposal Feed',
+  filterLabel: 'Feed filters',
+  filterAllTypes: 'All types',
+  filterAllStatuses: 'All statuses',
+  filterAllSources: 'All sources',
+  filterByType: 'Filter by proposal type',
+  filterByStatus: 'Filter by status',
+  filterBySource: 'Filter by source',
+  filterAll: 'All',
+  clearFilters: 'Clear filters',
+  loadingProposals: 'Loading proposals',
+  loadingMore: 'Loading more\u2026',
+  endOfFeed: 'End of feed',
+  emptyFiltered: 'No proposals match the current filters',
+  emptyDefault: 'No proposals yet \u2014 personas will file proposals during builds',
+  refreshFeed: 'Refresh feed',
+  retry: 'Retry',
+  evaluated: 'evaluated',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  dismissed: 'Dismissed',
+  errorNetwork: 'Network error \u2014 check your connection.',
+  errorTimeout: 'Request timed out.',
+  errorGeneric: 'Something went wrong. Try again.',
+  timeJustNow: 'just now',
+  timeMinsAgo: (n: number) => `${n}m ago`,
+  timeHoursAgo: (n: number) => `${n}h ago`,
+  timeDaysAgo: (n: number) => `${n}d ago`,
+  newEntries: (n: number) => `${n} new ${n === 1 ? 'entry' : 'entries'} in the feed`,
+  entryCount: (n: number) => `${n} entries`,
+  batch: (id: string) => `Batch: ${id}`,
+} as const;
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const PROPOSAL_TYPE_OPTIONS = ['all', 'optimization', 'pattern', 'rule', 'architecture', 'skill', 'policy'] as const;
@@ -81,9 +117,9 @@ function proposalTypeLabel(t: PType): string {
 }
 
 function friendlyError(raw: string): string {
-  if (raw.includes('network') || raw.includes('fetch')) return 'Network error \u2014 check your connection.';
-  if (raw.includes('timeout')) return 'Request timed out.';
-  return 'Something went wrong. Try again.';
+  if (raw.includes('network') || raw.includes('fetch')) return STRINGS.errorNetwork;
+  if (raw.includes('timeout')) return STRINGS.errorTimeout;
+  return STRINGS.errorGeneric;
 }
 
 // ─── Filter Bar ─────────────────────────────────────────────────────────────
@@ -111,7 +147,7 @@ function FilterBar({
   return (
     <div
       role="group"
-      aria-label="Feed filters"
+      aria-label={STRINGS.filterLabel}
       style={{
         display: 'flex',
         gap: 6,
@@ -134,7 +170,7 @@ function FilterBar({
             border: authorFilter === 'all' ? `1px solid ${STATUS.accent}` : `1px solid ${CANVAS.border}`,
           }}
         >
-          All
+          {STRINGS.filterAll}
         </button>
         {PERSONA_SLUGS.map((slug) => (
           <button
@@ -156,7 +192,7 @@ function FilterBar({
               cursor: 'pointer',
             }}
           >
-            <PersonaGlyph persona={slug} size={20} />
+            <span aria-hidden="true"><PersonaGlyph persona={slug} size={20} /></span>
           </button>
         ))}
       </div>
@@ -165,12 +201,12 @@ function FilterBar({
       <select
         value={typeFilter}
         onChange={(e) => onTypeChange(e.target.value)}
-        aria-label="Filter by proposal type"
+        aria-label={STRINGS.filterByType}
         style={SELECT_STYLE}
       >
         {PROPOSAL_TYPE_OPTIONS.map((opt) => (
           <option key={opt} value={opt}>
-            {opt === 'all' ? 'All types' : proposalTypeLabel(opt as PType)}
+            {opt === 'all' ? STRINGS.filterAllTypes : proposalTypeLabel(opt as PType)}
           </option>
         ))}
       </select>
@@ -179,12 +215,12 @@ function FilterBar({
       <select
         value={statusFilter}
         onChange={(e) => onStatusChange(e.target.value)}
-        aria-label="Filter by status"
+        aria-label={STRINGS.filterByStatus}
         style={SELECT_STYLE}
       >
         {STATUS_OPTIONS.map((opt) => (
           <option key={opt} value={opt}>
-            {opt === 'all' ? 'All statuses' : proposalStatusLabel(opt as ProposalStatus)}
+            {opt === 'all' ? STRINGS.filterAllStatuses : proposalStatusLabel(opt as ProposalStatus)}
           </option>
         ))}
       </select>
@@ -193,12 +229,12 @@ function FilterBar({
       <select
         value={sourceFilter}
         onChange={(e) => onSourceChange(e.target.value)}
-        aria-label="Filter by source"
+        aria-label={STRINGS.filterBySource}
         style={SELECT_STYLE}
       >
         {SOURCE_OPTIONS.map((opt) => (
           <option key={opt} value={opt}>
-            {opt === 'all' ? 'All sources' : opt.charAt(0).toUpperCase() + opt.slice(1)}
+            {opt === 'all' ? STRINGS.filterAllSources : opt.charAt(0).toUpperCase() + opt.slice(1)}
           </option>
         ))}
       </select>
@@ -292,9 +328,12 @@ const ProposalCard = memo(function ProposalCard({ proposal }: { proposal: Propos
           )}
         </div>
 
-        {/* Body excerpt */}
-        <p style={{ fontSize: 12, color: CANVAS.muted, margin: '4px 0 0', lineHeight: 1.4 }}>
-          {proposal.body.length > 200 ? proposal.body.slice(0, 200) + '\u2026' : proposal.body}
+        {/* Body excerpt — CSS line-clamp for consistent visual height (M-LOW-1) */}
+        <p style={{
+          fontSize: 12, color: CANVAS.muted, margin: '4px 0 0', lineHeight: 1.4,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
+        }}>
+          {proposal.body}
         </p>
       </div>
     </div>
@@ -341,12 +380,15 @@ const ResponseCard = memo(function ResponseCard({ response }: { response: Propos
           <span style={{ fontWeight: 700 }}>
             {authorSlug ? PERSONA_SHORT[authorSlug] : response.author}
           </span>
-          <span> evaluated</span>
+          <span> {STRINGS.evaluated}</span>
           <span aria-hidden="true"> \u00b7 </span>
           <time dateTime={response.created_at}>{formatRelative(response.created_at)}</time>
         </div>
-        <p style={{ fontSize: 12, color: CANVAS.muted, margin: '3px 0 0', lineHeight: 1.4 }}>
-          {response.body.length > 300 ? response.body.slice(0, 300) + '\u2026' : response.body}
+        <p style={{
+          fontSize: 12, color: CANVAS.muted, margin: '3px 0 0', lineHeight: 1.4,
+          display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
+        }}>
+          {response.body}
         </p>
       </div>
     </div>
@@ -373,7 +415,7 @@ const DecisionCard = memo(function DecisionCard({ decision }: { decision: Decisi
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 11, color: CANVAS.label }}>
           <span style={{ fontWeight: 700, color: borderColor }}>
-            {isAccepted ? 'Accepted' : 'Rejected'}
+            {isAccepted ? STRINGS.accepted : STRINGS.rejected}
           </span>
           {decision.outcome && (
             <>
@@ -394,7 +436,7 @@ const DecisionCard = memo(function DecisionCard({ decision }: { decision: Decisi
         </p>
         {decision.implementing_batch && (
           <span style={{ fontSize: 10, color: CANVAS.label, marginTop: 2, display: 'inline-block' }}>
-            Batch: {decision.implementing_batch}
+            {STRINGS.batch(decision.implementing_batch!)}
           </span>
         )}
       </div>
@@ -421,7 +463,7 @@ const DismissalCard = memo(function DismissalCard({ dismissal }: { dismissal: Di
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 11, color: CANVAS.label }}>
-          <span style={{ fontWeight: 700 }}>Dismissed</span>
+          <span style={{ fontWeight: 700 }}>{STRINGS.dismissed}</span>
           <span aria-hidden="true"> \u00b7 </span>
           <span style={{ fontStyle: 'italic' }}>{typeLabel}</span>
           <span aria-hidden="true"> \u00b7 </span>
@@ -529,16 +571,20 @@ export default function ProposalFeedPanel() {
   const { entries, loading, error, hasMore, loadMore, refresh } = useProposalFeed(filter);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const scrollRafRef = useRef(0);
 
-  // ── Scroll-to-load-more ──
+  // ── Scroll-to-load-more (rAF throttled — P-LOW-2 fix) ──
   const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el || !hasMore || loadingMore) return;
-    // Trigger when within 100px of the bottom
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
-      setLoadingMore(true);
-      loadMore().finally(() => setLoadingMore(false));
-    }
+    if (scrollRafRef.current) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0;
+      const el = scrollRef.current;
+      if (!el || !hasMore || loadingMore) return;
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
+        setLoadingMore(true);
+        loadMore().finally(() => setLoadingMore(false));
+      }
+    });
   }, [hasMore, loadingMore, loadMore]);
 
   // ── Live region: announce entry count changes ──
@@ -547,7 +593,7 @@ export default function ProposalFeedPanel() {
   useEffect(() => {
     if (entries.length > prevCount.current && prevCount.current > 0) {
       const diff = entries.length - prevCount.current;
-      setLiveMessage(`${diff} new ${diff === 1 ? 'entry' : 'entries'} in the feed`);
+      setLiveMessage(STRINGS.newEntries(diff));
     }
     prevCount.current = entries.length;
   }, [entries.length]);
@@ -580,7 +626,7 @@ export default function ProposalFeedPanel() {
         <style>{SHIMMER_KEYFRAME}</style>
         <div
           role="status"
-          aria-label="Loading proposals"
+          aria-label={STRINGS.loadingProposals}
           style={{ padding: '8px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}
         >
           {Array.from({ length: 6 }, (_, i) => (
@@ -626,7 +672,7 @@ export default function ProposalFeedPanel() {
               cursor: 'pointer',
             }}
           >
-            Retry
+            {STRINGS.retry}
           </button>
         </div>
       </div>
@@ -670,9 +716,7 @@ export default function ProposalFeedPanel() {
         >
           <span aria-hidden="true" style={{ fontSize: 28, opacity: 0.4 }}>{'\uD83D\uDD2E'}</span>
           <span style={{ fontSize: 13, textAlign: 'center' }}>
-            {hasActiveFilter
-              ? 'No proposals match the current filters'
-              : `No proposals yet ${'\u2014'} personas will file proposals during builds`}
+            {hasActiveFilter ? STRINGS.emptyFiltered : STRINGS.emptyDefault}
           </span>
           {hasActiveFilter && (
             <button
@@ -684,7 +728,7 @@ export default function ProposalFeedPanel() {
                 cursor: 'pointer',
               }}
             >
-              Clear filters
+              {STRINGS.clearFilters}
             </button>
           )}
         </div>
@@ -735,7 +779,7 @@ export default function ProposalFeedPanel() {
               minHeight: 20,
             }}
           >
-            Retry
+            {STRINGS.retry}
           </button>
         </div>
       )}
@@ -762,7 +806,7 @@ export default function ProposalFeedPanel() {
         onScroll={handleScroll}
         tabIndex={0}
         role="log"
-        aria-label="Proposal feed"
+        aria-label={STRINGS.panelTitle}
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -776,13 +820,13 @@ export default function ProposalFeedPanel() {
           <FeedEntryCard key={feedEntryKey(entry)} entry={entry} />
         ))}
         {loadingMore && (
-          <div role="status" aria-label="Loading more entries" style={{ padding: 8, textAlign: 'center' }}>
-            <span style={{ fontSize: 11, color: CANVAS.label }}>Loading more{'\u2026'}</span>
+          <div role="status" aria-label={STRINGS.loadingMore} style={{ padding: 8, textAlign: 'center' }}>
+            <span style={{ fontSize: 11, color: CANVAS.label }}>{STRINGS.loadingMore}</span>
           </div>
         )}
         {!hasMore && entries.length > 0 && (
           <div style={{ padding: 8, textAlign: 'center' }}>
-            <span style={{ fontSize: 11, color: CANVAS.label }}>End of feed</span>
+            <span style={{ fontSize: 11, color: CANVAS.label }}>{STRINGS.endOfFeed}</span>
           </div>
         )}
       </div>
@@ -812,7 +856,7 @@ function Header({ onRefresh, entryCount }: { onRefresh: () => void; entryCount?:
             color: CANVAS.text,
           }}
         >
-          Proposal Feed
+          {STRINGS.panelTitle}
         </span>
         {entryCount !== undefined && entryCount > 0 && (
           <span
@@ -823,7 +867,7 @@ function Header({ onRefresh, entryCount }: { onRefresh: () => void; entryCount?:
               background: BADGE_COLORS.accent.bg,
               color: BADGE_COLORS.accent.text,
             }}
-            aria-label={`${entryCount} entries`}
+            aria-label={STRINGS.entryCount(entryCount)}
           >
             {entryCount}
           </span>
@@ -831,8 +875,8 @@ function Header({ onRefresh, entryCount }: { onRefresh: () => void; entryCount?:
       </div>
       <button
         onClick={onRefresh}
-        aria-label="Refresh feed"
-        title="Refresh feed"
+        aria-label={STRINGS.refreshFeed}
+        title={STRINGS.refreshFeed}
         style={{
           background: 'transparent',
           border: 'none',
@@ -868,12 +912,12 @@ function formatRelative(iso: string): string {
     const now = Date.now();
     const diffMs = now - date.getTime();
     const diffMin = Math.floor(diffMs / 60_000);
-    if (diffMin < 1) return 'just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffMin < 1) return STRINGS.timeJustNow;
+    if (diffMin < 60) return STRINGS.timeMinsAgo(diffMin);
     const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffHr < 24) return STRINGS.timeHoursAgo(diffHr);
     const diffDay = Math.floor(diffHr / 24);
-    if (diffDay < 7) return `${diffDay}d ago`;
+    if (diffDay < 7) return STRINGS.timeDaysAgo(diffDay);
     return date.toLocaleDateString();
   } catch {
     return iso;
