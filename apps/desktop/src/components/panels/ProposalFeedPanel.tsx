@@ -35,7 +35,7 @@ import type {
 // ─── Strings (M-LOW-2: centralized for i18n readiness) ──────────────────────
 
 const STRINGS = {
-  panelTitle: 'Proposal Feed',
+  panelTitle: 'Agora',
   filterLabel: 'Feed filters',
   filterAllTypes: 'All types',
   filterAllStatuses: 'All statuses',

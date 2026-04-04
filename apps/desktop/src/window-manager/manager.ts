@@ -89,7 +89,7 @@ const PANEL_TYPE_REGISTRY: Map<PanelType, PanelTypeInfo> = new Map([
     defaultSize: { width: 300, height: 200 },
   }],
   ['proposal_feed', {
-    type: 'proposal_feed', label: 'Proposals', icon: '🔮',
+    type: 'proposal_feed', label: 'Agora', icon: '🔮',
     defaultConstraints: { minWidth: 300, minHeight: 250 },
     allowMultiple: false,
     defaultSize: { width: 420, height: 500 },
