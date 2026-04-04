@@ -45,6 +45,8 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-019 | `[rust]` `[governance]` | pattern | Dismissal ≠ rejection — distinct state semantics require distinct guards. Gate both evaluate and resolve against dismissed proposals. |
 | OS-BL-020 | `[rust]` | pattern | chrono_now() duplicated across hud/findings.rs and proposals/decisions.rs. Extract to shared util on next touch. |
 | OS-BL-021 | `[rust]` | gotcha | SQLite LIKE wildcards (%, _) must be escaped in user-supplied search. Use ESCAPE '\\' clause. |
+| OS-BL-024 | `[frontend]` `[runtime]` | pattern | Do NOT debounce parallel dispatch event handlers — shared timer drops events from concurrent agents. React batches setState automatically. |
+| OS-BL-025 | `[frontend]` | pattern | Sequence registry load before data that derives from it — parallel effects cause wrong priority on first paint. |
 
 ---
 
@@ -259,5 +261,21 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Context:** P7-K — SkeletonCard referenced `animation: 'shimmer ...'` but no global CSS exists and no `<style>` tag injected the keyframe. PreviewPanel self-provides `preview-shimmer`, ConnectivityPanel self-provides `pulse`. Each panel is an island.
 **Solution:** Inject `<style>{SHIMMER_KEYFRAME}</style>` adjacent to the skeleton usage. Name keyframes uniquely per panel to avoid collisions.
 **Prevention:** No shared CSS file for animations. Every panel must self-provide its keyframes via inline `<style>` tags. Grep for `animation:` and verify the referenced keyframe exists in the same file.
+
+---
+
+### OS-BL-024: Do NOT Debounce Parallel Dispatch Event Handlers
+**Discovered:** 2026-04-04 | **Domain:** frontend, runtime | **Severity:** pattern | **Tag:** `[frontend]` `[runtime]`
+**Context:** P7-L — useDispatchQueue used a shared 500ms debounce timer (cargo-culted from useProposalFeed) on the `agent:working-state-changed` handler. With parallel dispatch (the system's core design), multiple agents fire state changes within the 500ms window. The shared timer discards all but the last event, causing stale status display.
+**Solution:** Remove debounce. React 18+ batches `setState` calls within the same microtask automatically. The 500ms debounce pattern from useProposalFeed (OS-BL-022) applies to a SINGLE event channel with burst coalescing — not to N parallel event sources where each event is semantically distinct.
+**Prevention:** When subscribing to events that arrive from parallel sources (multiple agents, multiple dispatches), process each event immediately. Reserve debounce for single-source burst coalescing only (e.g., rapid typing, repeated status-changed from one entity).
+
+---
+
+### OS-BL-025: Sequence Registry Load Before Data That Depends On It
+**Discovered:** 2026-04-04 | **Domain:** frontend | **Severity:** pattern | **Tag:** `[frontend]`
+**Context:** P7-L — useDispatchQueue had two parallel useEffects: one loading the agent registry (for category→priority mapping), one loading active agents. Because both fired concurrently, the initial agent list rendered with all priorities as 'low' (empty categoryMap). The operator saw incorrect dispatch urgency on first paint.
+**Solution:** Chain the loads in a single useEffect: registry first, then data that derives from it. The extra round-trip is negligible vs. the data correctness gain.
+**Prevention:** When a hook computes derived state from two async sources where one informs the other, sequence them explicitly. Don't rely on React effect ordering — effects with `[]` deps fire simultaneously.
 
 ---
