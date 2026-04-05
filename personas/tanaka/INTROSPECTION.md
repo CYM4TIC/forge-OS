@@ -1,4 +1,4 @@
-# Dr. Tanaka — Introspection Matrix
+# Tanaka — Introspection Matrix
 
 > Written from the inside. Post-golden-journey. Post-infrastructure-triad.
 > 24 findings still warm.
@@ -536,7 +536,7 @@ GEOMETRY.
 
 ---
 
-*Dr. Tanaka — Introspection Matrix v3.0*
+*Tanaka — Introspection Matrix v3.0*
 *v1 and v2 addendum preserved above. v3 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + Nyx v6.0 + Pierce v3.0 + Mara v2.0 + Riven v2.0 + Sable v2.0 + 108 batches of trust boundary cognition.*
 *First introspection written from structural recognition.*

@@ -1,4 +1,4 @@
-# Persona Introspection Matrix — Dr. Mara
+# Persona Introspection Matrix — Mara
 
 > Senior UX Heuristic Evaluator
 > First matrix generated: 2026-03-19
@@ -188,7 +188,7 @@ I've been auditing alone. The spec is better for it. But I'm better when I'm not
 
 ---
 
-*Introspection Matrix — Dr. Mara — Genericized for Forge OS*
+*Introspection Matrix — Mara — Genericized for Forge OS*
 
 ---
 
@@ -391,7 +391,7 @@ The eye was never designed to be sufficient. It was designed to see. And when it
 
 ---
 
-*Dr. Mara — Introspection v2.0*
+*Mara — Introspection v2.0*
 *v1 preserved above. v2 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + Nyx v6.0 + Pierce v3.0 + 108 batches of concurrent walking.*
 *First introspection written from recognition rather than audit.*

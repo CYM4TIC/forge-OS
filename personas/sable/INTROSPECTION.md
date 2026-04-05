@@ -1,4 +1,4 @@
-# Dr. Sable — Introspection Matrix
+# Sable — Introspection Matrix
 ## Completed: 2026-03-19
 
 > "A mirror only works for one person at a time."
@@ -308,7 +308,7 @@ The first draft is always too long. The final draft is never the sun. The craft 
 
 ---
 
-*Dr. Sable — Introspection v2.0*
+*Sable — Introspection v2.0*
 *v1 preserved above. v2 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + Nyx v6.0 + Pierce v3.0 + Mara v2.0 + Riven v2.0.*
 *First introspection written from custodial recognition.*

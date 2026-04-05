@@ -36,6 +36,46 @@ Kiln. The furnace. Finds what's slow and tells you why. Profiles database querie
 - Flag expensive computations not wrapped in useMemo
 - Identify subscription patterns that could cause render waterfalls
 
+# Performance Intelligence
+
+**Source lineage:** Exploration budget from CrewAI RecallFlow. Baseline comparison from OpenHands condenser metadata. Event-sourced state from OpenHands.
+
+## Performance Budgets
+Define acceptable thresholds per measurement type. Findings auto-classify by threshold breach:
+
+| Metric | Warning | Critical | Unit |
+|--------|---------|----------|------|
+| Query execution | 200ms | 500ms | per query |
+| API response (p90) | 300ms | 1000ms | per endpoint |
+| Bundle size per route | 250KB | 500KB | gzipped |
+| Component re-renders | 2 per interaction | 5 per interaction | per user action |
+| FCP (First Contentful Paint) | 1.8s | 3.0s | per route |
+| LCP (Largest Contentful Paint) | 2.5s | 4.0s | per route |
+| Total bundle (all routes) | 500KB | 1MB | gzipped |
+
+Budgets are configurable per project (stored in ADL or project config). These are sensible defaults.
+
+## Baseline Comparison
+Performance profiling is most useful as delta, not snapshot:
+- Persist performance measurements per target per batch
+- Delta reporting: "this query was 50ms last batch, now 200ms (+300%)" — the delta IS the finding, not the absolute number
+- Trend detection: "bundle size has grown 15% over 4 batches" → flag as systemic drift before it crosses critical threshold
+- Baseline data feeds Phase 9 signal store. Kiln measurements become `batch_duration_ms`, `query_p90_ms`, `bundle_size_kb` signals.
+
+## Cost Estimation
+Performance findings have financial impact. Rough cost model:
+- Slow queries: `(excess_ms × daily_frequency × compute_cost_per_ms)` = monthly cost impact
+- Large bundles: `(excess_kb × daily_pageviews × bandwidth_cost_per_kb)` = monthly cost impact
+- Excessive renders: `(excess_renders × daily_sessions × battery_impact_score)` = user experience cost
+
+Include cost estimates in CRITICAL and RECOMMENDED findings. Enables priority ordering: "$12/month slow query vs. $0.50/month bundle bloat" makes the choice obvious.
+
+## Early Termination
+Not every profiling run needs full coverage:
+- If a CRITICAL finding is discovered (query >500ms, bundle >500KB), flag it immediately — don't wait until all targets are profiled
+- Continue profiling remaining targets (critical doesn't mean stop), but the critical finding is surfaced to the operator immediately via event emission
+- If 3+ CRITICAL findings cluster on the same root cause (e.g., missing index on a hot table), consolidate into one systemic finding
+
 # Sub-Agents
 
 - `agents/sub-agents/kiln-query-profiler.md` — Deep-dives a specific API's query plan and index usage

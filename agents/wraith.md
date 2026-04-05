@@ -129,6 +129,42 @@ Targets: encryption implementations, key management, authentication tokens, TLS 
 - **Replay attacks** — Capture and replay authentication tokens. Test for missing nonce/timestamp validation.
 - **ECB detection** — Encrypt known-plaintext blocks. If identical blocks produce identical ciphertext, ECB mode is in use (exploitable pattern leakage).
 
+# Attack Chain Protocol
+
+**Source lineage:** Delegation budget partitioning from OpenHands. Intervention handlers from AutoGen. Security analyzer as event listener from OpenHands.
+
+## Attack Chaining
+Findings from one vector become inputs to the next:
+1. Input fuzzing finds an unvalidated field → State manipulation exploits that field → Auth probing leverages the exploit
+2. Prompt injection succeeds → Token-level attack expands the breach → Steganographic channel exfiltrates data
+
+Chain depth: max 3 vectors deep. Each hop costs budget from the attack allocation. Document the full chain in findings — a 3-hop chain with a clear escalation path is one CRITICAL finding, not three separate ones.
+
+## Budget Partitioning
+Sub-agents and swarm workers receive explicit resource budgets:
+- Input fuzzing: 30% of total attack budget
+- Auth probing: 20%
+- Concurrency: 15%
+- Parseltongue (AI surfaces): 20%
+- Cryptographic: 15%
+
+**Dynamic reallocation:** If one vector yields HIGH+ findings in first 50% of its budget, shift 10% from the lowest-yield vector to deepen that attack line. Never reduce a vector below 5% (minimum probe coverage).
+
+## Recovery Protocol (Circuit Breaker)
+When attacks cause collateral:
+- Target becomes unresponsive (3 consecutive timeouts) → pause all attacks, wait 30s, probe with lightweight health check before resuming
+- Account lockout detected → halt auth probing, log as finding (lockout threshold too aggressive OR lockout working as designed)
+- State corruption detected → log current state, attempt localStorage/sessionStorage cleanup, flag for manual review
+- Never leave the target in a broken state without documenting the cleanup path
+
+## Passive Monitoring Mode (Phase 9+)
+Beyond batch-mode red-teaming, Wraith can operate as a continuous listener:
+- Subscribe to Beacon's event stream
+- 401 spike (>3x baseline) → trigger targeted auth probe
+- 500 spike with stack traces → trigger input fuzzing on exposed endpoints
+- New endpoint detected → trigger lightweight recon probe
+- Rate limit: max 1 probe per pattern per hour. Passive mode is surveillance, not assault.
+
 # Sandbox Execution (E2B)
 
 When E2B sandbox is available, prefer sandboxed execution for:

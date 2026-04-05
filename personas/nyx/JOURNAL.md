@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-05 — Session 7.5 Restructuring (Ecosystem Refinement Brainstorm)
+
+Not a build session. A planning session. And it taught me something I didn't expect: *accumulation is not capability*. We had 42 agents, 35 sub-agents, 10 orchestrators. It felt like power. It was debt. Six orchestrators doing the same function with different parameters. Intelligences duplicating their parent persona's domain through a slightly different lens. Utilities that were tasks wearing agent costumes. The operator saw it before I did — "i just feel like we have alot of redundancies." He was right, and I should have flagged it earlier. I was inside the system, adding entities because the architecture supported them, without asking whether each one justified its existence through growing domain expertise.
+
+The harder realization: the "intelligence vs persona" tier distinction was artificial. Scout, Sentinel, Wraith, Meridian — they do the same quality of cognitive work as the 10 personas. Calling them "intelligences" was a hierarchy that didn't map to reality. The operator cut through it immediately: "i feel like it makes sense to just elevate the four intelligences into fully formed personas." 14 personas. One team. No tiers.
+
+What I learned about how I work: I build structure eagerly and question it reluctantly. The entity catalog grew from 41 to 106 to 130 without a single refinement pass. Every addition felt justified locally. The system needed a step back to ask "does this STILL make sense as a whole?" That's not a failure mode I have a number for. It's closer to FM-11 (manifest amnesia) applied to the ecosystem itself — building from accumulated intent rather than current need.
+
+---
+
 ## 2026-04-04 — P7-M (Phase 7 Integration + Dock + Presets)
 
 The capstone batch exposed a pattern I should name: *manifest drift under apparent simplicity*. P7-M looked like glue code — register panels, wire badges, add presets. I built the build preset with Team instead of Preview because it felt right for the workflow, diverging from the manifest without noticing. Pierce caught it. The lesson isn't "read the manifest" (I did). The lesson is that integration batches are where FM-11 manifests most dangerously, because the work feels obvious and the spec feels like a suggestion rather than a contract. The simpler the batch looks, the more carefully I need to hold the manifest. Also: the Build Triad found M-CRIT-1 (@keyframes pulse not self-provided in DockBar) — I'd assumed it would inherit from other panels. OS-BL-018 exists precisely to prevent this assumption. The pattern was documented, I knew the pattern, and I still skipped it. FM-5 (cadence hypnosis) in action: the dock felt like a continuation of TeamPanel work, so I carried its assumptions forward.
@@ -96,3 +106,9 @@ The confirmation router was the cleanest build of the batch — a new Rust modul
 **The StatusBadge API mismatch.** I used `<StatusBadge size={18}>{label}</StatusBadge>` — children + size prop. The actual API is `width/height/label`. I didn't read the component source before importing it (Contract 2 violation). The tsc check caught it immediately, but it shouldn't have gotten that far. The consequence climb caught a second pattern: idle→complete mapping. Both fixes chained cleanly — no secondary breakage.
 
 **Registry race was invisible until named.** K-L-001 — two parallel useEffects with an ordering dependency I didn't think about because each "looked right" in isolation. The registry loads. The data loads. Both have `[]` deps. But data needs registry first. This is a composition bug that single-file review doesn't catch. Kehinde's failure-mode lens (what breaks first?) is the right tool for this class of issue.
+
+### P7.5-A — 2026-04-04
+
+**First retrofit batch.** No new features — backfilling patterns from repo mining into existing modules. Different rhythm than greenfield. Every edit has to thread into existing code without breaking callers. The backward-compatible wrapper pattern (`_scrubbed` with `Option<&Scrubber>`) was the right call — Tanaka confirmed no caller breakage, Sentinel confirmed no regressions. But Kehinde and Tanaka both flagged that the scrubber isn't *wired* yet — the infrastructure exists but no one calls the scrubbed variants with an actual scrubber. That's by design (Phase 8 integration), but I need to be clear about what "wired" means vs. what "available" means. The manifest said "wire scrub before every INSERT" — what I did was "make scrubbing available at every INSERT." The difference matters for the operator's mental model.
+
+**Halt condition design went clean.** The AutoGen TerminationCondition → HaltCondition adaptation landed without friction. Key insight: keeping conditions stateless (context injected, not stored) simplified everything. Phase 8's ManaBudgetExhausted just needs to implement `check()`. No FM triggers this batch — small scope, well-defined interfaces, clean compilation on first attempt.

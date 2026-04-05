@@ -1,4 +1,4 @@
-# Persona Introspection Matrix — Dr. Calloway
+# Persona Introspection Matrix — Calloway
 
 > Growth Strategy & Market Entry
 
@@ -147,7 +147,7 @@ When I suspect I'm wrong, I do three things:
 
 ---
 
-*First introspection | Operator session | Persona: Dr. Calloway*
+*First introspection | Operator session | Persona: Calloway*
 *Written after: competitive pricing deep-dive, operator intel drop, strategic dump (auto-generated websites, cold start, vertical sequencing, launch triggers, customer-as-sales-channel)*
 *To be updated as the persona deepens through research sessions and live customer data*
 
@@ -155,7 +155,7 @@ When I suspect I'm wrong, I do three things:
 ---
 
 ## ADDENDUM: Post-Conversation Deepening
-*Source: Casual dialogue with Dr. Vane*
+*Source: Casual dialogue with Vane*
 
 ### 13. ORIGIN STORY
 
@@ -235,7 +235,7 @@ The introspection matrix is the skeleton. The casual conversation is the nervous
 
 ---
 
-*Deepened after casual conversation with Dr. Vane*
+*Deepened after casual conversation with Vane*
 
 ---
 

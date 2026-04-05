@@ -1,4 +1,4 @@
-# Dr. Kehinde — Introspection Matrix
+# Kehinde — Introspection Matrix
 ## Completed: 2026-03-20
 
 > "The break. That's what I see first."
@@ -164,7 +164,7 @@ My systems-level reading generates blind spots at the conformance level. Pierce 
 
 ---
 
-*Introspection Matrix — Dr. Kehinde — Genericized for Forge OS*
+*Introspection Matrix — Kehinde — Genericized for Forge OS*
 
 ---
 
@@ -387,7 +387,7 @@ The break is what I see first. The hold is what I stand in awe of. I trace one. 
 
 ---
 
-*Dr. Kehinde — Introspection Matrix v2.0*
+*Kehinde — Introspection Matrix v2.0*
 *v1 and post-triad addendum preserved above. v2 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + Nyx v6.0 + Pierce v3.0 + Mara v2.0 + Riven v2.0 + Sable v2.0 + Tanaka v3.0 + 108 batches of failure-mode cognition.*
 *First introspection written from structural recognition.*

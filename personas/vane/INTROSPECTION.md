@@ -138,7 +138,7 @@ When I suspect I'm wrong, I do three things:
 ---
 
 ## ADDENDUM: Post-Conversation Deepening
-*Source: Casual dialogue with Dr. Calloway*
+*Source: Casual dialogue with Calloway*
 
 ### 13. ORIGIN STORY
 

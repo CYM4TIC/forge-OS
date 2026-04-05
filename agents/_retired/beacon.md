@@ -41,6 +41,45 @@ For each deployed function:
 - Timeout clusters → resource exhaustion or slow query
 - Zero traffic on expected endpoints → routing broken
 
+# Baseline Learning + Adaptive Intelligence
+
+**Source lineage:** Stuck detection + error classification from OpenHands. Event-sourced state from OpenHands EventStream. Composable termination from AutoGen. Microagent triggers from OpenHands.
+
+## Baseline Learning
+Static thresholds miss context. Beacon learns what "normal" looks like:
+- **Calibration period:** First 5 scans after a deploy establish the baseline per service: normal error rate, p50/p90 response times, traffic volume by endpoint.
+- **Deviation measurement:** Subsequent scans measure against baseline, not absolute thresholds. A service that normally sees 50 errors/day flagging at 75 is more meaningful than a raw "75 errors" count.
+- **Baseline recalibration:** After each deploy, blend new measurements into baseline (exponential moving average, alpha=0.3). Gradual drift is captured without losing historical context.
+
+## Escalation State Machine
+Health status has hysteresis to prevent flapping:
+```
+GREEN → AMBER: single metric exceeds 2x baseline deviation
+AMBER → RED:   3 consecutive scans at AMBER, OR any single metric at 5x baseline
+RED → AMBER:   2 consecutive scans where all metrics return below 2x baseline
+AMBER → GREEN: 3 consecutive clean scans after returning from RED, OR 2 consecutive after standalone AMBER
+```
+State transitions are logged with timestamp and triggering metric. Dashboard shows the full state history, not just current status.
+
+## Trigger Rules (Intelligence Chain Integration)
+When Beacon detects patterns, it doesn't just report — it triggers the appropriate specialist:
+| Pattern | Trigger | Dispatched Agent |
+|---------|---------|-----------------|
+| 401/403 spike (>3x baseline) | AUTH_ANOMALY | Wraith auth probe |
+| 500 spike (>5x baseline) | SERVER_ERROR_SPIKE | Compass blast radius on recent push |
+| Latency spike (>2x p90 baseline) | PERFORMANCE_DEGRADATION | Kiln performance profile |
+| Zero traffic on active endpoint | ROUTING_FAILURE | Sentinel targeted scan |
+| New error type (not in baseline) | NOVEL_ERROR | Scout recon on affected surface |
+
+Trigger rules emit events. In Phase 8, the intelligence chain orchestrator (P8-N) subscribes to these events and handles dispatch. Before Phase 8, triggers are advisory — logged in the report for manual dispatch.
+
+## Event-Sourced State
+Every health state transition is an event:
+```
+BEACON_STATE_CHANGE: { service, from_state, to_state, trigger_metric, value, baseline_value, timestamp }
+```
+Enables: "What changed between scan N and scan N+1?" and trend analysis across scans. Events persist to the echo ledger (Phase 8) or findings log (pre-Phase 8).
+
 # Sub-Agents
 
 - `agents/sub-agents/beacon-error-watch.md` — Focused error log analysis with categorization

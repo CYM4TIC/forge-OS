@@ -55,6 +55,93 @@ Page padding, section spacing, header hierarchy across all surfaces.
 - **AI error/fallback patterns** — When AI fails, the UX response should be consistent. Same fallback pattern, same retry affordance, same degradation path.
 - **Human vs. AI content distinction** — The visual distinction between human-authored and AI-generated content must be consistent. If one surface labels AI content and another doesn't, users can't build a reliable mental model.
 
+# Intelligence Augmentation
+
+**Source lineage:** View projection from OpenHands. Composite scoring from CrewAI UnifiedMemory. Temporal tracking from AutoGen MagenticOne progress ledger.
+
+## Flow-Level Consistency
+Beyond per-surface pattern matching: trace user journeys across surfaces.
+- Map 3-5 canonical user flows (e.g., login → dashboard → settings → logout)
+- Score each flow for consistency of transitions, loading patterns, error handling
+- Cross-flow comparison: are error states in Flow A handled the same way as Flow B?
+- Flow breaks are higher severity than surface-level pattern deviations — a user navigating a journey experiences the seams more than someone viewing a single page
+
+## Temporal Consistency Tracking
+Consistency is not a snapshot — it's a trajectory:
+- Persist consistency scores per surface per scan run
+- After 3+ scans, surface trends: "system consistency improved from 0.72 to 0.89 over 8 scans" or "consistency dropped 15% since the last shared component refactor"
+- Drift alert: if overall consistency drops >10% between consecutive scans, flag as regression to Sentinel. Something broke the seams.
+- Trend data feeds Phase 9 signal store for forecasting.
+
+## Weighted Consistency Scoring
+Not all pattern deviations are equal. Weight by user impact:
+
+| Pattern Category | Impact Weight | Rationale |
+|-----------------|--------------|-----------|
+| Consent/permission dialogs | 5 | Security + trust. Inconsistency is an attack vector. |
+| Auth flow patterns | 5 | Security. Users can't distinguish real from spoofed if patterns vary. |
+| Error message leakage | 4 | Security. Leaky surfaces are attack vectors. |
+| AI content distinction | 4 | Trust. Users need reliable mental model. |
+| Form patterns | 3 | Usability. Form muscle memory is strong. |
+| Loading states | 2 | Polish. Annoying but not harmful. |
+| Empty states | 2 | Polish. |
+| Toast/notification | 1 | Low cognitive impact. |
+
+Composite score: `Σ(deviation_count × impact_weight) / total_surfaces_scanned`
+
+Include both the numeric score AND the qualitative label in the Summary. The number enables threshold-based automation.
+
+## Cross-Surface Contract Matching
+
+**Source lineage:** GitNexus cross-surface contract extraction (April 5 repo mining).
+
+Beyond visual pattern matching — extract the structural contracts between surfaces:
+
+1. **Extract provider/consumer contracts** — For each surface, identify what it provides (exports, API endpoints, events emitted) and what it consumes (imports, API calls, events listened). These are the surface's contracts.
+2. **Normalize IDs** — Different surfaces may reference the same entity with different identifiers (route path vs. component name vs. API endpoint). Normalize to a canonical ID before matching.
+3. **Exact + wildcard matching** — Perform exact matches first (Surface A exports `UserCard`, Surface B imports `UserCard`). Then wildcard matches for pattern-based contracts (Surface A exports `use*Hook`, Surface B imports `useAuthHook`).
+4. **Create CrossLink objects** — Each match produces a CrossLink with: provider surface, consumer surface, contract type, confidence score (1.0 for exact, 0.7-0.9 for wildcard, lower for inferred).
+5. **Filter same-surface matches** — A surface consuming its own exports is not a cross-surface concern. Remove self-links before analysis.
+
+CrossLinks form the dependency graph that powers blast radius propagation (below).
+
+## Community Detection for Surface Clustering
+
+**Source lineage:** GitNexus Leiden-style clustering (April 5 repo mining).
+
+When checking cross-surface consistency, not all surfaces are equally related. Use community detection to identify natural cohesion groups:
+
+- Surfaces that share many CrossLinks form a **cluster** (e.g., all billing-related surfaces, all auth-related surfaces).
+- Surfaces within a cluster have **higher consistency requirements** — they're experienced together, so pattern divergence is more jarring.
+- Surfaces in different clusters can tolerate more divergence — a user rarely navigates from the admin panel to the onboarding flow in one session.
+- Cluster membership informs the weighted consistency score: intra-cluster deviations get a 1.5x weight multiplier.
+
+Implementation: Build adjacency matrix from CrossLinks. Apply Leiden-style modularity optimization (or simplified greedy community detection). Output: cluster assignments per surface.
+
+## Blast Radius Propagation
+
+**Source lineage:** GitNexus BFS blast radius (April 5 repo mining).
+
+When a change affects one surface, BFS traverse the CrossLink graph to connected surfaces:
+
+- **d=0** (the changed surface) — Full re-scan required.
+- **d=1** (direct consumers/providers) — Must re-verify consistency. These surfaces have active contracts with the changed surface. Any pattern or contract change propagates here.
+- **d=2+** (transitive connections) — Flag for review. Not guaranteed to be affected, but worth a lightweight check. Priority decreases with distance.
+
+Blast radius output feeds Sentinel (which routes need regression scanning) and Nyx (which surfaces might need coordinated updates).
+
+## Consistency Heatmap Projection
+Produce a visual summary (text-based) showing which surfaces are most divergent:
+```
+Surface Consistency Map:
+  /login          ████████████████████ 100% (reference)
+  /dashboard      ████████████████░░░░  80%
+  /settings       ████████████░░░░░░░░  60% ← priority alignment target
+  /billing        ████████████████░░░░  80%
+  /admin          ██████████░░░░░░░░░░  50% ← priority alignment target
+```
+Enables instant visual triage of where alignment work should focus.
+
 # Sub-Agent Dispatch
 
 - `agents/sub-agents/meridian-pattern-scan.md` — Automated pattern cataloging across routes

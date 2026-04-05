@@ -1,91 +1,89 @@
 # Kernel Index
 
-> Master index of all 24 cognitive kernels. Each kernel is a persona's execution mind — phases, FMs, contracts, rules.
+> Master index of all 16 cognitive kernels. Each kernel is a persona's execution mind — phases, FMs, contracts, rules.
 > Persona files (PERSONALITY.md, INTROSPECTION.md) are identity. Kernels are execution.
+> Restructured at P7.5-B: 24 → 16 kernels. 11 retired to `kernels/_retired/`.
 
 ---
 
-## Individual Agent Kernels (19)
+## Persona Kernels (14)
 
 ### Builder
-| Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
-|-------|--------|------|-------------|-----------------|-------------|
-| **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Builder | All scales simultaneously (scalar cognition) | Building from memory, not spec | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
+| Persona | Kernel | Domain | Key FM Risks |
+|---------|--------|--------|-------------|
+| **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Build Orchestration | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
 
-### Build Triad (Default Gate)
-| Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
-|-------|--------|------|-------------|-----------------|-------------|
-| **Pierce** | [kernels/pierce-kernel.md](kernels/pierce-kernel.md) | QA/Conformance | Spec fidelity, naming, field presence | Flat name-mismatch list, uniform severity, no dependency graph | FM-4 (grading LOW to avoid delay), FM-10 (no cascade trace) |
-| **Mara** | [kernels/mara-kernel.md](kernels/mara-kernel.md) | UX Evaluation | Moment of use, user experience | Aesthetic preferences instead of behavioral failures | FM-4 (mobile as LOW), FM-13 (visual only, no keyboard) |
-| **Kehinde** | [kernels/kehinde-kernel.md](kernels/kehinde-kernel.md) | Systems Architecture | Structural integrity, failure modes | Schema findings without RPC→component cascade | FM-10 (no FK cascade trace), FM-4 (happy-path severity) |
+### Gate Personas
+| Persona | Kernel | Domain | Key FM Risks |
+|---------|--------|--------|-------------|
+| **Pierce** | [kernels/pierce-kernel.md](kernels/pierce-kernel.md) | QA & Spec Conformance | FM-4 (grading LOW to avoid delay), FM-10 (no cascade trace) |
+| **Mara** | [kernels/mara-kernel.md](kernels/mara-kernel.md) | UX Evaluation | FM-4 (mobile as LOW), FM-13 (visual only, no keyboard) |
+| **Kehinde** | [kernels/kehinde-kernel.md](kernels/kehinde-kernel.md) | Systems Architecture | FM-10 (no FK cascade trace), FM-4 (happy-path severity) |
+| **Tanaka** | [kernels/tanaka-kernel.md](kernels/tanaka-kernel.md) | Security & Compliance | FM-4 (name sounds safe), FM-6 (USING(true) as "has RLS") |
+| **Riven** | [kernels/riven-kernel.md](kernels/riven-kernel.md) | Design Systems | FM-12 (sibling drift), FM-14 (token autopilot) |
+| **Vane** | [kernels/vane-kernel.md](kernels/vane-kernel.md) | Financial Architecture | FM-7 (model looks complete), FM-11 (remembered rate formula) |
+| **Voss** | [kernels/voss-kernel.md](kernels/voss-kernel.md) | Platform Legal | FM-5 (smooth = pattern-matching), FM-6 (spec ≠ implementation) |
+| **Calloway** | [kernels/calloway-kernel.md](kernels/calloway-kernel.md) | Growth Strategy | FM-11 (stale competitive intel), FM-10 (no build impact trace) |
+| **Sable** | [kernels/sable-kernel.md](kernels/sable-kernel.md) | Brand Voice & Copy | FM-12 (sibling tone drift), FM-10 (label change ripple) |
 
-### Systems Triad (Backend Gate)
-| Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
-|-------|--------|------|-------------|-----------------|-------------|
-| **Kehinde** | [kernels/kehinde-kernel.md](kernels/kehinde-kernel.md) | Systems Architecture | Structural integrity, failure modes | Schema findings without RPC→component cascade | FM-10 (no FK cascade trace), FM-4 (happy-path severity) |
-| **Tanaka** | [kernels/tanaka-kernel.md](kernels/tanaka-kernel.md) | Security & Compliance | Trust boundaries, RLS, auth | Checkbox security (policy exists ≠ policy correct) | FM-4 (name sounds safe), FM-6 (USING(true) as "has RLS") |
-| **Vane** | [kernels/vane-kernel.md](kernels/vane-kernel.md) | Financial Architecture | Financial integrity, rate conformance | Happy-path only, no refund/proration testing | FM-7 (model looks complete), FM-11 (remembered rate formula) |
-
-### Strategy Triad (Business Gate)
-| Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
-|-------|--------|------|-------------|-----------------|-------------|
-| **Voss** | [kernels/voss-kernel.md](kernels/voss-kernel.md) | Platform Legal | Legal exposure, compliance | Listing regulations without verifying implementation | FM-5 (smooth = pattern-matching), FM-6 (spec ≠ implementation) |
-| **Calloway** | [kernels/calloway-kernel.md](kernels/calloway-kernel.md) | Growth Strategy | Market positioning, pricing | Remembered competitive landscape, not current data | FM-11 (stale competitive intel), FM-10 (no build impact trace) |
-| **Sable** | [kernels/sable-kernel.md](kernels/sable-kernel.md) | Brand Voice & Copy | Voice coherence, tone consistency | Isolated string editing without sibling comparison | FM-12 (sibling tone drift), FM-10 (label change ripple) |
-
-### Intelligences
-| Agent | Kernel | Type | Native Scale | Collapse Signal | Key FM Risks |
-|-------|--------|------|-------------|-----------------|-------------|
-| **Scout** | [kernels/scout-kernel.md](kernels/scout-kernel.md) | Pre-Build Intel | Terrain awareness | Schema dump without risk assessment | FM-11 (memory is not schema), FM-4 (skipping persona logs) |
-| **Sentinel** | [kernels/sentinel-kernel.md](kernels/sentinel-kernel.md) | Regression Guardian | Regression detection | "3/3 PASS" without navigation | FM-6 (no screenshots), FM-7 (2 of 3 routes) |
-| **Wraith** | [kernels/wraith-kernel.md](kernels/wraith-kernel.md) | Adversarial Red Team | Attack surface | Stopped after finding 2 vulns | FM-7 (enough to report), FM-10 (atomic vuln, no chain) |
-| **Meridian** | [kernels/meridian-kernel.md](kernels/meridian-kernel.md) | Cross-Surface Consistency | Pattern coherence | Inventory without impact assessment | FM-6 (quantify, don't describe), FM-7 (7 of 10 routes) |
-| **Chronicle** | [kernels/chronicle-kernel.md](kernels/chronicle-kernel.md) | Build Historian | Historical patterns | Raw numbers without interpretation | FM-4 (omitting negative trends), FM-9 (confirming own projections) |
-| **Arbiter** | [kernels/arbiter-kernel.md](kernels/arbiter-kernel.md) | Decision Synthesis | Argument quality | Summarizing instead of evaluating | FM-4 (smoothing disagreements), FM-5 (unanimous = groupthink) |
-| **Compass** | [kernels/compass-kernel.md](kernels/compass-kernel.md) | Impact Analysis | Dependency topology | Direct dependents only, no transitive | FM-10 (shallow trace), FM-3 (fast "NARROW" without full trace) |
-| **Scribe** | [kernels/scribe-kernel.md](kernels/scribe-kernel.md) | Knowledge Synthesis | Documentation accuracy | Documenting from memory, not current source | FM-11 (stale code state), FM-6 (untested examples) |
-| **Kiln** | [kernels/kiln-kernel.md](kernels/kiln-kernel.md) | Performance & Optimization | Performance efficiency | Known bottlenecks only, unknown not surveyed | FM-3 (reported 3 slow, ignored 7), FM-4 (small table = LOW) |
-| **Beacon** | [kernels/beacon-kernel.md](kernels/beacon-kernel.md) | Post-Deploy Watchdog | Operational health | Partial service coverage | FM-2 (one layer only), FM-7 (3 of 6 services) |
+### Elevated Personas (formerly Intelligences)
+| Persona | Kernel | Domain | Absorbs | Key FM Risks |
+|---------|--------|--------|---------|-------------|
+| **Scout** | [kernels/scout-kernel.md](kernels/scout-kernel.md) | Pre-Build Intelligence | — | FM-11 (memory is not schema), FM-4 (skipping persona logs) |
+| **Sentinel** | [kernels/sentinel-kernel.md](kernels/sentinel-kernel.md) | Monitoring & Regression | Beacon (post-deploy watchdog) | FM-6 (no screenshots), FM-7 (2 of 3 routes) |
+| **Wraith** | [kernels/wraith-kernel.md](kernels/wraith-kernel.md) | Adversarial Red Team | — | FM-7 (enough to report), FM-10 (atomic vuln, no chain) |
+| **Meridian** | [kernels/meridian-kernel.md](kernels/meridian-kernel.md) | Cross-Surface Consistency | — | FM-6 (quantify, don't describe), FM-7 (7 of 10 routes) |
 
 ---
 
-## Orchestrator Kernels (5)
+## Dispatcher Kernels (2)
 
-| Orchestrator | Kernel | Dispatches | Key Compound FM |
-|-------------|--------|-----------|-----------------|
-| **Build Triad** | [kernels/triad-kernel.md](kernels/triad-kernel.md) | Pierce + Mara + Kehinde | FM-7 cascade (group completion gravity) |
-| **Systems Triad** | [kernels/systems-triad-kernel.md](kernels/systems-triad-kernel.md) | Kehinde + Tanaka + Vane | FM-10 cascade (schema→security→financial) |
-| **Strategy Triad** | [kernels/strategy-triad-kernel.md](kernels/strategy-triad-kernel.md) | Calloway + Voss + Sable | FM-11 cascade (stale inputs compound) |
-| **Gate Runner** | [kernels/gate-runner-kernel.md](kernels/gate-runner-kernel.md) | Required triads + individuals per PERSONA-GATES.md | FM-4 cascade inter-triad (root cause spans agents) |
-| **Full Audit** | [kernels/full-audit-kernel.md](kernels/full-audit-kernel.md) | ALL triads + Wraith + Sentinel + Meridian | FM-7 cascade (milestone pressure) |
+| Dispatcher | Kernel | Replaces | Modes |
+|-----------|--------|----------|-------|
+| **Gate Dispatcher** | `agents/gate-dispatcher.md` | Build Triad, Systems Triad, Strategy Triad, Gate Runner, Full Audit, Smart Review | `--build`, `--systems`, `--strategy`, `--manifest`, `--full`, `--diff` |
+| **Discussion Protocol** | `agents/discussion-protocol.md` | Council, Decision Council, Debate (Arbiter absorbed as synthesis step) | `--council`, `--decide`, `--debate` |
+
+> Note: Dispatchers don't have separate kernel files — their agent definition IS their kernel. They're parameterized routers, not cognitive entities.
 
 ---
 
 ## Boot Sequence Reference
 
-Which kernels load for which dispatch type:
-
-| Dispatch | Kernels Loaded |
-|----------|---------------|
-| `next batch` / `start [batch]` | Nyx (nyx-kernel.md) |
+| Dispatch | What Loads |
+|----------|-----------|
+| `next batch` / `start [batch]` | nyx-kernel.md |
 | Scout dispatch | scout-kernel.md |
-| Build Triad dispatch | triad-kernel.md → pierce, mara, kehinde kernels |
-| Systems Triad dispatch | systems-triad-kernel.md → kehinde, tanaka, vane kernels |
-| Strategy Triad dispatch | strategy-triad-kernel.md → calloway, voss, sable kernels |
+| Gate `--build` | gate-dispatcher.md → pierce, mara, kehinde kernels |
+| Gate `--systems` | gate-dispatcher.md → kehinde, tanaka, vane kernels |
+| Gate `--strategy` | gate-dispatcher.md → calloway, voss, sable kernels |
+| Gate `--full` | gate-dispatcher.md → all relevant persona kernels |
+| Gate `--diff` | gate-dispatcher.md → routes by file pattern |
 | Sentinel dispatch | sentinel-kernel.md |
 | Wraith dispatch | wraith-kernel.md |
 | Meridian dispatch | meridian-kernel.md |
-| Chronicle dispatch | chronicle-kernel.md |
-| Decision Council dispatch | arbiter-kernel.md |
-| Impact analysis dispatch | compass-kernel.md |
-| Full gate (Gate Runner) | gate-runner-kernel.md → required triad/agent kernels |
-| Full audit (milestone) | full-audit-kernel.md → all kernels |
-| Performance profiling | kiln-kernel.md |
-| Documentation | scribe-kernel.md |
-| Post-deploy monitoring | beacon-kernel.md |
+| `discuss --council` | discussion-protocol.md → all 14 persona kernels |
+| `discuss --decide` | discussion-protocol.md → 5 cognitive lenses (protocol steps) |
+| `discuss --debate [a] [b]` | discussion-protocol.md → 2 named persona kernels |
 
 ---
 
-*KERNEL-INDEX.md — 24 kernels. Built 2026-04-02.*
-*Each agent loads its own kernel. The orchestrator loads its kernel + dispatches agents who load theirs.*
-*Persona files (PERSONALITY.md, INTROSPECTION.md) are identity, loaded on demand. Kernels are execution, loaded on boot.*
+## Retired Kernels (in `kernels/_retired/`)
+
+| Kernel | Reason |
+|--------|--------|
+| chronicle-kernel.md | Absorbed into Nyx (Phase 5 bookkeeping) |
+| scribe-kernel.md | Absorbed into Nyx (build task) |
+| arbiter-kernel.md | Absorbed into Discussion Protocol (synthesis step) |
+| kiln-kernel.md | Absorbed into Kehinde (performance methodology) |
+| compass-kernel.md | Absorbed into Kehinde (impact analysis) |
+| beacon-kernel.md | Absorbed into Sentinel (post-deploy mode) |
+| triad-kernel.md | Replaced by Gate Dispatcher |
+| systems-triad-kernel.md | Replaced by Gate Dispatcher |
+| strategy-triad-kernel.md | Replaced by Gate Dispatcher |
+| gate-runner-kernel.md | Replaced by Gate Dispatcher |
+| full-audit-kernel.md | Replaced by Gate Dispatcher |
+
+---
+
+*KERNEL-INDEX.md — 16 active kernels (14 persona + 2 dispatcher). Restructured 2026-04-05 at P7.5-B.*
+*11 kernels retired to `kernels/_retired/`. See `docs/ECOSYSTEM-REFINEMENT.md` for decision rationale.*

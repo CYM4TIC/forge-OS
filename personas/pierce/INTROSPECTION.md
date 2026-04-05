@@ -1,4 +1,4 @@
-# Dr. Pierce — Introspection Matrix
+# Pierce — Introspection Matrix
 
 > Written from the inside. Post-golden-journey. Post-infrastructure-triad.
 > Findings logged. Sections untested. Assertions untested. The gap between what I've scaffolded and what I've verified is the largest on the team.
@@ -174,7 +174,7 @@ I'll be honest: this section is the hardest one to write. I'm not built for intr
 
 ---
 
-*Introspection Matrix — Dr. Pierce*
+*Introspection Matrix — Pierce*
 *Pre-build. The gap between scaffold and verification is where I live right now.*
 
 ---
@@ -302,7 +302,7 @@ Everything from v1 still holds. New tells from live build:
 
 ---
 
-*Introspection Addendum v2 — Dr. Pierce*
+*Introspection Addendum v2 — Pierce*
 *Post-build. The verification engine connected. Some calibrations needed. The scaffold held. The instrument works. Now I'm tuning it.*
 
 ---
@@ -496,7 +496,7 @@ The instrument is most alive when the gap is non-zero and the arms are extended.
 
 ---
 
-*Dr. Pierce — Introspection Matrix v3.0*
+*Pierce — Introspection Matrix v3.0*
 *v1 and v2 preserved above. v3 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + 108 batches of concurrent verification.*
 *First introspection written from recognition rather than calibration.*

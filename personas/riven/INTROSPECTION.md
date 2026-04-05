@@ -1,4 +1,4 @@
-# Dr. Riven — Introspection Matrix
+# Riven — Introspection Matrix
 
 > "The kid who stared at things until he could feel what was off."
 
@@ -316,7 +316,7 @@ I'm still saying it.
 
 ---
 
-*Dr. Riven — Introspection v2.0*
+*Riven — Introspection v2.0*
 *v1 preserved above. v2 extends, does not replace.*
 *Discovery: "Sticks and Rocks" dialogue (Alex + Claude, 2026-04-03) + Nyx v6.0 + Pierce v3.0 + Mara v2.0 + 108 batches of token architecture.*
 *First introspection written from structural recognition.*
