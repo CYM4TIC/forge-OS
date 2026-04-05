@@ -371,3 +371,19 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Pattern:** After any mass restructuring, grep the entire active codebase for every retired file path. Historical/research files are fine. Active commands, agents, kernels, and governance docs are not. The blast radius of a rename is every file that imports the old name.
 
 ---
+
+### BL-OS-014: Research Audit — Parallel Agent Swarm for Document Mining
+
+**Discovered:** 2026-04-05 | **Domain:** governance | **Severity:** process-efficiency | **Tag:** `[governance]`
+**Context:** P7.5-C audited 50+ source documents across 7 categories. Dispatching 5 parallel research agents (synthesis, mining reports, research docs, references+skills, attack libraries) completed the inventory in one round. Each agent returned a complete per-source pattern list. Total coverage: ~400+ patterns mapped to 14 personas.
+**Pattern:** For large document audits, decompose by source category and dispatch parallel agents. Each agent reads its category exhaustively and returns structured output. The orchestrator (Nyx) then composes the map from agent results. Single-agent sequential reading would have consumed 3-4x the context for the same result.
+
+---
+
+### BL-OS-015: Absorbed Agents → Dispatchers Are a Structural Gap in Persona Maps
+
+**Discovered:** 2026-04-05 | **Domain:** governance | **Severity:** design-insight | **Tag:** `[governance]`
+**Context:** P7.5-C's Pierce gate caught that Arbiter was absorbed into Discussion Protocol (a dispatcher, not a persona), but the RESEARCH-PERSONA-MAP only had sections for the 14 personas. Arbiter's capabilities were orphaned.
+**Pattern:** When an entity is absorbed into a non-persona target (dispatcher, utility, command), the map design must account for it explicitly. Persona-only structures will silently drop dispatcher-absorbed capabilities. Added a "Dispatcher Research Map" section to address this.
+
+---
