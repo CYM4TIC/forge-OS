@@ -28,9 +28,11 @@ dms_batches_total: 122
 
 **Session 7.5 — Pre-Phase 8 Intelligence Retrofit.**
 
-Last completed: **P7.5-C.1** — Infrastructure Housekeeping. BUILD-LEARNINGS.md → `build-learnings/` (6 domain files). ADL.md → `adl/` (18 decision files). phase-7.md split + sealed. `**Learnings:**` field added to batch manifest template (P8-A, P8-B annotated). Old monoliths removed. 400+ patterns mapped to 14 personas across 50+ source documents (3 synthesis, 6 mining, 19 research, 14 references, 5 skills, 2 attack libraries, 6 absorbed agents). Output: `docs/RESEARCH-PERSONA-MAP.md` (784 lines). Dispatcher Research Map added for Arbiter→Discussion Protocol. Pierce gate: 11 findings, all fixed. Sentinel PASS. Gaps identified: Voss, Calloway, Sable (addressable in profile sessions).
+Last completed: **P7.5-C.1** — Infrastructure Housekeeping.
 
-**Next: P7.5-D.0 — Guided Profile Session: Nyx** (read research audit → guided conversation → self-author profile).
+**Pre-D.0 prep (2026-04-05):** Mined github/awesome-copilot (35 patterns, 14 HIGH). Surveyed 38 repos across 8 orgs (github, microsoft, langchain, MCP, etc.) — 12 HIGH priority. Created `forge/research/PHASE-8-REPO-REFERENCE.md` (Phase 8 manifest reference combining mined patterns + repos to mine, organized by sub-session). Updated `docs/RESEARCH-PERSONA-MAP.md` with Repo Mining Targets per persona. Refined D/E-series manifest: 4-phase process (Load → Conversation → Reference Bank → Profile+Index), three output files per session (reference bank first as source of truth, profile + index derived from it). Updated `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md` with Layer 3 reference bank + index structure and KAIROS ingestion path.
+
+**Next: P7.5-D.0 — Guided Profile Session: Nyx** (Phase A-D: load context → guided conversation → reference bank → profile + index).
 
 ---
 

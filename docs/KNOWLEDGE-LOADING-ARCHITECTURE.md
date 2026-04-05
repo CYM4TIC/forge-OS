@@ -46,11 +46,13 @@ What the agent needs FOR THIS SPECIFIC TASK. Assembled by the dispatch system, n
 
 ### Layer 3: REFERENCE (available on-demand)
 
-Deep reference material the agent CAN access if a trigger fires during execution.
+Deep reference material the agent CAN access if a trigger fires during execution. Stored in two files per persona:
 
-- Full governance docs, INTROSPECTION.md, research reports, historical findings
-- **Budget:** Unbounded. Pulled on demand, not pre-loaded.
-- **Key:** Identity layer contains enough compressed methodology that reference is rarely needed.
+- **Reference bank** (`forge/profiles/{name}-references.md`) — the actual deep content, organized by methodology. Each section is self-contained: full reasoning, formulas, decision trees, edge cases, examples. Extracted and rewritten from source material during profile sessions. An agent reads a specific section when the profile's compressed line isn't enough detail.
+- **Reference index** (`forge/profiles/{name}-reference-index.md`) — lookup table mapping profile methodology → reference bank section → original source file/line range. Includes `KAIROS Tag` column for future sqlite-vec ingestion. This file IS the KAIROS ingestion manifest — when the runtime comes online, each row becomes a vector with provenance preserved.
+- Full governance docs, INTROSPECTION.md, research reports, historical findings also remain available.
+- **Budget:** Unbounded. Pulled on demand by section, not pre-loaded.
+- **Key:** Profile contains enough compressed methodology that reference bank is consulted only when the agent needs deeper understanding of WHY a methodology works or HOW to handle edge cases. The reference index ensures the agent lands on the right section instantly rather than searching.
 
 ---
 
@@ -130,9 +132,13 @@ Every dispatch teaches something. Learning flows back autonomously.
 
 ---
 
-## Profile Format
+## Output Format (Three Files Per Persona)
 
-14 profiles for 14 personas. Equal depth (~50 lines each). No tier distinction between original personas and elevated intelligences.
+14 personas, three files each. Equal depth. No tier distinction between original personas and elevated intelligences.
+
+### File 1: Profile (`forge/profiles/{name}-profile.md`, ~50 lines)
+
+Layer 1 identity. Loaded every dispatch alongside the kernel.
 
 ```markdown
 # {Name} — Professional Profile
@@ -156,17 +162,59 @@ Every dispatch teaches something. Learning flows back autonomously.
 
 Profiles are world-class domain expertise. Technology-aware at the principle level with specific examples. "Hybrid search fusion: use RRF (1/(K+rank), K=60) to merge keyword and semantic results" — not "run this query against the KAIROS table."
 
+### File 2: Reference Bank (`forge/profiles/{name}-references.md`, variable length)
+
+Layer 3 deep knowledge. The actual content behind each methodology in the profile. Organized by methodology section with anchor IDs. Each entry is self-contained — an agent reads one section and has everything it needs.
+
+```markdown
+# {Name} — Reference Bank
+
+> Deep reference material organized by methodology.
+> Read by section on-demand. Becomes KAIROS vector content at ingestion.
+
+## Impact Analysis {#impact-analysis}
+[Full BFS algorithm, scoring rubric (d=1 direct, d=2+ indirect), edge cases,
+ examples from past builds, when to stop traversal, output format]
+
+## Composable Halt Conditions {#halt-conditions}
+[Full trait design, AND/OR composition semantics, built-in conditions,
+ how to add custom conditions, Phase 8 mana budget integration path]
+```
+
+### File 3: Reference Index (`forge/profiles/{name}-reference-index.md`, ~30-50 lines)
+
+Lookup table and KAIROS ingestion manifest. Maps profile → reference bank → original source.
+
+```markdown
+# {Name} — Reference Index
+
+> Lookup: profile methodology → reference bank section → original source.
+> Becomes KAIROS ingestion manifest in Phase 8.
+
+| Methodology | Bank Section | Original Source | KAIROS Tag |
+|-------------|-------------|-----------------|------------|
+| Blast radius BFS | #impact-analysis | research/mining/gitnexus:45-78 | architecture.impact |
+| Composable halt | #halt-conditions | research/autogen:112-140 | orchestration.halt |
+```
+
+### Layer Relationship
+
+- **Profile** says WHAT to do (compressed, always loaded in Layer 1)
+- **Reference bank** says HOW and WHY in full depth (on-demand, read by section in Layer 3)
+- **Reference index** maps between them and provides KAIROS ingestion path (routing layer)
+
 ---
 
 ## Build Plan Integration
 
 | Batch | What | Phase |
 |-------|------|-------|
-| P7.5-G | Author 14 profiles (14 personas, equal depth) | NOW (pre-Phase 8) |
+| P7.5-D/E | Author 14 x 3 files (profile + reference bank + reference index) | NOW (pre-Phase 8) |
 | P8-F | KnowledgeAugmenter in ContextAssembler | Phase 8 Session 8.1 |
 | P8-G | Dreamtime consolidation pass per persona | Phase 8 Session 8.1 |
+| P8-G+ | KAIROS ingestion: read reference indexes, embed reference bank sections | Phase 8 Session 8.1 |
 | P8-K | Learning Extractor as post-dispatch hook | Phase 8 Session 8.2 |
-| P8-L | Load kernel + profile as identity layer | Phase 8 Session 8.2 |
+| P8-L | Load kernel + profile as identity layer, reference bank as on-demand | Phase 8 Session 8.2 |
 
 See `docs/ECOSYSTEM-REFINEMENT.md` for the full restructuring: 14 personas (10 original + 4 elevated intelligences), absorbed agents, orchestrator collapse, sub-agent refinement.
 

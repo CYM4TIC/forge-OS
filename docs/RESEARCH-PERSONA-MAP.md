@@ -153,6 +153,21 @@
 |-------|-----------|
 | nextjs-best-practices | On Next.js projects (server/client components, data fetching, caching, routing) |
 
+#### Repo Mining Targets (Session P7.5-D.0)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| github/gh-aw | Production agent orchestration framework — dispatch, task decomposition, workflow execution | HIGH |
+| github/copilot-engine-sdk | Lower-level engine architecture — kernel execution patterns, agent lifecycle | HIGH |
+| microsoft/semantic-kernel | The OG kernel concept — planners, memory stores, plugin architecture, multi-model routing | HIGH |
+| langchain-ai/langgraph | Graph-based agent state machines with checkpointing — dispatch DAGs, persistence | HIGH |
+| anthropics/claude-agent-sdk-typescript | Claude agent lifecycle, tool use patterns, conversation management | HIGH |
+| byte5ai/palaia | SQLite-vec + MCP agent memory — almost exactly KAIROS. Auto-capture, crash-safe | HIGH |
+| openai/swarm | Original swarm concept — agent handoff, routine patterns, context passing | MED |
+| langchain-ai/langgraph-swarm-py | Swarm dispatch with handoffs, multi-agent coordination | MED |
+| langchain-ai/deepagents | Hierarchical dispatch — planning tool, filesystem backend, subagent spawning | MED |
+| github/copilot-sdk | Multi-platform agent SDK — plugin/skill architecture patterns | MED |
+
 **Pattern count: ~120+ patterns directly feeding Nyx**
 
 ---
@@ -183,6 +198,13 @@
 
 Pierce consumes output from ALL 5 skills during gates. Not a direct user of skills, but the ultimate validator of skill-informed code.
 
+#### Repo Mining Targets (Session P7.5-D.1)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| microsoft/SafeAgents | Safety evaluation frameworks (ARIA, DHARMA) — quality benchmarks for agent outputs | MED |
+| github/spec-kit | Spec-driven development toolkit — structured verification against specs | MED |
+
 **Pattern count: ~10 patterns directly feeding Pierce, but leverages ALL research indirectly through gates**
 
 ---
@@ -208,6 +230,14 @@ Pierce consumes output from ALL 5 skills during gates. Not a direct user of skil
 | Reference | What It Provides |
 |-----------|-----------------|
 | ui-ux-pro-max | 15-item pre-delivery checklist (mandatory gate), Top 30 UX guidelines across 6 categories, dark theme palette |
+
+#### Repo Mining Targets (Session P7.5-D.2)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| microsoft/magentic-ui | Human-centered web agent UI — chat interface patterns, approval workflows, step visualization | HIGH |
+| langchain-ai/agent-chat-ui | React-based chat interface for agents — streaming, tool visualization, multi-turn | MED |
+| modelcontextprotocol/ext-apps | MCP embedded UI apps — spec for UIs embedded in AI chatbots | LOW |
 
 **Pattern count: ~15 patterns directly feeding Mara**
 
@@ -278,6 +308,12 @@ Pierce consumes output from ALL 5 skills during gates. Not a direct user of skil
 |-------|-----------|
 | tailwind-design-system | 3-layer token hierarchy, CSS variable tokens, component architecture, dark mode, accessibility, animation |
 
+#### Repo Mining Targets (Session P7.5-D.3)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | No strong matches in surveyed repos. Riven's domain (design tokens, visual patterns, typography) is not well represented in the GitHub/Microsoft/LangChain agent-focused repos. Riven is already research-saturated from design-md, poetengineer, touchdesigner. | — |
+
 **Pattern count: ~85+ patterns directly feeding Riven (richest research library)**
 
 ---
@@ -333,6 +369,16 @@ Pierce consumes output from ALL 5 skills during gates. Not a direct user of skil
 |-------|-----------|
 | postgres-best-practices | Index strategy, N+1 avoidance, cursor pagination, connection pooling, RLS, migration discipline, function patterns |
 
+#### Repo Mining Targets (Session P7.5-D.4)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| modelcontextprotocol/rust-sdk | Native Rust MCP integration — the SDK for building MCP server/client in Tauri backend | HIGH |
+| tauri-apps/plugins-workspace | Official Tauri v2 plugins — SQLite, secure storage (stronghold), shell, fs, websocket | HIGH |
+| modelcontextprotocol/servers | Reference MCP server implementations — filesystem, git, sqlite patterns | MED |
+| github/semantic | Source code analysis engine — AST parsing, semantic understanding across languages | MED |
+| modelcontextprotocol/typescript-sdk | Frontend MCP client capabilities for React chat interface | MED |
+
 **Pattern count: ~35+ patterns directly feeding Kehinde**
 
 ---
@@ -371,6 +417,15 @@ Pierce consumes output from ALL 5 skills during gates. Not a direct user of skil
 |-------|-----------|
 | security-auditor | 12 security domains: Auth, Input Validation, Insecure Defaults, Supply Chain, Data Protection, TCPA/CAN-SPAM, API Security, Cryptography, Infrastructure, Differential Review, Container, Testing |
 
+#### Repo Mining Targets (Session P7.5-D.5)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| github/gh-aw-firewall | Agent sandboxing, policy enforcement, permission boundaries — direct steal for tool governance | HIGH |
+| microsoft/SafeAgents | Safety evaluation (ARIA, DHARMA), attack detection — patterns for red-team defense | HIGH |
+| github/codeql | Security analysis queries — static analysis patterns for code scanning features | MED |
+| github/entitlements-app | IAM permission/entitlement patterns for tool governance | LOW |
+
 **Pattern count: ~20+ patterns directly feeding Tanaka**
 
 ---
@@ -396,6 +451,12 @@ Pierce consumes output from ALL 5 skills during gates. Not a direct user of skil
 |-------|-----------|
 | stripe-integration | 4 payment flows, webhook handling (signature, idempotency, 8 events), test methodology (6 cards, 6 scenarios, clocks), 8 pitfalls, financial accuracy (integer cents, reconciliation) |
 
+#### Repo Mining Targets (Session P7.5-D.6)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | No financial architecture repos in surveyed set. Vane's domain (payment flows, audit trails, margin protection) is project-specific, not well represented in agent-focused repos. Stripe skill remains primary source. | — |
+
 **Pattern count: ~5 patterns directly feeding Vane (domain-deep via skill)**
 
 ---
@@ -413,6 +474,12 @@ No research docs directly target Voss. Legal compliance patterns are embedded in
 #### Coverage Note
 
 Voss operates from pure persona identity + skill consumption. Legal domain research was not part of the 8 mined repos or 20+ research docs. Gap acknowledged — not actionable until legal-specific sources are mined.
+
+#### Repo Mining Targets (Session P7.5-D.7)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | Gap persists. No legal-tech repos in surveyed set. Consider mining: legal-specific AI repos, compliance frameworks, consent management systems. | — |
 
 **Pattern count: 0 direct, ~3 indirect via security-auditor skill**
 
@@ -433,6 +500,12 @@ Voss operates from pure persona identity + skill consumption. Legal domain resea
 
 Calloway operates from persona identity + operator conversations. Growth strategy research was not part of the mined corpus. Gap acknowledged — addressable in P7.5-D.8 profile session.
 
+#### Repo Mining Targets (Session P7.5-D.8)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | Gap persists. No growth/pricing strategy repos in surveyed set. Consider mining: SaaS pricing models, product-led growth frameworks, competitive intelligence tools. | — |
+
 **Pattern count: ~2 direct**
 
 ---
@@ -451,6 +524,12 @@ Calloway operates from persona identity + operator conversations. Growth strateg
 #### Coverage Note
 
 Sable's research depth comes from ArsContexta's vocabulary and personality systems. Additional voice/copy research addressable in P7.5-D.9 profile session.
+
+#### Repo Mining Targets (Session P7.5-D.9)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | Minimal matches. Sable's domain (voice, copy, register control) is not agent-repo territory. ArsContexta vocabulary transform remains primary source. | — |
 
 **Pattern count: ~2 direct**
 
@@ -490,6 +569,14 @@ Sable's research depth comes from ArsContexta's vocabulary and personality syste
 | Reference | What It Provides |
 |-----------|-----------------|
 | oh-my-claudecode | Ralplan-First Gate (vague request detection, <=15 words), Pre-mortem analysis |
+
+#### Repo Mining Targets (Session P7.5-E.0)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| github/copilot-plugins | MCP servers, skills, hooks — recon-relevant instruction patterns, skill architecture | MED |
+| microsoft/hve-core | Hypervelocity engineering components — production agent instruction patterns | MED |
+| github/spec-kit | Spec-driven development — structured pre-build task decomposition | LOW |
 
 **Pattern count: ~12 patterns directly feeding Scout**
 
@@ -537,6 +624,12 @@ Sable's research depth comes from ArsContexta's vocabulary and personality syste
 - AutoGen MagenticOne progress ledger for differential scanning
 - ArsContexta condition-based maintenance triggers + drift detection
 
+#### Repo Mining Targets (Session P7.5-E.1)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| microsoft/SafeAgents | Safety evaluation + attack detection — regression benchmarks for agent behavior | MED |
+
 **Pattern count: ~15 patterns directly feeding Sentinel**
 
 ---
@@ -579,6 +672,13 @@ Sable's research depth comes from ArsContexta's vocabulary and personality syste
 | trail-of-bits | Zeroize audit (8 finding categories, assembly-level), Audit context building (First Principles + 5 Whys/Hows), Constant-time analysis |
 | security-auditor skill | Inherits attack methodology from sections 1-4, 7, 10 |
 
+#### Repo Mining Targets (Session P7.5-E.2)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| github/gh-aw-firewall | Understand security boundaries to probe — policy enforcement, sandboxing constraints | HIGH |
+| microsoft/SafeAgents | Attack detection patterns, DHARMA safety benchmarks — know the defenses to test against | MED |
+
 **Pattern count: ~60+ attack techniques + ~10 research patterns**
 
 ---
@@ -603,6 +703,12 @@ Sable's research depth comes from ArsContexta's vocabulary and personality syste
 #### Coverage Note
 
 Meridian's methodology is deeply embedded in the build loop (Phase 4 exit dispatch, sibling audits, FM-12 defense) but has minimal dedicated research. Cross-surface consistency was validated by GitNexus patterns, not augmented with new methodology.
+
+#### Repo Mining Targets (Session P7.5-E.3)
+
+| Repo | Why | Priority |
+|------|-----|----------|
+| — | Gap acceptable. Cross-surface consistency is methodological, not research-dependent. GitNexus patterns remain sufficient. | — |
 
 **Pattern count: ~3 direct patterns**
 

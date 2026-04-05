@@ -31,3 +31,13 @@
 - **Updated refs:** nyx-kernel.md (Pre-Batch Checklist, adversarial check, bookkeeping), BOOT.md, CLAUDE.md, batch-manifests/INDEX.md.
 - **Old monoliths removed:** BUILD-LEARNINGS.md and ADL.md deleted (content in folders, history in git).
 - **COMMITS:** `73d7611` (splits + updates), `feef832` (remove monoliths).
+
+**2026-04-05 — Pre-D.0 Prep: Repo Mining + Manifest Refinement**
+- **SCOPE:** Mine awesome-copilot, survey GitHub/Microsoft/LangChain/MCP orgs, update persona map with mining targets, create Phase 8 manifest reference, refine D/E-series process.
+- **AWESOME-COPILOT MINING:** 35 patterns (14 HIGH, 13 MED, 8 LOW). Strongest veins: governance (Tool Guardian, Trust Scoring, Agent Governance), orchestration (RUG Protocol, Wave-based parallelism), memory (Memory Bank hierarchy, Ralph Loop, Self-categorizing memory). Report: `forge/research/awesome-copilot-mining.md`.
+- **REPO SURVEY:** 100+ repos across 8 orgs → 38 worth mining (12 HIGH, 18 MED, 8 LOW). Top targets: gh-aw trifecta, semantic-kernel, palaia (almost exactly KAIROS), langgraph, MCP rust-sdk, SafeAgents.
+- **PHASE 8 REFERENCE:** Created `forge/research/PHASE-8-REPO-REFERENCE.md` — 34 mined patterns + 29 unique repos organized by Phase 8 sub-session (8.1-8.5+). Living document for manifest writing.
+- **PERSONA MAP UPDATED:** Added "Repo Mining Targets" section to all 14 personas in `docs/RESEARCH-PERSONA-MAP.md`. Nyx: 10 repos. Kehinde: 5. Tanaka: 4. Mara: 3. Wraith: 2. Riven/Vane/Voss/Calloway/Sable/Meridian: gaps acknowledged (domains not agent-repo territory).
+- **MANIFEST REFINED:** D/E-series process rewritten as 4/6 explicit phases (A: Load context → B: Guided conversation → C: Reference bank → D: Profile + Index → E: Introspection [E-series only] → F: Kernel update [E-series only]). Three output files per session: reference bank (source of truth, written first), profile (compressed from bank), reference index (lookup + KAIROS ingestion manifest).
+- **KNOWLEDGE ARCHITECTURE UPDATED:** Layer 3 now explicitly defines reference bank + reference index structure. KAIROS ingestion path documented. Build plan table updated.
+- **NO BATCH CLOSED.** This was prep work — no batch count increment.

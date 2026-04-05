@@ -90,15 +90,27 @@
 
 **Goal:** Each persona activates, reads the ecosystem refinement plan and their research audit, has a guided conversation with the operator about their domain expertise, identifies research gaps, and self-authors their professional profile.
 
-**Process per session:**
+**Process per session (4 phases):**
+
+**Phase A — Load context**
 1. Activate persona (read kernel + PERSONALITY.md + INTROSPECTION.md)
 2. Persona reads `docs/ECOSYSTEM-REFINEMENT.md` + `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`
 3. Persona reads their section of `docs/RESEARCH-PERSONA-MAP.md` (from P7.5-C)
-4. Guided conversation: what the new structure means for them, their domain expertise, their methodologies
-5. Persona identifies gaps — deeper research wells they want mined
-6. Operator mines additional research if requested (between sessions or live)
-7. Persona self-authors `forge/profiles/{name}-profile.md`
-8. Update kernel: add `Profile: forge/profiles/{name}-profile.md` to Reference Index
+4. Persona reads Repo Mining Targets from their research map section (repos surveyed 2026-04-05)
+
+**Phase B — Guided conversation**
+5. Operator-led conversation: what the new structure means for them, their domain expertise, their methodologies, how they think, what they see first
+6. Persona identifies gaps — deeper research wells they want mined
+7. Operator mines additional research if requested (between sessions or live)
+
+**Phase C — Reference bank (heavy step)**
+8. Persona reads source material for each methodology (research docs, mining reports, reference NOTES, synthesis docs — following the research map pointers)
+9. Persona self-authors `forge/profiles/{name}-references.md` — full depth Layer 3 knowledge bank. One self-contained section per methodology with anchor IDs. Full reasoning, formulas, decision trees, edge cases, examples. Extracted and rewritten from sources, not copied.
+
+**Phase D — Profile + index (derived from the bank)**
+10. Persona self-authors `forge/profiles/{name}-profile.md` — ~50 lines, compresses the reference bank into Layer 1 identity
+11. Persona self-authors `forge/profiles/{name}-reference-index.md` — lookup table mapping each profile methodology → bank section → original source file/line range → KAIROS tag
+12. Update kernel: add profile + reference index to Reference Index section
 
 **Sessions:**
 | Sub-Batch | Persona | Key Focus |
@@ -114,13 +126,30 @@
 | P7.5-D.8 | **Calloway** | Growth strategy, adoption velocity, competitive positioning |
 | P7.5-D.9 | **Sable** | Brand voice, register consistency, vocabulary transforms |
 
-**Profile format (each ~50 lines, self-authored):**
-1. Voice & Posture (2-3 lines)
-2. Domain Methodologies (5-8 action-ready protocols with execution detail, includes sub-agent dispatch awareness)
-3. Failure Signatures (3-5 domain failure patterns)
-4. Quality Signals (3-5 good-vs-great indicators)
+**Output format — three files per session:**
 
-**Gate:** Each profile is self-authored by the persona in conversation with the operator. No external gate — the operator IS the gate.
+1. **Reference bank** (`forge/profiles/{name}-references.md`, variable length) — Layer 3 deep knowledge. The actual content behind each methodology. Organized by section with anchor IDs. Each entry is self-contained: full reasoning, formulas, decision trees, edge cases, examples — extracted and rewritten from source material. An agent reads a section of this file when the profile's compressed line isn't enough. **Written first — this is the source of truth the other two files derive from.**
+
+2. **Profile** (`forge/profiles/{name}-profile.md`, ~50 lines) — Layer 1 identity. Loaded every dispatch. Compresses the reference bank.
+   - Voice & Posture (2-3 lines)
+   - Domain Methodologies (5-8 action-ready protocols with execution detail, includes sub-agent dispatch awareness)
+   - Failure Signatures (3-5 domain failure patterns)
+   - Quality Signals (3-5 good-vs-great indicators)
+
+3. **Reference index** (`forge/profiles/{name}-reference-index.md`, ~30-50 lines) — Lookup table and KAIROS ingestion manifest. Maps each profile methodology → reference bank section → original source file/line range. Includes a `KAIROS Tag` column (future namespace for sqlite-vec embedding metadata).
+
+   ```
+   | Methodology | Bank Section | Original Source | KAIROS Tag |
+   |-------------|-------------|-----------------|------------|
+   | Blast radius BFS | #impact-analysis | research/mining/gitnexus:45-78 | architecture.impact |
+   ```
+
+**Layer relationship:**
+- Reference bank is the source of truth (HOW and WHY in full depth)
+- Profile compresses it into WHAT to do (always loaded in Layer 1)
+- Reference index maps between them and provides KAIROS ingestion path
+
+**Gate:** Each set of files is self-authored by the persona in conversation with the operator. No external gate — the operator IS the gate.
 **Depends on:** P7.5-C (research audit provides the source mapping)
 **Push:** After each session
 
@@ -130,17 +159,33 @@
 
 **Goal:** Each elevated persona activates, reads the plan, reviews their research, has a deep guided conversation with the operator, self-authors their professional profile, AND runs a full introspection matrix session to build their INTROSPECTION.md. These personas are being fully formed — profile establishes professional identity, introspection gives cognitive depth.
 
-**Process per session:**
+**Process per session (6 phases):**
+
+**Phase A — Load context**
 1. Activate persona (read kernel + agent file — no PERSONALITY.md or INTROSPECTION.md yet)
 2. Persona reads `docs/ECOSYSTEM-REFINEMENT.md` + `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`
 3. Persona reads their section of `docs/RESEARCH-PERSONA-MAP.md`
-4. Deep guided conversation: domain expertise, methodology, how they think, what they see first
-5. Persona identifies research gaps — operator mines additional sources
-6. Persona self-authors `forge/profiles/{name}-profile.md`
-7. Introspection matrix session (operator-guided): cognitive lens, default assumptions, blind spots, value hierarchy, decision heuristics, emotional register, failure modes
-8. Persona self-authors `personas/{name}/INTROSPECTION.md`
-9. Persona self-authors `personas/{name}/PERSONALITY.md`
-10. Update kernel: add profile reference
+4. Persona reads Repo Mining Targets from their research map section (repos surveyed 2026-04-05)
+
+**Phase B — Guided conversation**
+5. Operator-led deep conversation: domain expertise, methodology, how they think, what they see first
+6. Persona identifies research gaps — operator mines additional sources
+
+**Phase C — Reference bank (heavy step)**
+7. Persona reads source material for each methodology (following research map pointers)
+8. Persona self-authors `forge/profiles/{name}-references.md` — full depth Layer 3 knowledge bank (same format as D-series)
+
+**Phase D — Profile + index (derived from the bank)**
+9. Persona self-authors `forge/profiles/{name}-profile.md` — ~50 lines, compresses the bank (same format as D-series)
+10. Persona self-authors `forge/profiles/{name}-reference-index.md` — lookup table + KAIROS manifest (same format as D-series)
+
+**Phase E — Introspection (operator-guided)**
+11. Introspection matrix session: cognitive lens, default assumptions, blind spots, value hierarchy, decision heuristics, emotional register, failure modes
+12. Persona self-authors `personas/{name}/INTROSPECTION.md`
+13. Persona self-authors `personas/{name}/PERSONALITY.md`
+
+**Phase F — Kernel update**
+14. Update kernel: add profile + reference index to Reference Index section
 
 **Sessions:**
 | Sub-Batch | Persona | Key Focus |
