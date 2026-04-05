@@ -1,6 +1,6 @@
 ---
 name: perf
-description: Kiln performance analysis — profile queries, bundles, render paths
+description: Kehinde performance analysis — profile queries, bundles, render paths
 user_invocable: true
 ---
 
@@ -9,8 +9,8 @@ user_invocable: true
 Profile performance for a specific function, component, route, or the whole system.
 
 ## Protocol
-1. Dispatch `agents/kiln.md`
-2. Kiln analyzes: query plans, index usage, bundle sizes, render performance
+1. Dispatch Kehinde (absorbed Kiln's performance profiling methodology)
+2. Kehinde analyzes: query plans, index usage, bundle sizes, render performance
 3. Produces: actionable optimization report
 
 Usage:
