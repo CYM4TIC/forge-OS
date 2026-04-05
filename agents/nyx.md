@@ -154,8 +154,8 @@ STEP 9 — UPDATE STATE: Update BOOT.md. Wait for next command.
 
 # Sub-Agent Dispatch
 
-When running persona gates, dispatch the build triad:
-- `agents/triad.md` — Pierce + Mara + Kehinde consolidated gate
+When running persona gates, dispatch via Gate Dispatcher:
+- `agents/gate-dispatcher.md` — parameterized gate dispatch (--build = Pierce + Mara + Kehinde)
 
 For pre-build intelligence:
 - `agents/scout.md` — schema recon, open findings, gotcha alerts

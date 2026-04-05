@@ -15,7 +15,7 @@ Run `$ARGUMENTS` through the Decision Council.
 - Any genuine decision with stakes where the user wants multiple perspectives
 
 ## Protocol
-1. Dispatch `agents/decision-council.md` with the full question and context
+1. Dispatch `agents/discussion-protocol.md --decide` with the full question and context
 2. The council orchestrator handles:
    - Context enrichment (scans workspace for relevant files)
    - Question framing (neutral, enriched with business context)
