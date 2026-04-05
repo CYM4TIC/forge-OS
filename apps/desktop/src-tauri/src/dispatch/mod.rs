@@ -1,6 +1,7 @@
 pub mod types;
 pub mod cache;
 pub mod context;
+pub mod halt;
 pub mod lifecycle;
 pub mod queue;
 

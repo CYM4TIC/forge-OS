@@ -5,12 +5,15 @@
 // 4-tier priority: Critical > High > Normal > Low.
 // Configurable concurrency limit (default 3).
 // FIFO within same priority tier (via sequence counter).
+// P7.5-A: Composable halt conditions evaluated on every dequeue.
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
+use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
+use super::halt::{DispatchHaltContext, HaltCondition, HaltReason};
 use super::types::AgentRequest;
 
 // ---------------------------------------------------------------------------
@@ -92,7 +95,7 @@ impl PartialEq for QueuedDispatch {
 // Dispatch Queue
 // ---------------------------------------------------------------------------
 
-/// Priority-based dispatch queue with concurrency limit.
+/// Priority-based dispatch queue with concurrency limit and composable halt conditions.
 pub struct DispatchQueue {
     /// Priority heap of pending dispatches.
     heap: BinaryHeap<QueuedDispatch>,
@@ -104,6 +107,14 @@ pub struct DispatchQueue {
     active_count: usize,
     /// K-HIGH-3: Cancelled sequences — skipped during dequeue.
     cancelled: HashSet<u64>,
+    /// P7.5-A: Composable halt conditions evaluated on every dequeue.
+    halt_conditions: Vec<Box<dyn HaltCondition>>,
+    /// P7.5-A: When the current dispatch run started (reset on `reset_halt()`).
+    started_at: Instant,
+    /// P7.5-A: Dequeue cycle counter (reset on `reset_halt()`).
+    dequeue_turns: u64,
+    /// P7.5-A: Last halt reason if the queue halted.
+    last_halt_reason: Option<HaltReason>,
 }
 
 impl DispatchQueue {
@@ -114,6 +125,10 @@ impl DispatchQueue {
             max_concurrent,
             active_count: 0,
             cancelled: HashSet::new(),
+            halt_conditions: Vec::new(),
+            started_at: Instant::now(),
+            dequeue_turns: 0,
+            last_halt_reason: None,
         }
     }
 
@@ -133,11 +148,20 @@ impl DispatchQueue {
     }
 
     /// Try to dequeue the next dispatch (highest priority, oldest within tier).
-    /// Returns None if the queue is empty or concurrency limit is reached.
+    /// Returns None if the queue is empty, concurrency limit is reached,
+    /// or a halt condition has fired.
     /// K-HIGH-3: Skips cancelled entries automatically.
+    /// P7.5-A: Evaluates halt conditions before dequeuing.
     pub fn try_dequeue(&mut self) -> Option<QueuedDispatch> {
         if self.active_count >= self.max_concurrent {
             return None;
+        }
+        // K-MED-3: Only evaluate halt conditions when there's work to halt
+        if !self.heap.is_empty() {
+            if let Some(reason) = self.evaluate_halt() {
+                self.last_halt_reason = Some(reason);
+                return None;
+            }
         }
         // Skip cancelled entries
         while let Some(entry) = self.heap.pop() {
@@ -145,6 +169,7 @@ impl DispatchQueue {
                 continue; // Skip and clean up
             }
             self.active_count += 1;
+            self.dequeue_turns += 1;
             return Some(entry);
         }
         None
@@ -198,6 +223,61 @@ impl DispatchQueue {
         entries
     }
 
+    // ── Halt condition management (P7.5-A) ──
+
+    /// Add a halt condition to the queue.
+    pub fn add_halt_condition(&mut self, condition: Box<dyn HaltCondition>) {
+        self.halt_conditions.push(condition);
+    }
+
+    /// Set halt conditions, replacing any existing ones.
+    /// Default: `TurnLimit(100) | TimeoutHalt(600)` — no dispatch runs forever.
+    pub fn set_halt_conditions(&mut self, conditions: Vec<Box<dyn HaltCondition>>) {
+        self.halt_conditions = conditions;
+    }
+
+    /// Evaluate all halt conditions against the current context.
+    /// Returns the first HaltReason that fires (OR semantics at the top level).
+    fn evaluate_halt(&self) -> Option<HaltReason> {
+        let ctx = DispatchHaltContext {
+            turns: self.dequeue_turns,
+            started_at: self.started_at,
+        };
+        for cond in &self.halt_conditions {
+            if let Some(reason) = cond.check(&ctx) {
+                return Some(reason);
+            }
+        }
+        None
+    }
+
+    /// Reset halt state for a new dispatch run.
+    /// Resets the turn counter, started_at, clears last halt reason,
+    /// and calls reset() on all conditions.
+    pub fn reset_halt(&mut self) {
+        self.dequeue_turns = 0;
+        self.started_at = Instant::now();
+        self.last_halt_reason = None;
+        for cond in &mut self.halt_conditions {
+            cond.reset();
+        }
+    }
+
+    /// Check if the queue is currently halted.
+    pub fn is_halted(&self) -> bool {
+        self.last_halt_reason.is_some()
+    }
+
+    /// Get the last halt reason, if any.
+    pub fn last_halt_reason(&self) -> Option<&HaltReason> {
+        self.last_halt_reason.as_ref()
+    }
+
+    /// Get the number of dequeue turns since last reset.
+    pub fn dequeue_turns(&self) -> u64 {
+        self.dequeue_turns
+    }
+
     /// Get a snapshot of the queue state for the frontend.
     pub fn snapshot(&self) -> QueueSnapshot {
         QueueSnapshot {
@@ -205,6 +285,9 @@ impl DispatchQueue {
             active_count: self.active_count,
             max_concurrent: self.max_concurrent,
             next_priority: self.heap.peek().map(|e| e.priority),
+            is_halted: self.last_halt_reason.is_some(),
+            halt_reason: self.last_halt_reason.as_ref().map(|r| r.message.clone()),
+            dequeue_turns: self.dequeue_turns,
         }
     }
 }
@@ -216,6 +299,12 @@ pub struct QueueSnapshot {
     pub active_count: usize,
     pub max_concurrent: usize,
     pub next_priority: Option<DispatchPriority>,
+    /// P7.5-A: Whether the queue is currently halted.
+    pub is_halted: bool,
+    /// P7.5-A: Human-readable halt reason, if halted.
+    pub halt_reason: Option<String>,
+    /// P7.5-A: Number of dequeue cycles since last reset.
+    pub dequeue_turns: u64,
 }
 
 // ---------------------------------------------------------------------------

@@ -50,6 +50,8 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 | OS-BL-026 | `[frontend]` `[runtime]` | pattern | Event-driven + poll hybrid: use sequence counter to prevent stale poll results from overwriting fresh event-driven results. |
 | OS-BL-027 | `[frontend]` `[design-system]` | gotcha | Workspace preset panel sizes must respect registered minWidth/minHeight constraints. applyPreset does not clamp — the preset definition is the enforcement point. |
 | OS-BL-028 | `[frontend]` `[design-system]` | pattern | DockBar @keyframes must be self-provided (inline <style>) since globals.css has no shared keyframes. Same pattern as ConnectivityPanel, TeamPanel, ActionPalette per OS-BL-018. |
+| OS-BL-029 | `[rust]` `[runtime]` | pattern | Backward-compatible scrubbing: add `_scrubbed(…, Option<&Scrubber>)` variant, delegate original function with `None`. No callers break, opt-in wiring for Phase 8. |
+| OS-BL-030 | `[rust]` `[runtime]` | pattern | Trait-based halt conditions (BitOr/BitAnd on Box<dyn Trait>) compose cleanly in Rust. DispatchQueue evaluates them on dequeue. Phase 8 plugs ManaBudgetExhausted into the same trait. |
 
 ---
 
@@ -280,5 +282,77 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Context:** P7-L — useDispatchQueue had two parallel useEffects: one loading the agent registry (for category→priority mapping), one loading active agents. Because both fired concurrently, the initial agent list rendered with all priorities as 'low' (empty categoryMap). The operator saw incorrect dispatch urgency on first paint.
 **Solution:** Chain the loads in a single useEffect: registry first, then data that derives from it. The extra round-trip is negligible vs. the data correctness gain.
 **Prevention:** When a hook computes derived state from two async sources where one informs the other, sequence them explicitly. Don't rely on React effect ordering — effects with `[]` deps fire simultaneously.
+
+---
+
+### OS-BL-029: Backward-Compatible Scrubbing via Opt-In Wrapper
+**Discovered:** 2026-04-04 | **Domain:** rust, runtime | **Severity:** pattern | **Tag:** `[rust]` `[runtime]`
+**Context:** P7.5-A — SecretScrubber needed to be wired into `log_dispatch_event` and `send_message` without breaking existing callers. Solution: create `_scrubbed(…, Option<&SecretScrubber>)` variant that does the real work. Original function delegates with `None`. All callers unchanged. Phase 8 passes a real scrubber.
+**Pattern:** When adding cross-cutting concerns (scrubbing, logging, metrics) to existing functions, add an optional parameter variant and delegate. Don't change the original signature.
+
+---
+
+### OS-BL-030: Composable Halt Conditions via Trait + BitOr/BitAnd
+**Discovered:** 2026-04-04 | **Domain:** rust, runtime | **Severity:** pattern | **Tag:** `[rust]` `[runtime]`
+**Context:** P7.5-A — Dispatch queue needed composable termination conditions (from AutoGen's TerminationCondition pattern). Implemented as `HaltCondition` trait with `check()`, `reset()`, `name()`. `BitOr` and `BitAnd` on `Box<dyn HaltCondition>` enable `turn_limit(100) | timeout_halt(600)` composition.
+**Key insight:** Keep the trait stateless where possible — pass context (turns, started_at) via a `DispatchHaltContext` struct rather than storing mutable counters inside the condition. Makes reset() trivial and conditions reusable across dispatch runs.
+
+---
+
+### OS-BL-031: Exponential Decay > Linear Decay for Memory Scoring
+**Discovered:** 2026-04-05 | **Domain:** rust, runtime | **Severity:** pattern | **Tag:** `[rust]` `[runtime]`
+**Context:** April 5 repo mining — StixDB uses `importance * 2^(-elapsed_hours / half_life_hours)` instead of linear decay. The exponential formula (a) gives a smooth curve vs. cliff at linear cutoff, (b) allows persona-configurable half-life (Pierce remembers longer than ephemeral task agents), (c) is trivially computable in SQLite via `POWER()`.
+**Key constants:** Default half-life 48h. Prune threshold 0.05. Archive threshold 0.08. Touch-boost formula: `min(1.0, score * 1.2 + 0.1)` — multiplicative + additive so even near-dead memories revive meaningfully on access.
+
+---
+
+### OS-BL-032: RRF Fusion Beats Score Normalization for Hybrid Search
+**Discovered:** 2026-04-05 | **Domain:** rust, runtime | **Severity:** pattern | **Tag:** `[rust]` `[runtime]`
+**Context:** April 5 repo mining — GitNexus (22K stars) uses Reciprocal Rank Fusion `1/(K + rank)` where K=60 to merge FTS5 keyword and vector similarity results. RRF naturally balances disparate score scales without normalization. Per-document scores from both systems sum. No tuning needed — K=60 is the standard default. This is the missing fusion layer for KAIROS's FTS5 + sqlite-vec dual retrieval.
+**Key insight:** Run both search systems, merge by RRF, then apply touch-boost + importance weighting. Don't pick one system — fuse them.
+
+---
+
+### OS-BL-033: Three-Space Memory Partition Prevents 6 Conflation Failures
+**Discovered:** 2026-04-05 | **Domain:** runtime, governance | **Severity:** architecture | **Tag:** `[runtime]` `[governance]`
+**Context:** April 5 repo mining — ArsContexta documents exactly 6 failure modes from mixing memory spaces: (1) ops into notes = search pollution, (2) self into notes = schema confusion, (3) notes into ops = knowledge lost at purge, (4) self into ops = orientation fails, (5) ops into self = bloats beyond load capacity, (6) notes into self = domain knowledge doesn't scale in self. Fix: enforce three-space partition in KAIROS via `space` column: `kernel` (identity, slow growth, full load at boot), `garden` (composable knowledge, progressive disclosure), `ops` (coordination, targeted access, purgeable).
+**Key insight:** Content moves from temporal to durable (ops → garden, ops → kernel) but NEVER reverse. One-directional promotion rule.
+
+---
+
+### OS-BL-034: Similarity Consolidation — 0.88 Cosine Threshold
+**Discovered:** 2026-04-05 | **Domain:** rust, runtime | **Severity:** constant | **Tag:** `[rust]` `[runtime]`
+**Context:** April 5 repo mining — StixDB merges memory nodes above 0.88 cosine similarity. Merged embedding = normalized average of both parents. Importance = `max(parent_a, parent_b) * 0.95`. Parents archived (not deleted) with `lineage_summary_id` pointing to merged node. This is the condenser's consolidation pass — directly portable via sqlite-vec.
+**Key constants:** 0.88 threshold, 0.95 importance preservation, max 64 nodes per consolidation batch, 30s agent cycle interval.
+
+---
+
+### OS-BL-035: Dark-Mode Design Rules (Consolidated from 9 Systems)
+**Discovered:** 2026-04-05 | **Domain:** frontend, design-system | **Severity:** pattern | **Tag:** `[frontend]` `[design-system]`
+**Context:** April 5 repo mining — awesome-design-md analyzed 55 DESIGN.md files from real companies. Dark-mode consensus from Linear, Supabase, VoltAgent, Raycast, Spotify, xAI, Framer, SpaceX, Warp:
+- **Never** pure `#000000` background (use `#050507` to `#121212`)
+- **Never** pure `#ffffff` text (use `#f2f2f2` to `#fafafa`)
+- **Never** box-shadows on dark backgrounds (use rgba white overlays for depth)
+- Elevation = border-weight progression or `rgba(255,255,255, 0.02/0.04/0.05)`
+- Max headline weight 500-600 (never 700+)
+- Accent color for interactive elements ONLY — never decorative fills
+- Persona glow: `drop-shadow(0 0 2px {color})` → `drop-shadow(0 0 8px {color})`
+**Key insight:** Luminance stacking (rgba white overlays at 0.02/0.04/0.05) creates persona-color-independent surface hierarchy. This is how 10 persona colors coexist on the same dark canvas.
+
+---
+
+### OS-BL-036: Ecosystem Refinement — Agent Count Is a Liability
+**Discovered:** 2026-04-05 | **Domain:** governance, architecture | **Severity:** pattern | **Tag:** `[governance]`
+**Context:** Brainstorm session auditing the full agent ecosystem (42 agents + 35 sub-agents) revealed massive redundancy: 6 orchestrators doing variations of "dispatch personas for review," 3 discussion formats that are one parameterized function, intelligences that duplicate their parent persona's domain (Kiln = Kehinde perf lens, Compass = Kehinde impact lens, Beacon = Sentinel post-deploy). Task-utilities (Seed Generator, Scaffold, Changelog) are prompts wearing agent costumes.
+**Resolution:** 42 agents -> 14 personas. 35 sub-agents -> 20. 6 agents absorbed into parents. 10 orchestrators -> 2 parameterized dispatchers. 5 utilities -> commands. Every entity must justify its existence with domain expertise that grows through use.
+**Key insight:** Agent proliferation feels like capability building but creates maintenance debt, catalog drift, and routing confusion. The operator shouldn't need to know which sub-agent to invoke — the persona knows its own hands. See `docs/ECOSYSTEM-REFINEMENT.md`.
+
+---
+
+### OS-BL-037: Profiles Are Resumes, Not Config — The Portability Boundary
+**Discovered:** 2026-04-05 | **Domain:** governance, architecture | **Severity:** pattern | **Tag:** `[governance]`
+**Context:** Designing professional profiles for Knowledge Loading Architecture. Critical boundary: profiles contain domain expertise portable across ALL projects, not project-specific configuration. "Elevation on dark surfaces = rgba white overlays" is domain knowledge. "Forge OS uses #050507 backgrounds" is project config.
+**Classification rule:** If a methodology would be useful on a different project with the same technology stack, it's domain expertise (profile). If it only makes sense in context of a specific project's schema/features/flows, it's project config (vault). Technology-specific expertise IS domain expertise.
+**Key insight:** Clean initial profiles establish the classification template for the self-updating loop. Contaminated seeds corrupt the classification boundary from the start. See `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`.
 
 ---

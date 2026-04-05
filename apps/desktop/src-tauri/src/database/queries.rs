@@ -156,6 +156,7 @@ pub fn set_setting(conn: &Connection, key: &str, value: &str) -> Result<(), rusq
 // ── Dispatch event audit trail ──
 
 /// Log an agent dispatch lifecycle event for audit purposes.
+/// P7.5-A: If a SecretScrubber is provided, metadata_json is scrubbed before INSERT.
 pub fn log_dispatch_event(
     conn: &Connection,
     dispatch_id: &str,
@@ -163,11 +164,27 @@ pub fn log_dispatch_event(
     event_type: &str,
     metadata_json: &str,
 ) -> Result<(), rusqlite::Error> {
+    log_dispatch_event_scrubbed(conn, dispatch_id, agent_slug, event_type, metadata_json, None)
+}
+
+/// Log a dispatch event with optional secret scrubbing.
+pub fn log_dispatch_event_scrubbed(
+    conn: &Connection,
+    dispatch_id: &str,
+    agent_slug: &str,
+    event_type: &str,
+    metadata_json: &str,
+    scrubber: Option<&super::sanitize::SecretScrubber>,
+) -> Result<(), rusqlite::Error> {
     let id = uuid::Uuid::new_v4().to_string();
+    let scrubbed = match scrubber {
+        Some(s) => s.scrub(metadata_json),
+        None => metadata_json.to_string(),
+    };
     conn.execute(
         "INSERT INTO dispatch_events (id, dispatch_id, agent_slug, event_type, metadata_json)
          VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![id, dispatch_id, agent_slug, event_type, metadata_json],
+        params![id, dispatch_id, agent_slug, event_type, scrubbed],
     )?;
     Ok(())
 }

@@ -221,8 +221,13 @@ pub fn run() {
             };
 
             // P7-N: Dispatch queue — priority-based with configurable concurrency
+            // P7.5-A: Default halt conditions — no dispatch runs forever
+            let mut queue = dispatch::queue::DispatchQueue::new(3);
+            queue.add_halt_condition(
+                dispatch::halt::turn_limit(100) | dispatch::halt::timeout_halt(600),
+            );
             let dispatch_queue: dispatch::queue::DispatchQueueState =
-                Arc::new(Mutex::new(dispatch::queue::DispatchQueue::new(3)));
+                Arc::new(Mutex::new(queue));
 
             app.manage(db);
             app.manage(providers);

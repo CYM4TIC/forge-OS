@@ -1,9 +1,10 @@
 use rusqlite::{params, Connection};
 
 use super::types::{SwarmMessage, SwarmMessageType};
+use crate::database::sanitize::SecretScrubber;
 
 /// Send a message to an agent's mailbox.
-/// Returns the message ID.
+/// P7.5-A: If a SecretScrubber is provided, payload is scrubbed before INSERT.
 pub fn send_message(
     conn: &Connection,
     id: &str,
@@ -12,10 +13,27 @@ pub fn send_message(
     msg_type: &SwarmMessageType,
     payload: &str,
 ) -> Result<(), rusqlite::Error> {
+    send_message_scrubbed(conn, id, from_agent, to_agent, msg_type, payload, None)
+}
+
+/// Send a message with optional secret scrubbing.
+pub fn send_message_scrubbed(
+    conn: &Connection,
+    id: &str,
+    from_agent: &str,
+    to_agent: &str,
+    msg_type: &SwarmMessageType,
+    payload: &str,
+    scrubber: Option<&SecretScrubber>,
+) -> Result<(), rusqlite::Error> {
+    let scrubbed = match scrubber {
+        Some(s) => s.scrub(payload),
+        None => payload.to_string(),
+    };
     conn.execute(
         "INSERT INTO mailbox (id, from_agent, to_agent, msg_type, payload)
          VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![id, from_agent, to_agent, msg_type.as_str(), payload],
+        params![id, from_agent, to_agent, msg_type.as_str(), scrubbed],
     )?;
     Ok(())
 }

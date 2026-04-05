@@ -2,6 +2,7 @@ pub mod schema;
 pub mod migrations;
 pub mod queries;
 pub mod checkpoints;
+pub mod sanitize;
 pub mod search;
 
 use rusqlite::Connection;
