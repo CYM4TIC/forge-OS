@@ -8,8 +8,8 @@ project: forge_os
 architecture: tauri_v2
 phase: 8
 current_session: 7.5
-current_batch: P7.5-B
-batches_done: 113
+current_batch: P7.5-C
+batches_done: 114
 phases_complete: [1, 4, 5, 6, 7]
 phases_total: 11
 sessions_total: 38
@@ -28,11 +28,9 @@ dms_batches_total: 122
 
 **Session 7.5 — Pre-Phase 8 Intelligence Retrofit.**
 
-Last completed: **P7.5-A** — Dispatch Queue Intelligence + Secret Scrubbing. HaltCondition trait (combinators, built-ins: TurnLimit/TimeoutHalt/ExternalHalt), SecretScrubber (longest-first, deterministic), queue halt evaluation, backward-compatible scrub wiring. Gated by Kehinde + Tanaka, Sentinel PASS.
+Last completed: **P7.5-B** — Ecosystem Refinement. 42 agents → 14 world-class personas. 6 agents absorbed, 10 orchestrators → 2 dispatchers (gate-dispatcher + discussion-protocol), 5 utilities → commands, 15 sub-agents retired, 4 intelligences elevated. "Dr." prefix dropped. BOOT.md/BATCH-MANIFESTS.md split into folder systems (batch-manifests/, build-history/). Gated by Kehinde, Sentinel PASS (tsc 0 errors, cargo check 0 errors).
 
-Session restructured (2026-04-05): 7 batches → 10 batches (A-J). People first (B-F), infrastructure second (G-J). See `docs/ECOSYSTEM-REFINEMENT.md`.
-
-**Next: P7.5-B — Ecosystem Refinement** (42 agents → 14 personas, retire/consolidate/elevate).
+**Next: P7.5-C — Research Audit** (map 182+ patterns to 14 personas → RESEARCH-PERSONA-MAP.md).
 
 ---
 
@@ -52,7 +50,7 @@ Session restructured (2026-04-05): 7 batches → 10 batches (A-J). People first 
 | Batch | Name | Status |
 |-------|------|--------|
 | P7.5-A | Dispatch Queue Intelligence + Secret Scrubbing | ✅ DONE |
-| P7.5-B | Ecosystem Refinement (42→14 personas) | ⬜ TODO |
+| P7.5-B | Ecosystem Refinement (42→14 personas) | ✅ DONE |
 | P7.5-C | Research Audit (182+ patterns → 14 personas) | ⬜ TODO |
 | P7.5-D.0–D.9 | Guided Profile Sessions — 10 original personas | ⬜ TODO |
 | P7.5-E.0–E.3 | Guided Profile + Introspection — 4 elevated personas | ⬜ TODO |

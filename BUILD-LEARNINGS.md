@@ -356,3 +356,18 @@ Filter at Phase 0 by grepping for the tag(s) matching your batch's domain:
 **Key insight:** Clean initial profiles establish the classification template for the self-updating loop. Contaminated seeds corrupt the classification boundary from the start. See `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`.
 
 ---
+
+### OS-BL-038: Boot File Architecture — Split Monoliths at the Read Boundary
+**Discovered:** 2026-04-05 | **Domain:** governance, tooling | **Severity:** architecture | **Tag:** `[governance]` `[tooling]`
+**Context:** BOOT.md grew to 937 lines / 17K tokens. Every boot required 3-5 read retries with offset/limit. BATCH-MANIFESTS.md hit 3,757 lines. Solution: split into folder systems (batch-manifests/, build-history/) with lean index files. Boot reads went from 17K tokens to ~350 lines.
+**Pattern:** Any file that grows unboundedly and is read on every session should be split at its natural seams (phase, session). Keep a lean index at the top level. Sealed historical content goes into per-phase files. The handoff appends to the current session's file, not a monolith.
+**Anti-pattern:** "limit 150" workarounds on monolith reads. If you need a limit parameter to read your boot file, the file is too big.
+
+---
+
+### OS-BL-039: Ecosystem Restructuring — Grep for Stale References Before Declaring Done
+**Discovered:** 2026-04-05 | **Domain:** governance | **Severity:** process-failure | **Tag:** `[governance]`
+**Context:** P7.5-B retired 39 entities. Consequence climb caught 3 stale "10-persona" references. Gate caught 6 more commands dispatching retired agents + stale AGENT-MANIFEST.md + stale MODEL-TIERING.md reference. 10 total stale references that would have broken dispatch.
+**Pattern:** After any mass restructuring, grep the entire active codebase for every retired file path. Historical/research files are fine. Active commands, agents, kernels, and governance docs are not. The blast radius of a rename is every file that imports the old name.
+
+---

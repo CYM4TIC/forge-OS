@@ -1,0 +1,12 @@
+**2026-04-05 — P7.5-B: Ecosystem Refinement**
+- **SCOPE:** Restructure 42-agent ecosystem to 14 world-class personas. Also: BOOT.md/BATCH-MANIFESTS.md split into folder systems.
+- **INFRASTRUCTURE FIRST:** BOOT.md (937 lines → 97 lines), BATCH-MANIFESTS.md (3,757 lines → batch-manifests/ per-phase), session logs → build-history/ per-phase. Boot reads: 17K tokens → ~350 lines, zero retries.
+- **RETIREMENTS:** 6 agents (Chronicle→Nyx, Scribe→Nyx, Arbiter→Discussion Protocol, Kiln→Kehinde, Compass→Kehinde, Beacon→Sentinel), 11 kernels, 15 sub-agents, AGENT-MANIFEST.md. All to _retired/ dirs.
+- **CONSOLIDATIONS:** 10 orchestrators → 2 dispatchers (gate-dispatcher.md with 6 modes, discussion-protocol.md with 3 modes). 5 utilities → commands (test-gen.md created).
+- **ELEVATIONS:** Scout, Sentinel, Wraith, Meridian → full personas with identity dirs (JOURNAL.md + RELATIONSHIPS.md).
+- **CLEANUP:** "Dr." prefix removed (47 occurrences, 26 files). Persona table 10→14. Entity counts updated everywhere.
+- **CONSEQUENCE CLIMB:** Caught 3 stale "10-persona" references in identity files.
+- **GATE (Kehinde):** Caught 6 commands dispatching retired orchestrators, stale AGENT-MANIFEST.md, stale MODEL-TIERING.md reference. All fixed.
+- **SENTINEL:** PASS. tsc --noEmit = 0 errors. cargo check = 0 errors (46 pre-existing warnings).
+- **COMMITS:** `dafd147` (P7.5-A code), `dbd0b95` (research docs), `909c98d` (infrastructure split), `35fca57` (ecosystem refinement), `8d69326` (consequence climb fixes), `6302560` (gate fixes).
+- **BUILD-LEARNINGS:** OS-BL-038 (split monoliths at read boundary), OS-BL-039 (grep for stale refs after restructuring).

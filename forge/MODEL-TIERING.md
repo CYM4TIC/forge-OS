@@ -104,4 +104,4 @@ The `model:` frontmatter is the default. Overrides are per-invocation and don't 
 
 Every agent file MUST have a valid `model:` field in YAML frontmatter. Valid values: `high`, `medium`, `fast`.
 
-An agent without `model:` frontmatter is a build error. The AGENT-MANIFEST.md serves as the canonical inventory — any agent not listed there doesn't exist in the system.
+An agent without `model:` frontmatter is a build error. The ENTITY-CATALOG.md serves as the canonical inventory — any agent not listed there doesn't exist in the system.
