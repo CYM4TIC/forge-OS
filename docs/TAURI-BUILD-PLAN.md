@@ -221,7 +221,7 @@ trait ContextEngine {
 }
 ```
 
-KAIROS becomes `KairosEngine: ContextEngine`. Future memory strategies (per-persona context assembly, project-specific memory, LightRAG-backed) implement the same trait. The dispatch pipeline calls `ContextEngine` methods — never KAIROS directly.
+KAIROS becomes `KairosEngine: ContextEngine`. Future memory strategies (per-persona context assembly, project-specific memory, retrieval engine-backed) implement the same trait. The dispatch pipeline calls `ContextEngine` methods — never KAIROS directly.
 
 **2. Cache-TTL Context Pruning (from OpenClaw pattern)**
 
@@ -746,7 +746,7 @@ The OS has a formalized internal communication system where personas propose cha
 
   **`ProposalOutcome` enum (from Factory-AI FeatureSuccessState):** Success, Partial, Failure. Stored on decision resolution — `Partial` means accepted and partially implemented (verification incomplete). Enables outcome quality tracking over time.
 - `triage.rs` — auto-routes proposals to scope-appropriate personas for evaluation. Security proposal → Tanaka evaluates. UX proposal → Mara evaluates. Architecture → Kehinde. Cross-cutting → Council. Uses Agent Registry (7.1) for persona→domain mapping. Proposals can also be manually assigned. **(ByteRover: Policy Engine with first-match-wins rule evaluation informs the triage mechanism — ordered rules route proposals by scope pattern, first match determines evaluator assignment.)**
-- `decisions.rs` — accepted proposals become decisions in `.forge/decisions/`. Rejected proposals preserve reasoning (why not). Both indexed by LightRAG (Phase 8.3) when available. Decision schema mirrors proposal but adds: resolution rationale, implementing batch, outcome tracking, **`outcome: ProposalOutcome`** (Success/Partial/Failure from Factory-AI FeatureSuccessState).
+- `decisions.rs` — accepted proposals become decisions in `.forge/decisions/`. Rejected proposals preserve reasoning (why not). Both indexed by retrieval engine (Phase 8.3) when available. Decision schema mirrors proposal but adds: resolution rationale, implementing batch, outcome tracking, **`outcome: ProposalOutcome`** (Success/Partial/Failure from Factory-AI FeatureSuccessState).
   - **`DismissalRecord` struct (from Factory-AI DismissalRecord pattern):** `{ dismissal_type: DismissalType, source_proposal_id, summary, justification }`. `DismissalType` enum: DiscoveredIssue, CriticalContext, IncompleteWork. When a proposal is dismissed rather than resolved, the dismissal is recorded with explicit justification. No silent drops — every dismissed item has a paper trail. Dismissals are distinct from rejections: rejection = "evaluated and declined"; dismissal = "acknowledged but deprioritized with documented reasoning." Dismissals visible in the Agora with distinct visual treatment.
   - Tauri command: `dismiss_proposal(id, dismissal_type, justification) -> DismissalRecord`
 - `feed.rs` — aggregates proposals + responses + decisions into a chronological feed. Supports pagination, filtering, search. Emits Tauri events on new activity.
@@ -782,13 +782,31 @@ The OS has a formalized internal communication system where personas propose cha
 
 ---
 
-## Phase 8: Intelligence Foundation (4 sessions) — RESTRUCTURED 2026-04-04
+## Pre-Phase 8 Patch: Intelligence Retrofit (Session 7.5) — ADDED 2026-04-04
 
-> **Restructure (2026-04-04):** Original Phase 8 (9 sessions) split into Phase 8 (4), Phase 9 (5), Phase 10 (4), Phase 11 (2-3).
-> Research sources: `docs/RESEARCH-AGENTIC-DEV-ENVIRONMENTS.md` (5 products, 52 patterns), `docs/RESEARCH-POETENGINEER-OBSERVATORY-AESTHETICS.md` (30 visual patterns), Karpathy LLM Wiki (vault/ritual/sigil convergence validation).
+> **Source:** April 4 repo mining (CrewAI, AutoGen, OpenHands). Patterns that can be backfilled into existing Phase 1-7 code before Phase 8. Phase 8 inherits cleaner infrastructure.
+
+**3 batches, 1 session.** Backward-compatible extensions to 6 existing modules:
+
+1. **P7.5-A: Dispatch Queue Intelligence + Secret Scrubbing** — `HaltCondition` trait with `&`/`|` combinators on `DispatchQueue`. `SecretScrubber` on all persisted payloads (dispatch_events, mailbox). Phase 8 plugs `ManaBudgetExhausted` into this trait.
+2. **P7.5-B: Finding Deduplication + Condenser Architecture** — FTS5-based finding similarity detection + pattern clustering with systemic severity escalation. `Condenser` trait + `CondenserPipeline` refactor of existing compaction. Phase 8 adds `ObservationMaskingCondenser` and `LLMSummarizingCondenser` to this pipeline.
+3. **P7.5-C: KAIROS Composite Scoring + Swarm Event Triggers** — `composite_score()` (semantic * 0.5 + recency * 0.3 + importance * 0.2) for memory recall. `TriggerRegistry` for event-driven agent dispatch from swarm mailbox. Phase 8's intelligence chains (P8-N) inherit this trigger system.
+
+**New files:** halt.rs, sanitize.rs, condenser.rs, triggers.rs. **Edited:** queue.rs, queries.rs, mailbox.rs, findings.rs, engine.rs, dream.rs, lib.rs. **Migration:** V15b. **New commands:** 3.
+
+**Gate:** Halt conditions compose. Secrets scrubbed. Findings deduplicate. Condenser pipeline produces identical compaction to pre-refactor. Composite scoring reorders recall. Triggers fire on matching events.
+
+**Depends on:** Phase 7 complete
+
+---
+
+## Phase 8: Intelligence Foundation (6 sessions) — RESTRUCTURED 2026-04-04
+
+> **Restructure (2026-04-04):** Original Phase 8 (9 sessions) split into Phase 8 (6), Phase 9 (5), Phase 10 (4), Phase 11 (2-3). Phase 8 expanded from 4 to 6 sessions to include persona evolution engine (8.5) and messaging gateway (8.6).
+> Research sources: `docs/RESEARCH-AGENTIC-DEV-ENVIRONMENTS.md` (5 products, 52 patterns), `docs/RESEARCH-POETENGINEER-OBSERVATORY-AESTHETICS.md` (30 visual patterns), Karpathy LLM Wiki (vault/ritual/sigil convergence validation). **April 4 repo mining:** CrewAI (14 patterns), AutoGen (14 patterns), OpenHands (15 patterns) — composable halt conditions, condenser pipelines, progress ledgers, stuck detection, handoff-as-tool, SocietyOfMind nesting, intervention handlers, delegation budget partitioning, error classification, event-sourced state. Full reports: `research/{crewai,autogen,openhands}-mining-report.md`.
 > Reason: original Phase 8 contained ~37 Rust modules, 13 SQLite tables, 7 new panel types, ~15K LOC Rust, ~60 Tauri commands across 4 distinct architectural layers. Split by layer: intelligence foundation → observatory+predictions → platform integration → integration testing.
 
-**Goal:** The core runtime systems the OS needs to think — vault watching, dispatch pipeline, knowledge graph, project onboarding. Everything downstream depends on this phase being solid.
+**Goal:** The core runtime systems the OS needs to think — vault watching, dispatch pipeline, knowledge graph, project onboarding, persona evolution, messaging gateway. Everything downstream depends on this phase being solid.
 
 ### Session 8.1 — Vault Watcher + State Engine + Skills Crystallization
 
@@ -816,8 +834,8 @@ The OS has a formalized internal communication system where personas propose cha
     - `economy.rs` — `ManaEconomy` struct: load grimoire, price lookups, budget allocation
     - `tracker.rs` — per-run mana tracking: starting budget, current balance, spend log
     - `grimoire.rs` — parse `GRIMOIRE.md` (repo root) for cost definitions
-  - **Grimoire format** (`GRIMOIRE.md`): single file defining all mana costs (file read=0, artifact write=0, depth read=1, web search=2, doc gen=2, LightRAG=3, emanation=10-20, image gen=3) and run budgets (interactive=120, heartbeat=60, dreamtime=40, scrying=40, automated=60). **(AiDesigner: profile-based environment separation — grimoire supports dev/staging/prod profiles with inheritance. Production profile restricts Destructive capabilities entirely. Profile auto-detected via env vars or git branch.)** **(Agent Browser: hierarchical config merge — 4-tier cascade (per-dispatch > per-persona > project grimoire > system defaults) with additive extension arrays for capability accumulation.)**
-  - **Mana gradient shapes behavior:** Free (local reads, artifact writes) → Low (depth reads) → Medium (external, generation) → High (emanations, LightRAG). Agents self-optimize toward cheap paths.
+  - **Grimoire format** (`GRIMOIRE.md`): single file defining all mana costs (file read=0, artifact write=0, depth read=1, web search=2, doc gen=2, retrieval engine=3, emanation=10-20, image gen=3) and run budgets (interactive=120, heartbeat=60, dreamtime=40, scrying=40, automated=60). **(AiDesigner: profile-based environment separation — grimoire supports dev/staging/prod profiles with inheritance. Production profile restricts Destructive capabilities entirely. Profile auto-detected via env vars or git branch.)** **(Agent Browser: hierarchical config merge — 4-tier cascade (per-dispatch > per-persona > project grimoire > system defaults) with additive extension arrays for capability accumulation.)**
+  - **Mana gradient shapes behavior:** Free (local reads, artifact writes) → Low (depth reads) → Medium (external, generation) → High (emanations, deep retrieval queries). Agents self-optimize toward cheap paths.
   - **Pareto frontier tracking (from Meta-Harness + Lighthouse scoring):**
     - `pareto.rs` — track mana spent vs finding quality per persona per surface type
     - Empirical frontier: "At 40 mana, Pierce's gate pass rate is 78%. At 80 mana: 94%. At 120 mana: 96%."
@@ -861,7 +879,7 @@ The OS has a formalized internal communication system where personas propose cha
   - **Three-tier knowledge access (mana-aware):**
     - Sigils: 0 mana — index scan ("what do we know about auth?")
     - Articles: 1 mana — full article read ("what does ADL-017 say?")
-    - Ley lines (LightRAG): 3 mana — cross-article query ("what connects auth to payments?")
+    - Ley lines (retrieval engine): 3 mana — cross-article query ("what connects auth to payments?")
   - **Three-tier context assembly model (from oh-my-codex, validates KAIROS + enriches dispatch prompts):**
     - **PRIORITY tier** (replaced per dispatch): kernel + current goal + dispatch grants + capability metadata. Fresh every time — no stale context.
     - **WORKING tier** (append-only, prunable by dreamtime): echoes + recent findings + active traces + in-flight dispatch state. Grows during session, pruned nightly.
@@ -1012,7 +1030,7 @@ The OS has a formalized internal communication system where personas propose cha
 
 - **Arbiter CONSORTIUM Synthesis (v2 addition, from G0DM0D3)**
   - When the Build Triad or any multi-agent gate produces conflicting severity rulings on the same finding, the findings aggregator detects the conflict and dispatches Arbiter.
-  - Arbiter collects all positions + evidence, queries LightRAG for similar past conflicts, and synthesizes ground truth: "Tanaka says CRIT because X, Mara says LOW because Y — considering both threat models, the ground truth is Z. Confidence: high — 3 prior similar cases resolved this way."
+  - Arbiter collects all positions + evidence, queries retrieval engine for similar past conflicts, and synthesizes ground truth: "Tanaka says CRIT because X, Mara says LOW because Y — considering both threat models, the ground truth is Z. Confidence: high — 3 prior similar cases resolved this way."
   - The synthesis AND the raw positions are both preserved. Arbiter synthesizes for the operator. Arbiter never overrides a persona.
   - Outcome tracking: was Arbiter's synthesis correct? Filed as a decision trace with `validated` field updated after N batches.
   - **Trade-Off Pattern Index (from Block engineering research — inter-agent negotiation)**
@@ -1044,18 +1062,18 @@ The OS has a formalized internal communication system where personas propose cha
   - **`DispatchTransport` enum:** `Internal` (existing Rust dispatch) | `ACP` (external agent via ACP, Phase 10.2) | `Terminal` (inject into terminal pane, Phase 10.1). Build the enum and `Internal` transport now. ACP and Terminal transports implemented when those phases land.
   - **Plan mode as explicit `InteractionMode::Plan`.** `/plan` command in CommandRegistry. Maps to existing `Spec` mode with a UI surface — operator explicitly requests read-only analysis before execution. (From Codex/T3 Code — both offer plan mode as first-class user choice)
 
-### Session 8.3 — LightRAG Integration + Vault as Virtual Filesystem
-- Install LightRAG (`pip install lightrag-hku`) + MCP bridge
+### Session 8.3 — Retrieval Engine + Knowledge Garden + Vault as Virtual Filesystem
+- SQLite-native retrieval via `sqlite-vec` crate (Rust bindings for C extension) + `fastembed` crate (ONNX embedding). No Python dependencies. No external processes.
 - Configure with Claude API backend
 - `tools/index-vault.py` for batch indexing
 - Query routing: hybrid default, local for entity questions, global for cross-cutting
 - Index OS's own docs as test → verify queries
-- Wire into Scout's pre-build recon (LightRAG query for batch-relevant entities)
-- Wire into GraphViewer (Phase 5.3) — LightRAG entities with Pretext-measured labels
+- Wire into Scout's pre-build recon (retrieval engine query for batch-relevant entities)
+- Wire into GraphViewer (Phase 5.3) — retrieval engine entities with Pretext-measured labels
 - Auto-index when `/init` or `/link` creates a new vault
 - **Temporal edges (from MiroFish pattern):** relationships in the knowledge graph carry `valid_from` / `valid_until` timestamps. Architecture decisions that get superseded have their edges invalidated rather than deleted. Scout can query "what was true about auth at the time L2 was built" vs "what's true now." Enables historical reasoning.
 - **Ley Line Generation (from Karpathy backlink pattern)**
-  - During LightRAG indexing, generate bidirectional ley lines (backlinks) between vault articles:
+  - During retrieval engine indexing, generate bidirectional ley lines (backlinks) between vault articles:
   - When article A references article B, both articles get ley line entries
   - Ley lines stored in `vault/ley-lines/<article-slug>.json` — array of `{ target, relationship, context }`
   - Vault browser panel (Phase 5.3) renders ley lines as a "Referenced By" section on each article
@@ -1075,7 +1093,7 @@ The OS has a formalized internal communication system where personas propose cha
   - **Pretext detection:** when customer-facing surfaces detected, auto-scaffold `layout-engine` package in project repo, add Pretext/CLS evaluation rules to Mara/Riven assignments
   - **Customer Simulator Generator:** Mara auto-generates 3-5 sim-agents from discovered user roles
   - **PDF Project Brief** generated via document engine (dual-output: markdown + PDF)
-  - LightRAG auto-indexes new vault
+  - retrieval engine auto-indexes new vault
   - **Mandatory Security Circle (from Excalibur Warden pattern)**
     - "Configure security audit schedule" — operator sets Tanaka and Wraith dispatch frequency
     - Default: Tanaka runs on every gate. Wraith runs on high-risk surfaces (auth, payments, PII).
@@ -1093,7 +1111,7 @@ The OS has a formalized internal communication system where personas propose cha
   - Stack-specific MCP recommendations
   - Pretext detection + recommendation for applicable repos
   - Customer simulator generation from detected surfaces
-  - LightRAG auto-indexes generated vault
+  - retrieval engine auto-indexes generated vault
 - Both flows render as guided wizards in the Chat panel
 - **/init v2 additions:**
   - Domain adapter selection during discovery: "What functions will this system support?" Default: development. Future: operations, support, sales. Each adapter registers its event types, signals, and trace types.
@@ -1106,7 +1124,7 @@ The OS has a formalized internal communication system where personas propose cha
 - **Research enrichments (2026-04-04):**
   - **Issue-tracker-as-dispatch awareness.** During /init, detect connected Linear/GitHub MCPs. If present, configure dispatch surface for issue-originated tasks. During /link, scan for existing issues tagged for automation. (From Codex — tasks originate from GitHub Issues, Linear, Jira via @mentions)
 
-**Phase 8 Gate:** Vault infrastructure stable. Skills crystallizing. Projects onboardable via /init and /link. Dispatch pipeline operational with worktree isolation. LightRAG indexing and querying. All ritual specs present (disabled by default). Mana economy tracking. Batch checkpoints operational. Plan mode available.
+**Phase 8 Gate:** Vault infrastructure stable. Skills crystallizing. Projects onboardable via /init and /link. Dispatch pipeline operational with worktree isolation. SQLite-native retrieval engine (sqlite-vec + FTS5 + entity graph) indexing and querying. Knowledge Garden renders. All ritual specs present (disabled by default). Mana economy tracking with composable halt conditions. Batch checkpoints operational. Plan mode available. Condenser pipeline compresses context. Progress ledger assesses dispatch turns. Stuck detector catches 5 loop patterns. Persona evolution engine accumulates experience and detects drift. Messaging gateway sends outbound notifications with inbound approval.
 
 **Depends on:** Phase 1 (Tauri shell, SQLite, provider system), Phase 3 (agent runtime, KAIROS, Swarm), Phase 4 (ContextEngine trait, FTS5), Phase 7 (agent registry, command registry, capability families, Agora)
 
@@ -1176,7 +1194,7 @@ The OS has a formalized internal communication system where personas propose cha
 |-----|-----------|-----------------|------------|
 | **Grimoire** | Agent Registry + persona_relationships | Tight clusters (high link force, low repel) | Personas (10), intelligences (10), orchestrators (10), sub-agents (34) — colored by role |
 | **Vault** | Vault file tree + sigil indexes | Medium spread | Files, ADL entries, build learnings, skills — colored by domain tag |
-| **Ley Lines** | LightRAG entities + ley-line JSON | Wide spread (high repel, low link) | Vault articles, concepts, entities — colored by type. Temporal edges show valid_from/until |
+| **Ley Lines** | retrieval engine entities + ley-line JSON | Wide spread (high repel, low link) | Vault articles, concepts, entities — colored by type. Temporal edges show valid_from/until |
 | **Scrying** | Intelligence interaction model + signal store | Orbital (high center, low repel) | 10 intelligences as orbital nodes. Central Arbiter. Event subscriptions as edges. Chain activations as animated pulse. |
 
 **Shared graph engine** (`packages/canvas-components/graph/`):
@@ -1206,7 +1224,7 @@ The OS has a formalized internal communication system where personas propose cha
 - **TimesFM Python sidecar** (`sidecar/timesfm/`): FastAPI on port 8787, ~200M params, point forecasts + 10 quantile bands, anomaly detection. Launched by Tauri backend on app start.
 - **TimesFM Rust client** (`src-tauri/src/predictive/timesfm_client.rs`): reqwest, retry, cache (5-min TTL), z-score fallback when sidecar down or <32 datapoints.
 - **Anomaly detector** (`src-tauri/src/predictive/anomaly.rs`): on every new signal → TimesFM `/anomaly` → emit `signal.threshold` event if anomalous.
-- **Reasoning engine** (`src-tauri/src/predictive/reasoning.rs`): triggered by `signal.threshold`. Step 1: query LightRAG for similar past traces. Step 2: extract reasoning + outcomes. Step 3: compose recommendation. Step 4: file to store + emit `forecast.alert`. Non-Markovian credit assignment — reads full echo history, not just recent window.
+- **Reasoning engine** (`src-tauri/src/predictive/reasoning.rs`): triggered by `signal.threshold`. Step 1: query retrieval engine for similar past traces. Step 2: extract reasoning + outcomes. Step 3: compose recommendation. Step 4: file to store + emit `forecast.alert`. Non-Markovian credit assignment — reads full echo history, not just recent window.
 - **Recommendation store** (`src-tauri/src/predictive/recommendations.rs`): pending → approved/overridden/dismissed. Outcome tracking after N actions.
 - **Incident-driven policy evolution** (`src-tauri/src/predictive/policy_evolution.rs`): pattern detection when finding type repeats N times across M batches → compose policy proposal → file through Agora with `source: Automated`.
 - **Scrying ritual extension:** vault integrity scan (contradictions, stale skills, unvalidated ADL, knowledge gaps). Impute via web search. File through Agora.
@@ -1249,7 +1267,7 @@ The OS has a formalized internal communication system where personas propose cha
 
 **Phase 9 Gate:** All panels render with observatory effects at 60fps. Graph panel has 4 working tabs with Obsidian-style controls. TimesFM sidecar operational with anomaly detection. Persona evolution Layer 1 producing journal entries. Predictions surfacing on RecommendationSurface. WebGL effects active on capable hardware with graceful fallback.
 
-**Depends on:** Phase 8 (vault, dispatch, LightRAG, onboarding), Phase 5 (existing canvas panels to upgrade), Phase 4 (canvas-components infrastructure)
+**Depends on:** Phase 8 (vault, dispatch, retrieval engine, onboarding), Phase 5 (existing canvas panels to upgrade), Phase 4 (canvas-components infrastructure)
 
 ---
 
@@ -1348,7 +1366,7 @@ The OS has a formalized internal communication system where personas propose cha
 - Chat with multiple personas across different providers
 - Canvas HUD shows pipeline stages, animated with observatory effects (breathing, flow particles, feedback trails)
 - PDF project brief generated
-- LightRAG indexes vault, Graph Viewer renders entities across all 4 tabs (Grimoire / Vault / Ley Lines / Scrying)
+- Retrieval engine indexes vault, Graph Viewer renders entities across all 4 tabs (Grimoire / Vault / Ley Lines / Scrying)
 - Graph panel: Obsidian controls functional — adjust forces, create groups, search/filter, freeze/animate
 - Connectivity panel shows GitHub
 - Agent dispatch → Scout → Build → Triad gate (with worktree isolation for parallel agents)
@@ -1372,8 +1390,8 @@ The OS has a formalized internal communication system where personas propose cha
 ### Session 11.2 — DMS Reconnection
 - `/link` the Forge DMS vault
 - Verify BOOT.md parsing → Canvas HUD shows L4-J.2c position
-- LightRAG indexes 146 segments + ADL + build learnings (with temporal edges on superseded decisions)
-- Scout recon against DMS Supabase (with LightRAG query + injection scan)
+- retrieval engine indexes 146 segments + ADL + build learnings (with temporal edges on superseded decisions)
+- Scout recon against DMS Supabase (with retrieval engine query + injection scan)
 - Build Triad gate (3 parallel sessions across configured providers, worktree-isolated)
 - Gate report in Findings Feed AND exported as PDF
 - Dev server preview showing DMS app
@@ -1428,11 +1446,12 @@ The OS has a formalized internal communication system where personas propose cha
 | 5. Canvas HUD | 3 | Living build state + agent board + findings + flow viz + graph (all as independent panel types) |
 | 6. Preview + Connectivity | 2 | Embedded dev server + service health (as independent panel types) |
 | 7. Team + Presence + Palette + Proposals | 3 | Agent registry + tool gating + command registry + **smart review dispatch** + multi-select + action palette + orchestration UI + **proposal feed (ADL-005)** |
-| 8. Intelligence Foundation | 4 | Vault + dispatch (worktree isolation, batch checkpoints) + LightRAG + onboarding |
+| 7.5. Intelligence Retrofit (pre-Phase 8) | 1 | HaltCondition trait + SecretScrubber + Condenser trait/pipeline + finding dedup/clustering + composite memory scoring + TriggerRegistry |
+| 8. Intelligence Foundation | 6 | Vault + dispatch (worktree isolation, batch checkpoints, composable halt, progress ledger, stuck detection, condenser pipeline) + retrieval engine + Knowledge Garden + onboarding + persona evolution + messaging gateway |
 | 9. Observatory + Predictions | 5 | Visual foundation (30 patterns) + graph overhaul (4 tabs, Obsidian controls) + TimesFM + persona evolution + WebGL |
 | 10. Platform Integration | 4 | Embedded terminal (ghostty-web) + ACP host + messaging/media + self-modification (WASM plugins) |
 | 11. Integration Test | 2-3 | Fresh project + DMS reconnection + observatory stress test |
-| **Total** | **36-38** | **~31-33 on critical path (Phase 2 parallel)** |
+| **Total** | **37-39** | **~32-34 on critical path (Phase 2 parallel)** |
 
 ### Panel Type Registry (grows across phases)
 
@@ -1443,7 +1462,7 @@ The OS has a formalized internal communication system where personas propose cha
 | 5 | Canvas HUD (real), Agent Board, Findings Feed, Session Timeline, Vault Browser, Graph Viewer, **Intelligence Network** | ~11 |
 | 6 | Dev Server Preview (multi-instance), Connectivity | ~12 |
 | 7 | Team Panel (rebuilt), Action Palette, Dispatch Queue, **Agora** | ~16 |
-| 8 | LightRAG Graph, Vault Watcher, Skills Browser | ~19 |
+| 8 | Knowledge Garden, Vault Watcher, Skills Browser | ~19 |
 | 9 | **RecommendationSurface, SignalCharts, TraceExplorer, ContextHealth** | ~23 |
 | 10 | **Terminal (multi-instance), ACP Agent Viewer, Atelier (Media Gallery)** | ~26 |
 | 11+ | Per-agent detail views, document previews, report viewers... | 26+ |
@@ -1467,14 +1486,29 @@ Patterns adopted from external repo analysis (2026-04-01):
 | Injection scanning on context files | Hermes Agent | Phase 8 Session 8.2 |
 | Provider fallback chain with cooldowns | Hermes/OpenClaw | Phase 8 Session 8.2 |
 | Temporal relationship edges | MiroFish | Phase 8 Sessions 8.3 + 8.5 |
-| Persona evolution engine | Novel (inspired by MiroFish temporal + Hermes skills) | Phase 9 Session 9.4 |
-| Messaging notification layer | Hermes/OpenClaw gateway | Phase 10 Session 10.3 |
+| Persona evolution engine | Novel (inspired by MiroFish temporal + Hermes skills) | Phase 8 Session 8.5 |
+| Messaging notification layer | Hermes/OpenClaw gateway | Phase 8 Session 8.6 |
+| Composable halt conditions (HaltCondition trait with &/| combinators) | AutoGen TerminationCondition | Phase 8 Session 8.1 (P8-B) |
+| Rolling condenser pipeline (composable context compression) | OpenHands Condenser | Phase 8 Session 8.1 (P8-F) |
+| Proactive condensation request tool | OpenHands CondensationRequestTool | Phase 8 Session 8.1 (P8-F) |
+| Progress ledger per dispatch turn (structured assessment + stall detection) | AutoGen MagenticOne | Phase 8 Session 8.2 (P8-M) |
+| Stuck detection — 5 loop patterns with recovery | OpenHands StuckDetector | Phase 8 Session 8.2 (P8-N) |
+| Handoff-as-tool protocol (persona transfers via tool calls) | AutoGen Swarm | Phase 8 Session 8.2 (P8-K) |
+| SocietyOfMind nested missions (team-as-agent) | AutoGen SocietyOfMindAgent | Phase 8 Session 8.2 (P8-P emanations) |
+| InterventionHandler middleware stack (dispatch interception) | AutoGen InterventionHandler | Phase 8 Session 8.2 (P8-K hooks) |
+| Delegation budget partitioning (mana snapshot for child) | OpenHands AgentController | Phase 8 Session 8.2 (P8-P emanations) |
+| Error classification for self-correction (LLM-fixable vs controller-handled) | OpenHands exception hierarchy | Phase 8 Session 8.2 (P8-K) |
+| Event-sourced state with view projection | OpenHands EventStream + View | Phase 8 Session 8.1 (P8-C echoes) |
+| Secret scrubbing on event persistence | OpenHands EventStream._replace_secrets | Phase 8 Session 8.1 (P8-C echoes) |
+| Composite memory scoring (semantic + recency + importance) | CrewAI UnifiedMemory | Phase 8 Session 8.3 (P8-R retrieval) |
+| Exploration budget loop (confidence-based iterative deepening) | CrewAI RecallFlow | Phase 8 Session 8.3 (P8-R retrieval) |
+| Parallel speaker dispatch (fan-out multiple personas per turn) | AutoGen BaseGroupChatManager | Phase 8 Session 8.2 (P8-L composition) |
 | Decision trace data model | Novel (from Block letter + context graph research) | Phase 8 Session 8.1 |
 | Signal streams + time-series store | Novel (from context graph research) | Phase 8 Session 8.1 |
 | Domain adapter architecture | Novel (organizational substrate vision) | Phase 8 Session 8.1 |
 | TimesFM forecasting sidecar | google-research/timesfm | Phase 9 Session 9.3 |
 | Anomaly detection via quantile bands | google-research/timesfm | Phase 9 Session 9.3 |
-| Reasoning engine (LightRAG + forecast → recommendation) | Novel (synthesis of context graph + TimesFM) | Phase 9 Session 9.3 |
+| Reasoning engine (retrieval + forecast → recommendation) | Novel (synthesis of context graph + TimesFM) | Phase 9 Session 9.3 |
 | Intelligence interaction model (10 specs + 5 chains) | Novel | Phase 8 Session 8.2 |
 | Arbiter CONSORTIUM synthesis | elder-plinius/G0DM0D3 | Phase 8 Session 8.2 |
 | Wraith Parseltongue (adversarial input perturbation) | elder-plinius/G0DM0D3 + P4RS3LT0NGV3 + L1B3RT4S + ST3GG + GLOSSOPETRAE | **DONE** — agents/wraith.md Section 5 + wraith-kernel.md FM-15 + sub-agents/wraith-parseltongue.md (2026-04-04) |
@@ -1706,7 +1740,7 @@ Patterns from research docs (`docs/RESEARCH-*.md`) and reference files (`referen
 | Human reads, LLM writes (operator steers, system writes/compiles/indexes) | Karpathy | Validates operator/persona role split |
 | Output diversity (Q&A renders as markdown, slides, plots) | Karpathy | **DONE** — Phase 4 Session 4.4 (document gen engine) |
 | Backlinks / bidirectional linking (dreamtime-generated backlink maps) | Karpathy | Phase 8 Sessions 8.3/8.5 (Ley Lines) |
-| Mana-aware access tiers (index=free, depth=low mana, LightRAG=higher) | Karpathy | Phase 8 Sessions 8.1/8.3 |
+| Mana-aware access tiers (index=free, depth=low mana, retrieval engine=higher) | Karpathy | Phase 8 Sessions 8.1/8.3 |
 | Query-to-vault promotion (approved recs auto-promote during dreamtime) | Karpathy (Apr 4 gist) | Phase 8 Sessions 8.1/8.5 |
 | Three-layer wiki architecture (Raw Sources → Wiki → Schema) | Karpathy (Apr 4 gist) | Phase 8 Sessions 8.1/8.5 |
 
@@ -1796,6 +1830,53 @@ Patterns from research docs (`docs/RESEARCH-*.md`) and reference files (`referen
 | Anti-pattern detection (OVER_CONSTRAINED, BLOATED_SKILL, DEAD_CROSS_REF) | wshobson/agents | Phase 8 Session 8.3b |
 | Agent frontmatter pattern (YAML frontmatter with "Use PROACTIVELY when [trigger]") | wshobson/agents | Phase 7 Session 7.1. Already in agent definitions. |
 
+#### April 5, 2026 — 4 repos: awesome-design-md, GitNexus, StixDB, ArsContexta (68 patterns)
+
+| Pattern | Source Repo | Integrated In |
+|---------|-------------|---------------|
+| Exponential decay with half-life `importance * 2^(-t/48h)` | StixDB | Session 7.5 (P7.5-D) |
+| Touch-boost on access `min(1.0, score * 1.2 + 0.1)` | StixDB | Session 7.5 (P7.5-D) |
+| Hybrid LRU+LFU access scoring `0.6*freq + 0.4*recency` | StixDB | Session 7.5 (P7.5-D) |
+| Reciprocal Rank Fusion (RRF) `1/(60+rank)` hybrid search | GitNexus | Session 7.5 (P7.5-E) |
+| Three-Space memory partition (kernel/garden/ops) + 6 conflation failures | ArsContexta | Session 7.5 (P7.5-E) |
+| Similarity-based consolidation merge at 0.88 cosine threshold | StixDB | Session 7.5 (P7.5-E) |
+| 9-Section DESIGN.md format (agent-optimized design system governance) | awesome-design-md | Session 7.5 (P7.5-F) |
+| Next-step hint guidance on agent returns | GitNexus | Session 7.5 (P7.5-F) |
+| Dark-mode Do's/Don'ts (consolidated from 9 systems) | awesome-design-md | Session 7.5 (P7.5-F) |
+| Border-as-depth system (rgba white overlays, zero shadows) | awesome-design-md | Session 7.5 (P7.5-F) |
+| Persona-colored glow effects `drop-shadow(0 0 Npx {color})` | awesome-design-md | Session 7.5 (P7.5-F) |
+| Luminance stacking `rgba(255,255,255, 0.02/0.04/0.05)` surface hierarchy | awesome-design-md | Session 7.5 (P7.5-F) |
+| Multi-table FTS with score aggregation | GitNexus | Phase 8 Session 8.1 |
+| Incremental embedding with skip sets | GitNexus | Phase 8 Session 8.1 |
+| Tier-based memory promotion/demotion (WORKING/SEMANTIC/ARCHIVED) | StixDB | Phase 8 Session 8.1 |
+| Hash-based exact dedup pre-pass | StixDB | Phase 8 Session 8.1 |
+| Lineage-safe consolidation (pin sources, preserve provenance) | StixDB | Phase 8 Session 8.1 |
+| Condition-based maintenance triggers (replace time scheduling) | ArsContexta | Phase 8 Session 8.1 |
+| Feature block composition (always-included vs conditional modules) | ArsContexta | Phase 8 Session 8.1 |
+| Tiered confidence resolution for dispatch routing (0.95/0.8/0.5) | GitNexus | Phase 8 Session 8.2 |
+| Blast radius analysis via BFS (d=1 breaks, d=2+ indirect risk) | GitNexus | Phase 8 Session 8.2 |
+| Ralph subagent spawning (fresh context per phase, count verification) | ArsContexta | Phase 8 Session 8.2 |
+| Augmentation engine (batch-query related context before agent tasks) | GitNexus | Phase 8 Session 8.2 |
+| Global agent capability registry | GitNexus | Phase 8 Session 8.2 |
+| WHY/HOW/WHAT query classification for retrieval routing | ArsContexta | Phase 8 Session 8.2 |
+| Signal-to-dimension derivation with confidence scoring | ArsContexta | Phase 8 Session 8.2 |
+| Cascade constraints (hard/soft/compensating) | ArsContexta | Phase 8 Session 8.2 |
+| Topological sort for batch dependency ordering (Kahn's algorithm) | GitNexus | Phase 8 Session 8.2 |
+| Cross-surface contract matching | GitNexus | Phase 8 Session 8.2 |
+| Leiden community detection for Knowledge Garden clustering | GitNexus | Phase 8 Session 8.3 |
+| Knowledge graph analysis (8 ops: health, triangles, bridges, hubs) | ArsContexta | Phase 8 Session 8.3 |
+| Per-type text generation for embeddings | GitNexus | Phase 8 Session 8.3 |
+| Working memory boost in re-ranking (+0.15 for hot tier) | StixDB | Phase 8 Session 8.3 |
+| Autonomous maintenance planner (self-healing memory) | StixDB | Phase 8 Session 8.3+ |
+| 6 Rs extraction pipeline (Record/Reduce/Reflect/Reweave/Verify/Rethink) | ArsContexta | Phase 8 Session 8.3 |
+| Session lifecycle Orient/Work/Persist | ArsContexta | Validates existing BOOT.md pattern |
+| Three-font system (display/body/code triplet) | awesome-design-md | Phase 9 frontend |
+| HSL+alpha color tokens | awesome-design-md | Phase 9 frontend |
+| Vocabulary transforms per persona | ArsContexta | Phase 8 Session 8.5 (persona evolution) |
+| Personality dimension framework (warmth/opinionatedness/formality/emotional) | ArsContexta | Phase 8 Session 8.5 (persona evolution) |
+| Seed-evolve-reseed lifecycle (kernel versioning + drift detection) | ArsContexta | Phase 8 Session 8.5 |
+| 15-primitive kernel validation (3-pass coherence check) | ArsContexta | Phase 8 Session 8.5 |
+
 ## Verification
 
 After each phase:
@@ -1806,4 +1887,4 @@ After each phase:
 - Canvas renders at 60fps (no jank)
 - All code pushed to CYM4TIC/forge-OS
 
-Final verification (Phase 11): Alex opens Forge, links the DMS project, backfill engine seeds 57 decision traces + signals, TimesFM calibrates on real history, LightRAG indexes it, and resumes the L4-J.2c build entirely from within the app. The observatory renders data as living topological surfaces — finding density as terrain elevation, persona activity as particle density, intelligence chains as light pulses flowing between orbital nodes. The graph panel shows 4 views (Grimoire / Vault / Ley Lines / Scrying) with Obsidian-style tunable physics controls. Gate reports export as typeset PDFs. An embedded terminal shows agent commands executing in real-time. Claude Code connects via ACP as an external agent with full capability mediation. Recommendations surface proactive intelligence before the next batch starts. Policy evolution proposes new checks from recurring gate patterns. The Agora shows agents debating in real time. CONSORTIUM resolves conflicts with empirical trade-off data. `/review` auto-dispatches from diffs. The OS modifies its own config and loads WASM-sandboxed plugins. All 105 agents respond in character through any configured provider. The system remembers, reasons, predicts, recommends, proposes, debates, learns, and makes its own intelligence visible as a living landscape.
+Final verification (Phase 11): Alex opens Forge, links the DMS project, backfill engine seeds 57 decision traces + signals, TimesFM calibrates on real history, retrieval engine indexes it, and resumes the L4-J.2c build entirely from within the app. The observatory renders data as living topological surfaces — finding density as terrain elevation, persona activity as particle density, intelligence chains as light pulses flowing between orbital nodes. The graph panel shows 4 views (Grimoire / Vault / Ley Lines / Scrying) with Obsidian-style tunable physics controls. Gate reports export as typeset PDFs. An embedded terminal shows agent commands executing in real-time. Claude Code connects via ACP as an external agent with full capability mediation. Recommendations surface proactive intelligence before the next batch starts. Policy evolution proposes new checks from recurring gate patterns. The Agora shows agents debating in real time. CONSORTIUM resolves conflicts with empirical trade-off data. `/review` auto-dispatches from diffs. The OS modifies its own config and loads WASM-sandboxed plugins. All 105 agents respond in character through any configured provider. The system remembers, reasons, predicts, recommends, proposes, debates, learns, and makes its own intelligence visible as a living landscape.
