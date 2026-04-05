@@ -199,7 +199,7 @@ For constraints: `SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint W
 
 ### CONTRACT 8: STATE_UPDATE
 
-**When:** Updating BOOT.md, BUILD-LEARNINGS.md, BATCH-MANIFESTS.md, or any build state file.
+**When:** Updating BOOT.md, BUILD-LEARNINGS.md, batch-manifests/, or any build state file.
 
 **Preconditions:**
 - [ ] Every claim in the update has a verification result backing it
@@ -215,7 +215,7 @@ For constraints: `SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint W
 - [ ] No stale information carried forward from prior handoff
 
 **CONSEQUENCE CHECK (OS-BL-007):** After updating ANY build state file, ask: "What other files reference this state?" Follow the chain:
-- TAURI-BUILD-PLAN.md → BATCH-MANIFESTS.md → BOOT.md → ADL
+- TAURI-BUILD-PLAN.md → batch-manifests/phase-{N}.md → BOOT.md → ADL
 - Build plan changes → batch manifests MUST be updated in the same session
 - New ADL entries referenced in the plan → ADL file must be updated
 

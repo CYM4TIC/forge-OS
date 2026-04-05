@@ -29,7 +29,7 @@ Every build batch follows this sequence. No skips. No reordering.
 ### Pre-Batch Checklist (run before Phase 0)
 
 1. BOOT.md — confirm current position
-2. Batch manifest — get segments, blockers, persona gates
+2. Batch manifest — grep `batch-manifests/phase-{N}.md` for current batch ID
 3. Dependency board — are blockers resolved?
 4. Persona gates (load findings when relevant to this batch):
    - Tanaka: auth findings resolved? (if batch has auth RPCs)
@@ -171,7 +171,7 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 
    **7b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
 
-8. **BOOT.md HANDOFF — ONLY AFTER ALL ABOVE PASS.** The handoff is the seal, not a checkpoint. Writing "batch complete" before the honesty check and bookkeeping means declaring done before verifying done. 3 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position paragraph (what shipped, what next batch inherits), (3) batch table (mark ✅ DONE). All three. Read back after writing.
+8. **BOOT.md HANDOFF — ONLY AFTER ALL ABOVE PASS.** The handoff is the seal, not a checkpoint. Writing "batch complete" before the honesty check and bookkeeping means declaring done before verifying done. 4 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position (structured: status, last completed, next batch, restructure notes if any), (3) batch table (mark ✅ DONE), (4) **`build-history/phase-{N}/session-log.md`** append (date, batch, scope, files, gate results, commits). All four. Read back after writing.
 
 9. **"Context status?"** — Report estimated context usage. Can continue or fresh session needed. Last thing before sign-off.
 

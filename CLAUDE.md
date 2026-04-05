@@ -13,7 +13,7 @@
    → "active_project": "name"  →  Continue to step 2.
 2. Read forge/kernels/nyx-kernel.md — THE DASHBOARD. Mandatory. Every session.
 3. Read projects/{name}/vault/team-logs/nyx/BOOT.md (position, open risks)
-4. Read batch manifest for current batch.
+4. Read batch manifest for current batch (grep batch-manifests/phase-{N}.md for batch ID).
 5. Ready. Wait for command.
 ```
 
@@ -134,11 +134,11 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 The build workflow is defined in **forge/kernels/nyx-kernel.md Section 2** (the 6 phases). The kernel is loaded at boot. The phases are the law.
 
 ```
-BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~280 lines)
+BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~250 lines)
 LOAD:    ADL + BUILD-LEARNINGS.md + segment files (on demand per batch)
 RECON:   Scout brief includes Integration Map grep (patterns targeting current session)
 EXECUTE: Phase 0 → 1 → 2 → 3 → 4 → 5 (no skips, no reordering)
-CLOSE:   Auto-extract + BOOT.md handoff
+CLOSE:   Auto-extract + BOOT.md handoff + build-history/ session log append
 ```
 
 **Integration Map auto-pull:** Scout greps `docs/TAURI-BUILD-PLAN.md` for "Session X.Y" and surfaces all research-backed patterns targeting the current session. These are spec-level inputs, not optional. Nyx implements them alongside the batch manifest.
@@ -281,7 +281,7 @@ projects/{name}/
     │       └── findings-log.md
     ├── cross-refs/            # Build learnings, dependency board, gates
     │   ├── BUILD-LEARNINGS.md
-    │   ├── BATCH-MANIFESTS.md
+    │   ├── BATCH-MANIFESTS.md  # legacy — now batch-manifests/
     │   ├── DEPENDENCY-BOARD.md
     │   └── PERSONA-GATES.md
     ├── session-transcripts/
@@ -296,20 +296,24 @@ projects/{name}/
 
 ---
 
-## The 10 Personas
+## The 14 Personas
 
 | Persona | Domain |
 |---|---|
-| Dr. Nyx | Build Orchestration |
-| Dr. Pierce | QA & Spec Conformance |
-| Dr. Mara | UX Evaluation |
-| Dr. Riven | Design Systems |
-| Dr. Kehinde | Systems Architecture |
-| Dr. Tanaka | Security & Compliance |
-| Dr. Vane | Financial Architecture |
-| Dr. Voss | Platform Legal |
-| Dr. Calloway | Growth Strategy |
-| Dr. Sable | Brand Voice & Copy |
+| Nyx | Build Orchestration |
+| Pierce | QA & Spec Conformance |
+| Mara | UX Evaluation |
+| Riven | Design Systems |
+| Kehinde | Systems Architecture |
+| Tanaka | Security & Compliance |
+| Vane | Financial Architecture |
+| Voss | Platform Legal |
+| Calloway | Growth Strategy |
+| Sable | Brand Voice & Copy |
+| Scout | Pre-Build Intelligence |
+| Sentinel | Monitoring & Regression |
+| Wraith | Adversarial Red Team |
+| Meridian | Cross-Surface Consistency |
 
 ---
 
@@ -321,7 +325,7 @@ projects/{name}/
 | Project state | `projects/{active}/vault/STARTUP.md` |
 | Build state | `projects/{active}/vault/team-logs/nyx/BOOT.md` |
 | ADL | `projects/{active}/vault/adl/` |
-| Batch manifests | `projects/{active}/vault/cross-refs/BATCH-MANIFESTS.md` |
+| Batch manifests | `batch-manifests/` (per-phase, index at `batch-manifests/INDEX.md`) |
 | Build learnings | `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` |
 | Persona gates | `projects/{active}/vault/cross-refs/PERSONA-GATES.md` |
 | **Execution protocol (THE COMPILER)** | **`forge/EXECUTION-PROTOCOL.md` ← LOAD EVERY SESSION** |
@@ -372,18 +376,17 @@ projects/{name}/
 
 | Category | Count | Location |
 |----------|-------|----------|
-| Core Personas | 10 | `agents/*.md` (nyx, pierce, mara, riven, kehinde, tanaka, vane, voss, calloway, sable) |
-| Intelligences | 10 | `agents/*.md` (scout, sentinel, wraith, meridian, chronicle, arbiter, compass, scribe, kiln, beacon) |
-| Orchestrators | 10 | `agents/*.md` (triad, systems-triad, strategy-triad, gate-runner, council, decision-council, debate, full-audit, launch-sequence, postmortem) |
+| Personas | 14 | `agents/*.md` (nyx, pierce, mara, riven, kehinde, tanaka, vane, voss, calloway, sable, scout, sentinel, wraith, meridian) |
+| Dispatchers | 2 | `agents/*.md` (gate-dispatcher, discussion-protocol) |
 | Customer Lens | 1 | `agents/customer-lens.md` |
-| Utilities | 10 | `agents/*.md` (seed-generator, test-generator, api-docs, launch-readiness, onboarding, scaffold, changelog, dep-audit, env-validator, migration-planner) |
-| Sub-Agents | 35 | `agents/sub-agents/*.md` |
-| Build Commands | 30 | `commands/*.md` |
+| Utilities | 5 | `agents/*.md` (launch-readiness, onboarding, dep-audit, env-validator, migration-planner) |
+| Sub-Agents | 20 | `agents/sub-agents/*.md` |
+| Build Commands | ~35 | `commands/*.md` (30 original + 5 converted utilities) |
 | OS Commands | 5 | `.claude/commands/*.md` (init, link, start, status, introspect) |
 | Skills | 5 | `.claude/skills/*/SKILL.md` (postgres, security, stripe, nextjs, tailwind) |
-| Persona Identities | 10 | `personas/*/` (4 files each: PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
-| **Cognitive Kernels** | **24** | `forge/kernels/*.md` (19 individual + 5 orchestrator) — indexed at `forge/KERNEL-INDEX.md` |
-| **Total Entities** | **130** | (agents: 41 + sub-agents: 35 + commands: 30 + kernels: 24) |
+| Persona Identities | 14 | `personas/*/` (PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
+| **Cognitive Kernels** | **16** | `forge/kernels/*.md` (14 persona + 2 dispatcher) — indexed at `forge/KERNEL-INDEX.md` |
+| **Retired** | 39 | `agents/_retired/`, `forge/kernels/_retired/`, `agents/sub-agents/_retired/` |
 
 Full catalog: `forge/ENTITY-CATALOG.md`
 
@@ -400,7 +403,8 @@ Full catalog: `forge/ENTITY-CATALOG.md`
 **Architecture:** Tauri v2 desktop app (Rust backend + React frontend).
 **Phase:** 2 COMPLETE — Content Layer. All 105 entities genericized + protocols + references.
 **Phase 3 next:** Agent Runtime — KAIROS memory, Swarm dispatch, SQLite state, auto-compact.
-**Build state tracked at:** `BOOT.md` (repo root)
-**Batch manifests:** `BATCH-MANIFESTS.md` (repo root)
+**Build state tracked at:** `BOOT.md` (repo root, ~97 lines — always fits in one read)
+**Batch manifests:** `batch-manifests/` (per-phase files, index at `batch-manifests/INDEX.md`)
+**Session logs:** `build-history/` (per-phase folders, index at `build-history/BATCH-INDEX.md`)
 **Full build plan:** `docs/TAURI-BUILD-PLAN.md` (11 phases, 38 sessions)
 **Phase 3 architecture:** `docs/PHASE-3-ARCHITECTURE.md` (synthesized from Claude Code source + ecosystem research)
