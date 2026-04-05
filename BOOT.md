@@ -8,8 +8,8 @@ project: forge_os
 architecture: tauri_v2
 phase: 8
 current_session: 7.5
-current_batch: P7.5-C
-batches_done: 114
+current_batch: P7.5-D.0
+batches_done: 115
 phases_complete: [1, 4, 5, 6, 7]
 phases_total: 11
 sessions_total: 38
@@ -28,9 +28,9 @@ dms_batches_total: 122
 
 **Session 7.5 — Pre-Phase 8 Intelligence Retrofit.**
 
-Last completed: **P7.5-B** — Ecosystem Refinement. 42 agents → 14 world-class personas. 6 agents absorbed, 10 orchestrators → 2 dispatchers (gate-dispatcher + discussion-protocol), 5 utilities → commands, 15 sub-agents retired, 4 intelligences elevated. "Dr." prefix dropped. BOOT.md/BATCH-MANIFESTS.md split into folder systems (batch-manifests/, build-history/). Gated by Kehinde, Sentinel PASS (tsc 0 errors, cargo check 0 errors).
+Last completed: **P7.5-C** — Research Audit. 400+ patterns mapped to 14 personas across 50+ source documents (3 synthesis, 6 mining, 19 research, 14 references, 5 skills, 2 attack libraries, 6 absorbed agents). Output: `docs/RESEARCH-PERSONA-MAP.md` (784 lines). Dispatcher Research Map added for Arbiter→Discussion Protocol. Pierce gate: 11 findings, all fixed. Sentinel PASS. Gaps identified: Voss, Calloway, Sable (addressable in profile sessions).
 
-**Next: P7.5-C — Research Audit** (map 182+ patterns to 14 personas → RESEARCH-PERSONA-MAP.md).
+**Next: P7.5-D.0 — Guided Profile Session: Nyx** (read research audit → guided conversation → self-author profile).
 
 ---
 
@@ -51,7 +51,7 @@ Last completed: **P7.5-B** — Ecosystem Refinement. 42 agents → 14 world-clas
 |-------|------|--------|
 | P7.5-A | Dispatch Queue Intelligence + Secret Scrubbing | ✅ DONE |
 | P7.5-B | Ecosystem Refinement (42→14 personas) | ✅ DONE |
-| P7.5-C | Research Audit (182+ patterns → 14 personas) | ⬜ TODO |
+| P7.5-C | Research Audit (400+ patterns → 14 personas) | ✅ DONE |
 | P7.5-D.0–D.9 | Guided Profile Sessions — 10 original personas | ⬜ TODO |
 | P7.5-E.0–E.3 | Guided Profile + Introspection — 4 elevated personas | ⬜ TODO |
 | P7.5-F | Design System Governance | ⬜ TODO |
