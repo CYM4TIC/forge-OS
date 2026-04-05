@@ -1,0 +1,5 @@
+### OS-ADL-001: Pretext as OS Rendering Primitive
+**Status:** LOCKED | **Date:** 2026-03-30 | **Domain:** architecture
+**Decision:** `@chenglou/pretext` (by Cheng Lou, React co-creator) is the foundation for all OS visual surfaces. Every text measurement, layout computation, and canvas render in the dashboard flows through the layout engine built on Pretext.
+**Rationale:** DOM text measurement triggers layout reflow — the browser's most expensive operation. Pretext provides pure JS text measurement without DOM dependency. Two-phase: `prepare()` (one-time, ~19ms/500 texts) + `layout()` (<0.1ms, pure arithmetic). Supports DOM, Canvas, SVG, WebGL targets. The OS uses it and recommends it — eating our own cooking.
+**Consequence:** All dashboard visual components use Pretext-measured text. No `getBoundingClientRect` or `offsetHeight` for text sizing. The layout engine package (`runtime/src/engine/layout/`) wraps Pretext with batch prepare, fit-to-container, virtual heights, canvas renderer, and PDF generation.

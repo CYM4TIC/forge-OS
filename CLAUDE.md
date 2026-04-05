@@ -134,7 +134,7 @@ The build workflow is defined in **forge/kernels/nyx-kernel.md Section 2** (the 
 
 ```
 BOOT:    Kernel + BOOT.md + batch manifest (3 files, ~250 lines)
-LOAD:    ADL + BUILD-LEARNINGS.md + segment files (on demand per batch)
+LOAD:    adl/ + build-learnings/{domain}.md + segment files (on demand per batch)
 RECON:   Scout brief includes Integration Map grep (patterns targeting current session)
 EXECUTE: Phase 0 → 1 → 2 → 3 → 4 → 5 (no skips, no reordering)
 CLOSE:   Auto-extract + BOOT.md handoff + build-history/ session log append
@@ -144,10 +144,10 @@ CLOSE:   Auto-extract + BOOT.md handoff + build-history/ session log append
 
 ### Auto-Extract (runs at Phase 5):
 Before closing, scan session for unlogged knowledge:
-- Tool surprises or workarounds → BUILD-LEARNINGS.md
+- Tool surprises or workarounds → build-learnings/{domain}.md
 - Persona failure patterns observed → flag for introspection
 - Architecture decisions made implicitly → ADL or decisions/
-- Reusable patterns discovered → BUILD-LEARNINGS.md
+- Reusable patterns discovered → build-learnings/{domain}.md
 If new failure mode candidate:
 - Persona-inherent? → propagate to personas/{name}/INTROSPECTION.md (global)
 - Project-specific? → log in project findings only
@@ -325,7 +325,7 @@ projects/{name}/
 | Build state | `projects/{active}/vault/team-logs/nyx/BOOT.md` |
 | ADL | `projects/{active}/vault/adl/` |
 | Batch manifests | `batch-manifests/` (per-phase, index at `batch-manifests/INDEX.md`) |
-| Build learnings | `projects/{active}/vault/cross-refs/BUILD-LEARNINGS.md` |
+| Build learnings | `build-learnings/` (per-domain files, index at `build-learnings/INDEX.md`) |
 | Persona gates | `projects/{active}/vault/cross-refs/PERSONA-GATES.md` |
 | **Execution protocol (THE COMPILER)** | **`forge/EXECUTION-PROTOCOL.md` ← LOAD EVERY SESSION** |
 | Methodology | `forge/METHODOLOGY.md` |

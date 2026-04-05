@@ -79,8 +79,8 @@ Last completed: **P7.5-C** — Research Audit. 400+ patterns mapped to 14 person
 
 ## Reference Pointers
 
-- **Architecture decisions:** `ADL.md` (repo root)
-- **Build learnings:** `BUILD-LEARNINGS.md` (repo root)
+- **Architecture decisions:** `adl/` (per-decision files, index at `adl/INDEX.md`)
+- **Build learnings:** `build-learnings/` (per-domain files, index at `build-learnings/INDEX.md`)
 - **Full build plan:** `docs/TAURI-BUILD-PLAN.md` (11 phases, 38 sessions)
 - **Batch manifests:** `batch-manifests/` (per-phase files, see `batch-manifests/INDEX.md`)
 - **Session logs:** `build-history/` (per-phase folders, see `build-history/BATCH-INDEX.md`)

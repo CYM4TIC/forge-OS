@@ -56,6 +56,7 @@
 - Frontend: fix timeline scope to session-relative range (PL-008), fix pill touch targets to 44px (M-LOW-3), fix DismissalCard opacity to ≥4.5:1 contrast (M-LOW-4), convert preset pixel values to viewport-relative (K-MED-2)
 - `src-tauri/src/lib.rs` — register new commands in `generate_handler`
 
+**Learnings:** `build-learnings/rust.md` (OS-BL-009: rusqlite branching, OS-BL-019: dismissal guards, OS-BL-021: LIKE escaping), `build-learnings/frontend.md` (OS-BL-008: isTauriRuntime, OS-BL-011: phantom fields, OS-BL-027: preset constraints), `build-learnings/design-system.md` (OS-BL-014: WCAG contrast)
 **Gate:** All 16 risks resolved with read-back. `tsc --noEmit` zero errors. `cargo check` clean. Sentinel regression sweep clean.
 **Depends on:** Phase 7 complete
 **Push:** Yes (2 pushes — backend first, frontend second)
@@ -84,6 +85,7 @@
 - *Configurable Execution Limits (just-bash):* Per-persona profiles defined in Grimoire — Scout: tight (20 tool calls, 5 file reads), Nyx: wide (unlimited tool calls, unlimited reads), Gates: read-heavy (50 reads, 0 writes)
 - *Thinking Budget Control (AutoAgent):* Per-persona reasoning token allocation via Grimoire. Scout: 2K thinking tokens, Nyx: 8K, Triad agents: 4K
 
+**Learnings:** `build-learnings/rust.md` (OS-BL-030: composable halt conditions via trait), `build-learnings/runtime.md` (OS-BL-031: exponential decay, OS-BL-032: RRF fusion, OS-BL-033: three-space partition)
 **Gate:** `get_mana_balance` returns correct balance after mock operations. Grimoire parses from markdown. DomainAdapter trait compiles with development adapter. Provider factory registers and hot-swaps. Pareto frontier records data points. Halt conditions compose with `&`/`|` — `ManaBudgetExhausted | TurnLimit` fires when either triggers. `ManaBudgetExhausted & TurnLimit` fires only when both trigger.
 **Depends on:** P8-A
 **Push:** Yes

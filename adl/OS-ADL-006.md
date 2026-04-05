@@ -1,0 +1,5 @@
+### OS-ADL-006: Model Tiering Enforced
+**Status:** LOCKED | **Date:** 2026-03-30 | **Domain:** content
+**Decision:** Every agent file has a `model:` frontmatter field specifying `high`, `medium`, or `fast` (abstracted tiers). The orchestrator reads this and enforces the tier when spawning sessions. No agent runs on a tier higher than specified without explicit override. Tier-to-model mapping lives in `ProviderConfig.model_mappings` (default: high=opus, medium=sonnet, fast=haiku) and can change as models evolve.
+**Rationale:** Token cost optimization. Architecture and judgment calls (Nyx, Pierce, Tanaka) need `high`. Implementation and review (Kehinde, Mara, Riven) need `medium`. Utility and formatting tasks (sub-agents, commands) can use `fast`. Documented rationale per agent prevents drift. Abstracted tier names decouple agent definitions from specific model names.
+**Consequence:** All 105 agent files include `model:` in frontmatter. The dispatch pipeline must read this field and enforce it — callers should not need to manually pass the tier. See `forge/MODEL-TIERING.md` for the full tier catalog.

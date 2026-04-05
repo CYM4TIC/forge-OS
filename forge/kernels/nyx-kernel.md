@@ -39,9 +39,9 @@ Every build batch follows this sequence. No skips. No reordering.
    - Vane: financial flows traceable? (if financial)
    - Voss: legal requirements addressed? (if compliance-touching)
    - Sable: string registry covers strings? (if customer-facing)
-5. Load BUILD-LEARNINGS.md filtered by domain tags for this batch:
-   `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`
-   Grep for the tag(s) that match the batch's domain. Read matching entries. Skip the rest.
+5. Load build learnings for this batch's domain(s). Read `build-learnings/{domain}.md` for each matching domain:
+   `frontend.md` `rust.md` `runtime.md` `design-system.md` `governance.md` `tooling.md`
+   If the batch manifest has a `**Learnings:**` field, load those specific files/entries directly.
 6. **Integration Map** — Grep `docs/TAURI-BUILD-PLAN.md` for the current session ID (e.g., "Session 8.1"). Collect all patterns targeting this session. These are research-backed design patterns that MUST inform the implementation — not optional enhancement, but spec-level input. Scout surfaces them in the brief. Nyx implements them.
 
 ---
@@ -147,7 +147,7 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 
    **0a. ZERO COMPILER ERRORS.** Run `tsc --noEmit`. Zero errors across the full build. Any error — regardless of origin — fix it, re-run, confirm zero. "Pre-existing" is not an exemption.
 
-   **0b. EVERY FINDING RESOLVED.** Produce a table: every gate finding by ID and severity. Every CRIT, HIGH, MED, and LOW must have a corresponding fix with read-back confirmation. No severity tier is exempt. INFO findings must be logged where they won't get lost — BUILD-LEARNINGS.md, BOOT.md carried risks, or the relevant persona's findings-log. An INFO that isn't logged is a finding that's been silently dropped. Count in vs. count out. The arithmetic must balance.
+   **0b. EVERY FINDING RESOLVED.** Produce a table: every gate finding by ID and severity. Every CRIT, HIGH, MED, and LOW must have a corresponding fix with read-back confirmation. No severity tier is exempt. INFO findings must be logged where they won't get lost — `build-learnings/{domain}.md`, BOOT.md carried risks, or the relevant persona's findings-log. An INFO that isn't logged is a finding that's been silently dropped. Count in vs. count out. The arithmetic must balance.
 
    **0c. CONSEQUENCE CLIMB ON EVERY FIX.** Every fix is a code change. Every code change has downstream effects. For each fix applied: did I run at minimum a brief consequence climb (what else does this touch? what imports it? what pattern did I just propagate or break?)? If any fix shipped without a climb — run one now. A fix without a climb is how you trade one bug for another.
 
@@ -167,7 +167,7 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 
 7. **BOOKKEEPING.** Two mandatory outputs:
 
-   **7a. BUILD-LEARNINGS.md** — "Did this batch produce any technical pattern, gotcha, or convention worth preserving?" If yes, write the entry with a domain tag: `[frontend]` `[canvas]` `[rust]` `[runtime]` `[design-system]` `[governance]` `[tooling]`. Tag is mandatory — an untagged entry is unfindable. If nothing new, state it explicitly. Silence is not an answer.
+   **7a. `build-learnings/{domain}.md`** — "Did this batch produce any technical pattern, gotcha, or convention worth preserving?" If yes, write the entry in the matching domain file (`frontend.md`, `rust.md`, `runtime.md`, `design-system.md`, `governance.md`, `tooling.md`) and add it to `build-learnings/INDEX.md` quick index. If nothing new, state it explicitly. Silence is not an answer.
 
    **7b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
 
