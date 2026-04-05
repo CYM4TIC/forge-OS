@@ -9,7 +9,7 @@ architecture: tauri_v2
 phase: 8
 current_session: 7.5
 current_batch: P7.5-D.0
-batches_done: 115
+batches_done: 116
 phases_complete: [1, 4, 5, 6, 7]
 phases_total: 11
 sessions_total: 38
@@ -28,7 +28,7 @@ dms_batches_total: 122
 
 **Session 7.5 — Pre-Phase 8 Intelligence Retrofit.**
 
-Last completed: **P7.5-C** — Research Audit. 400+ patterns mapped to 14 personas across 50+ source documents (3 synthesis, 6 mining, 19 research, 14 references, 5 skills, 2 attack libraries, 6 absorbed agents). Output: `docs/RESEARCH-PERSONA-MAP.md` (784 lines). Dispatcher Research Map added for Arbiter→Discussion Protocol. Pierce gate: 11 findings, all fixed. Sentinel PASS. Gaps identified: Voss, Calloway, Sable (addressable in profile sessions).
+Last completed: **P7.5-C.1** — Infrastructure Housekeeping. BUILD-LEARNINGS.md → `build-learnings/` (6 domain files). ADL.md → `adl/` (18 decision files). phase-7.md split + sealed. `**Learnings:**` field added to batch manifest template (P8-A, P8-B annotated). Old monoliths removed. 400+ patterns mapped to 14 personas across 50+ source documents (3 synthesis, 6 mining, 19 research, 14 references, 5 skills, 2 attack libraries, 6 absorbed agents). Output: `docs/RESEARCH-PERSONA-MAP.md` (784 lines). Dispatcher Research Map added for Arbiter→Discussion Protocol. Pierce gate: 11 findings, all fixed. Sentinel PASS. Gaps identified: Voss, Calloway, Sable (addressable in profile sessions).
 
 **Next: P7.5-D.0 — Guided Profile Session: Nyx** (read research audit → guided conversation → self-author profile).
 

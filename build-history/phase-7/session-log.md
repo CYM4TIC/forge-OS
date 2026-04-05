@@ -21,3 +21,13 @@
 - **SENTINEL:** PASS. No regressions. One new untracked file only.
 - **COMMITS:** `4ad05ed` (P7.5-C research audit).
 - **BUILD-LEARNINGS:** BL-OS-014 (parallel agent swarm for audits), BL-OS-015 (dispatcher gap in persona maps).
+
+**2026-04-05 — P7.5-C.1: Infrastructure Housekeeping**
+- **SCOPE:** Split monoliths into folder structures. Seal Phase 7.
+- **BUILD-LEARNINGS.md → build-learnings/:** 6 domain files (tooling, frontend, rust, design-system, runtime, governance) + INDEX.md. 47 entries categorized by primary domain tag.
+- **ADL.md → adl/:** 18 per-decision files + INDEX.md. One file per ADL entry (OS-ADL-001 through OS-ADL-023c).
+- **phase-7.md → phase-7.md (sealed) + phase-7.5.md:** Phase 7 core (P7-A through P7-N, 599 lines) sealed. Session 7.5 (P7.5-A through P7.5-J, 289 lines) in own file.
+- **New convention:** `**Learnings:**` field added to batch manifest template. P8-A and P8-B annotated with specific domain files + entry IDs.
+- **Updated refs:** nyx-kernel.md (Pre-Batch Checklist, adversarial check, bookkeeping), BOOT.md, CLAUDE.md, batch-manifests/INDEX.md.
+- **Old monoliths removed:** BUILD-LEARNINGS.md and ADL.md deleted (content in folders, history in git).
+- **COMMITS:** `73d7611` (splits + updates), `feef832` (remove monoliths).
