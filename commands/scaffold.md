@@ -9,9 +9,10 @@ user_invocable: true
 Generate boilerplate that matches existing project patterns.
 
 ## Protocol
-1. Dispatch `agents/scaffold.md`
-2. Scaffold reads 2-3 exemplars, extracts the pattern, generates matching code
-3. Produces: boilerplate with TODO markers for business logic
+1. Nyx reads 2-3 exemplars from the codebase, extracts the pattern
+2. Generate matching boilerplate with TODO markers for business logic
+
+> Converted from Scaffold agent at P7.5-B. Nyx executes directly.
 
 Usage:
 - `/scaffold page [name]` — generate a page component

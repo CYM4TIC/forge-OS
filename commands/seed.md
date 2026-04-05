@@ -9,7 +9,8 @@ user_invocable: true
 Generate realistic seed data for the specified surface.
 
 ## Protocol
-1. Dispatch `agents/seed-generator.md` with `$ARGUMENTS` as target
-2. Agent reads the spec, queries live schema (if available), generates seed data
-3. Data themed to the project's domain context
-4. Returns SQL or seed scripts ready to apply
+1. Nyx reads the spec + queries live schema (if available)
+2. Generate realistic seed data themed to the project's domain context
+3. Returns SQL or seed scripts ready to apply
+
+> Converted from Seed Generator agent at P7.5-B. Nyx executes directly.

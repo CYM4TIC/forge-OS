@@ -9,9 +9,10 @@ user_invocable: true
 Generate a changelog for a batch range, date range, or the full project.
 
 ## Protocol
-1. Dispatch `agents/changelog.md`
-2. Changelog reads git history + build state handoffs
-3. Produces: categorized release notes for the specified audience
+1. Nyx reads git history + build state handoffs (BOOT.md, build-history/)
+2. Produces: categorized release notes for the specified audience
+
+> Converted from Changelog agent at P7.5-B. Nyx executes directly.
 
 Usage:
 - `/changelog [batch-range]` — e.g., `/changelog P1-A..P1-L`

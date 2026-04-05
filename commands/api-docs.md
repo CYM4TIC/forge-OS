@@ -9,8 +9,9 @@ user_invocable: true
 Generate comprehensive API documentation from the project's live schema or codebase.
 
 ## Protocol
-1. Dispatch `agents/api-docs.md`
-2. Agent discovers API endpoints (database RPCs, REST routes, serverless functions)
-3. Documents: name, args, returns, auth, description
-4. Groups by domain (inferred from naming conventions)
-5. Returns markdown documentation
+1. Nyx discovers API endpoints (Tauri commands, database RPCs, REST routes)
+2. Documents: name, args, returns, auth, description
+3. Groups by domain (inferred from naming conventions)
+4. Returns markdown documentation
+
+> Converted from API Docs agent at P7.5-B. Nyx executes directly.
