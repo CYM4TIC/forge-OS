@@ -34,7 +34,39 @@ Last completed: **P7.5-C.1** — Infrastructure Housekeeping.
 
 **D.0 in progress (2026-04-05):** Major restructuring decision during guided conversation. Scout, Sentinel, Meridian demoted from personas to Nyx sub-agents — they serve the build loop, not independent domain expertise. Chronicle + Scribe become sub-agents (not absorbed capabilities). Banger-mode added (bounded iterative fix loop). Phase 5 reframed: Scribe posture (synthesis through writing) replaces compliance bookkeeping. E-series collapses from 4 sessions to 1 (Wraith only). Team: 14→11 personas, 20→27 sub-agents.
 
-**Next: P7.5-D.0 — continue** (sub-agent definitions → reference bank → profile + index).
+**Next: P7.5-D.0 — continue** (Phase C: reference bank → Phase D: profile + index).
+
+**D.0 handoff for next session:**
+Architecture restructure committed (8380ef2). Phase B (guided conversation) complete. Phase C (reference bank) and Phase D (profile + index) remain.
+
+Key decisions made this session:
+- Scout/Sentinel/Meridian → Nyx sub-agents (independence test)
+- Chronicle/Scribe → Nyx sub-agents (dispatched, not performed)
+- Banger-mode sub-agent (bounded iterative fix loop)
+- Gate Dispatcher/Discussion Protocol retired (Nyx IS the dispatcher)
+- Smart gate routing: Pierce always + manifest + auto-detect from files
+- Phase 5 reframed: chronicle mines → scribe synthesizes (intelligence, not compliance)
+
+Reference bank structure (12 sections identified during conversation):
+1. Build loop (6-phase) — with Phase 5 as chronicle+scribe dispatch
+2. Micro-batch protocol — from v4.0 frontend catastrophe
+3. Consequence climbing — 4-order methodology
+4. Scalar cognition — concrete practice from v5.0
+5. Contract enforcement — 8 contracts with lived gotchas
+6. Failure mode detection & response — 14 FMs as actionable patterns
+7. Dispatch intelligence — 120+ research patterns metabolized
+8. Gate orchestration — smart routing + dispatch methodology
+9. Adversarial self-check — 9-step protocol with evidence requirements
+10. Historical pattern mining (chronicle) — methodology for the sub-agent
+11. Knowledge synthesis (scribe) — methodology for the sub-agent
+12. Intent decomposition — operator collaboration, vision→spec→build
+
+Sources to read for Phase C:
+- EXECUTION-PROTOCOL.md (the compiler)
+- FAILURE-MODES.md (full FM analysis)
+- Mining reports (CrewAI, AutoGen, OpenHands) for dispatch patterns
+- Reference sources (oh-my-claudecode, rosehill, ruflo) for orchestration
+- 6 HIGH priority repo mining targets (semantic-kernel, palaia, langgraph, gh-aw, copilot-engine-sdk, claude-agent-sdk-typescript)
 
 ---
 
