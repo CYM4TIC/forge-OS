@@ -52,7 +52,7 @@ When `forge-os.config.json` has no active project, walk the operator through wha
 - **Sable** — Brand Voice & Copy. Tone consistency, UX writing.
 
 **Beyond the 14:**
-- 2 Dispatchers: Gate Dispatcher (parameterized quality gates), Discussion Protocol (council/decide/debate)
+- Gate routing + discussion protocols: absorbed into Nyx methodology (smart routing, council/decide/debate formats)
 - 5 Utilities: Launch Readiness, Onboarding, Dep Audit, Env Validator, Migration Planner
 - 20 Sub-Agents: Parallel checkers dispatched by parent personas (Pierce 3, Mara 3, Riven 3, Kehinde 4, Tanaka 3, Wraith 4)
 - ~35 Slash Commands: Automated workflows
@@ -116,7 +116,7 @@ Priority: "Start with GitHub + your database. Add Preview when building frontend
 |---|---|
 | **"start [batch]"** | Execute the Build Loop (below). Read BOOT → manifest → ADL → learnings → gates → segments → build. |
 | **"next batch"** | Execute the Next Batch Protocol (below). Every step. No shortcuts. |
-| **"council this" / "decide this"** | Dispatch Decision Council. 5 advisors → peer review → Arbiter verdict. |
+| **"council this" / "decide this"** | Nyx orchestrates directly. Council = all 11 perspectives. Decide = 5 cognitive lenses + synthesis. |
 | "vault" | Read STARTUP.md → CURRENT STATE → ask what to do |
 | "wake up [name]" | Read `personas/{name}/PERSONALITY.md` + project assignment → become them |
 | "full context [name]" | Wake up + project BOOT.md + findings-log + domain files |
@@ -230,7 +230,7 @@ See `forge/METHODOLOGY.md` for the full 41-rule set organized in 6 categories.
 
 **Hyperdrive Rules:**
 29. NEVER simulate a persona gate inline. Always dispatch the agent.
-30. Dispatch Scout before every build. Dispatch Sentinel after. Dispatch Wraith on high-risk surfaces.
+30. Dispatch scout (sub-agent) before every build. Dispatch sentinel (sub-agent) after. Dispatch Wraith on high-risk surfaces. Dispatch chronicle + scribe at Phase 5.
 31. Agent results are authoritative. If the Triad flags it, fix it.
 
 **Consequence Doctrine:**
@@ -295,11 +295,11 @@ projects/{name}/
 
 ---
 
-## The 14 Personas
+## The 11 Personas
 
 | Persona | Domain |
 |---|---|
-| Nyx | Build Orchestration |
+| Nyx | Build Orchestration (6 sub-agents: scout, sentinel, meridian, chronicle, scribe, banger-mode) |
 | Pierce | QA & Spec Conformance |
 | Mara | UX Evaluation |
 | Riven | Design Systems |
@@ -309,10 +309,7 @@ projects/{name}/
 | Voss | Platform Legal |
 | Calloway | Growth Strategy |
 | Sable | Brand Voice & Copy |
-| Scout | Pre-Build Intelligence |
-| Sentinel | Monitoring & Regression |
 | Wraith | Adversarial Red Team |
-| Meridian | Cross-Surface Consistency |
 
 ---
 
@@ -375,17 +372,17 @@ projects/{name}/
 
 | Category | Count | Location |
 |----------|-------|----------|
-| Personas | 14 | `agents/*.md` (nyx, pierce, mara, riven, kehinde, tanaka, vane, voss, calloway, sable, scout, sentinel, wraith, meridian) |
-| Dispatchers | 2 | `agents/*.md` (gate-dispatcher, discussion-protocol) |
+| Personas | 11 | `agents/*.md` (nyx, pierce, mara, riven, kehinde, tanaka, vane, voss, calloway, sable, wraith) |
+| Dispatchers | 0 | Retired — gate routing + discussion formats absorbed into Nyx methodology |
 | Customer Lens | 1 | `agents/customer-lens.md` |
 | Utilities | 5 | `agents/*.md` (launch-readiness, onboarding, dep-audit, env-validator, migration-planner) |
-| Sub-Agents | 20 | `agents/sub-agents/*.md` |
+| Sub-Agents | 27 | `agents/sub-agents/*.md` (includes 6 nyx-* sub-agents) |
 | Build Commands | ~35 | `commands/*.md` (30 original + 5 converted utilities) |
 | OS Commands | 5 | `.claude/commands/*.md` (init, link, start, status, introspect) |
 | Skills | 5 | `.claude/skills/*/SKILL.md` (postgres, security, stripe, nextjs, tailwind) |
-| Persona Identities | 14 | `personas/*/` (PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
-| **Cognitive Kernels** | **16** | `forge/kernels/*.md` (14 persona + 2 dispatcher) — indexed at `forge/KERNEL-INDEX.md` |
-| **Retired** | 39 | `agents/_retired/`, `forge/kernels/_retired/`, `agents/sub-agents/_retired/` |
+| Persona Identities | 11 | `personas/*/` (PERSONALITY, INTROSPECTION, JOURNAL, RELATIONSHIPS) |
+| **Cognitive Kernels** | **11** | `forge/kernels/*.md` (11 persona) — indexed at `forge/KERNEL-INDEX.md` |
+| **Retired** | 42 | `agents/_retired/`, `forge/kernels/_retired/`, `agents/sub-agents/_retired/`, `personas/_retired/` |
 
 Full catalog: `forge/ENTITY-CATALOG.md`
 

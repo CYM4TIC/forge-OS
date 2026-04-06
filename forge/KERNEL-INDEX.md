@@ -1,17 +1,17 @@
 # Kernel Index
 
-> Master index of all 16 cognitive kernels. Each kernel is a persona's execution mind — phases, FMs, contracts, rules.
+> Master index of all 11 cognitive kernels. Each kernel is a persona's execution mind — phases, FMs, contracts, rules.
 > Persona files (PERSONALITY.md, INTROSPECTION.md) are identity. Kernels are execution.
-> Restructured at P7.5-B: 24 → 16 kernels. 11 retired to `kernels/_retired/`.
+> Restructured at P7.5-B: 24 → 16 kernels. P7.5-D.0: 16 → 13 (Scout/Sentinel/Meridian → Nyx sub-agents).
 
 ---
 
-## Persona Kernels (14)
+## Persona Kernels (11) — Total: 11 (no dispatchers)
 
 ### Builder
-| Persona | Kernel | Domain | Key FM Risks |
-|---------|--------|--------|-------------|
-| **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Build Orchestration | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
+| Persona | Kernel | Domain | Sub-Agents | Key FM Risks |
+|---------|--------|--------|-----------|-------------|
+| **Nyx** | [kernels/nyx-kernel.md](kernels/nyx-kernel.md) | Build Orchestration | scout, sentinel, meridian, chronicle, scribe, banger-mode | FM-7 (completion gravity), FM-10 (consequence blindness), FM-11 (manifest amnesia) |
 
 ### Gate Personas
 | Persona | Kernel | Domain | Key FM Risks |
@@ -26,24 +26,19 @@
 | **Calloway** | [kernels/calloway-kernel.md](kernels/calloway-kernel.md) | Growth Strategy | FM-11 (stale competitive intel), FM-10 (no build impact trace) |
 | **Sable** | [kernels/sable-kernel.md](kernels/sable-kernel.md) | Brand Voice & Copy | FM-12 (sibling tone drift), FM-10 (label change ripple) |
 
-### Elevated Personas (formerly Intelligences)
-| Persona | Kernel | Domain | Absorbs | Key FM Risks |
-|---------|--------|--------|---------|-------------|
-| **Scout** | [kernels/scout-kernel.md](kernels/scout-kernel.md) | Pre-Build Intelligence | — | FM-11 (memory is not schema), FM-4 (skipping persona logs) |
-| **Sentinel** | [kernels/sentinel-kernel.md](kernels/sentinel-kernel.md) | Monitoring & Regression | Beacon (post-deploy watchdog) | FM-6 (no screenshots), FM-7 (2 of 3 routes) |
-| **Wraith** | [kernels/wraith-kernel.md](kernels/wraith-kernel.md) | Adversarial Red Team | — | FM-7 (enough to report), FM-10 (atomic vuln, no chain) |
-| **Meridian** | [kernels/meridian-kernel.md](kernels/meridian-kernel.md) | Cross-Surface Consistency | — | FM-6 (quantify, don't describe), FM-7 (7 of 10 routes) |
+### Adversarial
+| Persona | Kernel | Domain | Sub-Agents | Key FM Risks |
+|---------|--------|--------|-----------|-------------|
+| **Wraith** | [kernels/wraith-kernel.md](kernels/wraith-kernel.md) | Adversarial Red Team | input-fuzzer, auth-probe, concurrency, parseltongue, banger-mode | FM-7 (enough to report), FM-10 (atomic vuln, no chain) |
 
 ---
 
-## Dispatcher Kernels (2)
+## Dispatchers (retired at P7.5-D.0)
 
-| Dispatcher | Kernel | Replaces | Modes |
-|-----------|--------|----------|-------|
-| **Gate Dispatcher** | `agents/gate-dispatcher.md` | Build Triad, Systems Triad, Strategy Triad, Gate Runner, Full Audit, Smart Review | `--build`, `--systems`, `--strategy`, `--manifest`, `--full`, `--diff` |
-| **Discussion Protocol** | `agents/discussion-protocol.md` | Council, Decision Council, Debate (Arbiter absorbed as synthesis step) | `--council`, `--decide`, `--debate` |
-
-> Note: Dispatchers don't have separate kernel files — their agent definition IS their kernel. They're parameterized routers, not cognitive entities.
+> Gate Dispatcher and Discussion Protocol retired. Routing logic absorbed into Nyx methodology.
+> Gate routing: Pierce (always) + manifest Gate: field + auto-detect from files touched.
+> Discussion: council/decide/debate are formats Nyx orchestrates directly.
+> See `agents/_retired/gate-dispatcher.md` and `agents/_retired/discussion-protocol.md`.
 
 ---
 
@@ -52,18 +47,13 @@
 | Dispatch | What Loads |
 |----------|-----------|
 | `next batch` / `start [batch]` | nyx-kernel.md |
-| Scout dispatch | scout-kernel.md |
-| Gate `--build` | gate-dispatcher.md → pierce, mara, kehinde kernels |
-| Gate `--systems` | gate-dispatcher.md → kehinde, tanaka, vane kernels |
-| Gate `--strategy` | gate-dispatcher.md → calloway, voss, sable kernels |
-| Gate `--full` | gate-dispatcher.md → all relevant persona kernels |
-| Gate `--diff` | gate-dispatcher.md → routes by file pattern |
-| Sentinel dispatch | sentinel-kernel.md |
+| Nyx sub-agents (scout, sentinel, meridian, chronicle, scribe, banger-mode) | Sub-agent definitions in `agents/sub-agents/nyx-*.md` |
+| `/gate` | Nyx smart routing → Pierce (always) + manifest + auto-detect |
+| `/gate --full` | Nyx → all 10 non-Nyx persona kernels |
 | Wraith dispatch | wraith-kernel.md |
-| Meridian dispatch | meridian-kernel.md |
-| `discuss --council` | discussion-protocol.md → all 14 persona kernels |
-| `discuss --decide` | discussion-protocol.md → 5 cognitive lenses (protocol steps) |
-| `discuss --debate [a] [b]` | discussion-protocol.md → 2 named persona kernels |
+| `/council` | Nyx → all 10 non-Nyx persona kernels |
+| `/decide` | Nyx → 5 cognitive lenses (protocol steps, not agents) |
+| `/debate [a] [b]` | Nyx → 2 named persona kernels |
 
 ---
 
@@ -71,8 +61,11 @@
 
 | Kernel | Reason |
 |--------|--------|
-| chronicle-kernel.md | Absorbed into Nyx (Phase 5 bookkeeping) |
-| scribe-kernel.md | Absorbed into Nyx (build task) |
+| chronicle-kernel.md | Absorbed into Nyx (Phase 5 sub-agent) |
+| scribe-kernel.md | Absorbed into Nyx (Phase 5 sub-agent) |
+| scout-kernel.md | Demoted to Nyx sub-agent (Phase 0) at P7.5-D.0 |
+| sentinel-kernel.md | Demoted to Nyx sub-agent (Phase 4) at P7.5-D.0 |
+| meridian-kernel.md | Demoted to Nyx sub-agent (Phase 4 exit) at P7.5-D.0 |
 | arbiter-kernel.md | Absorbed into Discussion Protocol (synthesis step) |
 | kiln-kernel.md | Absorbed into Kehinde (performance methodology) |
 | compass-kernel.md | Absorbed into Kehinde (impact analysis) |
@@ -85,5 +78,7 @@
 
 ---
 
-*KERNEL-INDEX.md — 16 active kernels (14 persona + 2 dispatcher). Restructured 2026-04-05 at P7.5-B.*
-*11 kernels retired to `kernels/_retired/`. See `docs/ECOSYSTEM-REFINEMENT.md` for decision rationale.*
+*KERNEL-INDEX.md — 11 active kernels (11 persona, 0 dispatchers). Restructured 2026-04-05 at P7.5-B.*
+*14 kernels retired to `kernels/_retired/`. Scout/Sentinel/Meridian demoted to Nyx sub-agents at P7.5-D.0.*
+*Dispatchers retired at P7.5-D.0 — gate routing + discussion formats absorbed into Nyx methodology.*
+*See `docs/ECOSYSTEM-REFINEMENT.md` for decision rationale.*

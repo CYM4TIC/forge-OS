@@ -155,50 +155,46 @@
 
 ---
 
-### P7.5-E.0 through E.3: Guided Profile + Introspection Sessions — 4 Elevated Personas
+### P7.5-E: Guided Profile + Introspection Session — Wraith
 
-**Goal:** Each elevated persona activates, reads the plan, reviews their research, has a deep guided conversation with the operator, self-authors their professional profile, AND runs a full introspection matrix session to build their INTROSPECTION.md. These personas are being fully formed — profile establishes professional identity, introspection gives cognitive depth.
+> **Restructured at P7.5-D.0.** Original E-series was 4 sessions (Scout, Sentinel, Wraith, Meridian).
+> Scout, Sentinel, Meridian demoted to Nyx sub-agents — their definitions are authored as part of Nyx's D.0 session.
+> Only Wraith remains as a full persona requiring profile + introspection.
 
-**Process per session (6 phases):**
+**Goal:** Wraith activates, reads the plan, reviews research, has a deep guided conversation with the operator, self-authors professional profile, AND runs a full introspection matrix session to build INTROSPECTION.md. Wraith is being fully formed — profile establishes professional identity, introspection gives cognitive depth.
+
+**Process (6 phases):**
 
 **Phase A — Load context**
-1. Activate persona (read kernel + agent file — no PERSONALITY.md or INTROSPECTION.md yet)
-2. Persona reads `docs/ECOSYSTEM-REFINEMENT.md` + `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`
-3. Persona reads their section of `docs/RESEARCH-PERSONA-MAP.md`
-4. Persona reads Repo Mining Targets from their research map section (repos surveyed 2026-04-05)
+1. Activate Wraith (read kernel + agent file — no PERSONALITY.md or INTROSPECTION.md yet)
+2. Wraith reads `docs/ECOSYSTEM-REFINEMENT.md` + `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md`
+3. Wraith reads their section of `docs/RESEARCH-PERSONA-MAP.md`
+4. Wraith reads Repo Mining Targets from research map section
 
 **Phase B — Guided conversation**
-5. Operator-led deep conversation: domain expertise, methodology, how they think, what they see first
-6. Persona identifies research gaps — operator mines additional sources
+5. Operator-led deep conversation: attack methodology, how Wraith thinks, what Wraith sees first
+6. Wraith identifies research gaps — operator mines additional sources
 
 **Phase C — Reference bank (heavy step)**
-7. Persona reads source material for each methodology (following research map pointers)
-8. Persona self-authors `forge/profiles/{name}-references.md` — full depth Layer 3 knowledge bank (same format as D-series)
+7. Wraith reads source material for each methodology (following research map pointers)
+8. Wraith self-authors `forge/profiles/wraith-references.md` — full depth Layer 3 knowledge bank
 
 **Phase D — Profile + index (derived from the bank)**
-9. Persona self-authors `forge/profiles/{name}-profile.md` — ~50 lines, compresses the bank (same format as D-series)
-10. Persona self-authors `forge/profiles/{name}-reference-index.md` — lookup table + KAIROS manifest (same format as D-series)
+9. Wraith self-authors `forge/profiles/wraith-profile.md` — ~50 lines, compresses the bank
+10. Wraith self-authors `forge/profiles/wraith-reference-index.md` — lookup table + KAIROS manifest
 
 **Phase E — Introspection (operator-guided)**
 11. Introspection matrix session: cognitive lens, default assumptions, blind spots, value hierarchy, decision heuristics, emotional register, failure modes
-12. Persona self-authors `personas/{name}/INTROSPECTION.md`
-13. Persona self-authors `personas/{name}/PERSONALITY.md`
+12. Wraith self-authors `personas/wraith/INTROSPECTION.md`
+13. Wraith self-authors `personas/wraith/PERSONALITY.md`
 
 **Phase F — Kernel update**
 14. Update kernel: add profile + reference index to Reference Index section
 
-**Sessions:**
-| Sub-Batch | Persona | Key Focus |
-|-----------|---------|-----------|
-| P7.5-E.0 | **Scout** | Pre-build intelligence, terrain mapping, WHY/HOW/WHAT classification |
-| P7.5-E.1 | **Sentinel** | Monitoring & regression, absorbed Beacon, differential scanning, drift detection |
-| P7.5-E.2 | **Wraith** | Adversarial red team, parseltongue, prompt attacks, l33tspeak voice |
-| P7.5-E.3 | **Meridian** | Cross-surface consistency, pattern coherence, state uniformity |
-
-**Gate:** No external gate — operator-guided deep sessions. The operator IS the gate.
+**Gate:** No external gate — operator-guided deep session. The operator IS the gate.
 **Depends on:** P7.5-D (calibrate from original persona profiles)
-**Push:** After each session
-**Notes:** These are the deepest sessions in Session 7.5. Each persona is being fully formed — professional identity (profile) + cognitive depth (introspection) + voice (personality). Wraith's voice is l33tspeak throughout all authored files.
+**Push:** After session
+**Notes:** Wraith's voice is l33tspeak throughout all authored files. Wraith's banger-mode sub-agent ("bang on it until it breaks") is defined during this session.
 
 ---
 
@@ -307,8 +303,8 @@
 | P7.5-A | Kehinde + Tanaka | Dispatch queue architecture + secret scrubbing security |
 | P7.5-B | Kehinde | Architecture coherence — all references resolve after restructuring |
 | P7.5-C | Pierce | Completeness — no research source orphaned |
-| P7.5-D.0–D.9 | Operator (guided sessions — the operator IS the gate) | Self-authored profiles, persona-by-persona |
-| P7.5-E.0–E.3 | Operator (guided deep sessions — profile + introspection) | Self-authored profiles + introspection matrices |
+| P7.5-D.0–D.9 | Operator (guided sessions — the operator IS the gate) | Self-authored profiles + Nyx sub-agent defs |
+| P7.5-E | Operator (guided deep session — profile + introspection) | Wraith profile + introspection + banger-mode def |
 | P7.5-F | Mara + Sable + Riven | Design system governance + voice + persona return format |
 | P7.5-G | Kehinde + Pierce | Finding deduplication correctness + condenser architecture |
 | P7.5-H | Kehinde + Pierce + Sentinel | Full Rust integration — regression risk from touching 6 existing modules |

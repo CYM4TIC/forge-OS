@@ -12,7 +12,7 @@
 
 **The personas are the team. The project is the job. Knowledge travels with the person, not the project.**
 
-14 world-class domain experts. Each one a permanent team member who brings professional expertise to every project — not project workers, but senior professionals whose knowledge grows through use.
+11 world-class domain experts. Each one a permanent team member who brings professional expertise to every project — not project workers, but senior professionals whose knowledge grows through use.
 
 - Identity layer = who they are (portable, all projects). Grows autonomously through use.
 - Context layer = what they need for this task (project-specific, assembled per-dispatch).
@@ -134,7 +134,7 @@ Every dispatch teaches something. Learning flows back autonomously.
 
 ## Output Format (Three Files Per Persona)
 
-14 personas, three files each. Equal depth. No tier distinction between original personas and elevated intelligences.
+11 personas, three files each. Equal depth. No tier distinction between original personas and elevated intelligences.
 
 ### File 1: Profile (`forge/profiles/{name}-profile.md`, ~50 lines)
 
@@ -209,7 +209,7 @@ Lookup table and KAIROS ingestion manifest. Maps profile → reference bank → 
 
 | Batch | What | Phase |
 |-------|------|-------|
-| P7.5-D/E | Author 14 x 3 files (profile + reference bank + reference index) | NOW (pre-Phase 8) |
+| P7.5-D/E | Author 11 x 3 files (profile + reference bank + reference index) + 6 Nyx sub-agent defs | NOW (pre-Phase 8) |
 | P8-F | KnowledgeAugmenter in ContextAssembler | Phase 8 Session 8.1 |
 | P8-G | Dreamtime consolidation pass per persona | Phase 8 Session 8.1 |
 | P8-G+ | KAIROS ingestion: read reference indexes, embed reference bank sections | Phase 8 Session 8.1 |

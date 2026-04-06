@@ -1,12 +1,13 @@
 # Forge OS — Entity Catalog
 
-> Complete inventory. 14 personas + 2 dispatchers + 1 customer lens + 5 utilities + 20 sub-agents + ~35 commands.
-> Restructured at P7.5-B. See `docs/ECOSYSTEM-REFINEMENT.md` for decision rationale.
+> Complete inventory. 11 personas + 2 dispatchers + 1 customer lens + 5 utilities + 27 sub-agents + ~35 commands.
+> Restructured at P7.5-B; refined at P7.5-D.0 (Scout/Sentinel/Meridian → Nyx sub-agents).
+> See `docs/ECOSYSTEM-REFINEMENT.md` for decision rationale.
 > Retired entities preserved in `_retired/` directories.
 
 ---
 
-## Personas (14)
+## Personas (11)
 
 | Agent | File | Domain | Model Tier | Tools |
 |-------|------|--------|-----------|-------|
@@ -20,20 +21,13 @@
 | **Voss** | `agents/voss.md` | Platform Legal | capable (sonnet) | READ-ONLY advisory |
 | **Calloway** | `agents/calloway.md` | Growth Strategy | capable (sonnet) | READ-ONLY + WebSearch |
 | **Sable** | `agents/sable.md` | Brand Voice & Copy | capable (sonnet) | READ-ONLY + GitHub search |
-
-| **Scout** | `agents/scout.md` | Pre-Build Intelligence | capable (sonnet) | READ-ONLY + DB + Grep |
-| **Sentinel** | `agents/sentinel.md` | Monitoring & Regression (absorbs Beacon) | capable (sonnet) | READ-ONLY + Preview |
 | **Wraith** | `agents/wraith.md` | Adversarial Red Team | capable (sonnet) | READ-ONLY + Preview + Grep |
-| **Meridian** | `agents/meridian.md` | Cross-Surface Consistency | capable (sonnet) | READ-ONLY + Preview |
 
 ---
 
-## Dispatchers (2)
+## Dispatchers (0 — retired at P7.5-D.0)
 
-| Agent | File | Replaces | Modes |
-|-------|------|----------|-------|
-| **Gate Dispatcher** | `agents/gate-dispatcher.md` | Build Triad, Systems Triad, Strategy Triad, Gate Runner, Full Audit, Smart Review | `--build`, `--systems`, `--strategy`, `--manifest`, `--full`, `--diff` |
-| **Discussion Protocol** | `agents/discussion-protocol.md` | Council, Decision Council, Debate (absorbs Arbiter synthesis) | `--council`, `--decide`, `--debate` |
+> Gate Dispatcher and Discussion Protocol retired. Gate routing logic absorbed into Nyx (smart routing: Pierce always + manifest + auto-detect from files). Discussion protocol absorbed into Nyx methodology (council/decide/debate are formats Nyx orchestrates directly). See `agents/_retired/gate-dispatcher.md` and `agents/_retired/discussion-protocol.md`.
 
 ---
 
@@ -59,10 +53,22 @@
 
 ---
 
-## Sub-Agents (20)
+## Sub-Agents (27)
 
 > 15 sub-agents retired at P7.5-B — absorbed into parent persona methodologies or protocol steps.
-> Survivors are genuinely parallel and have independent methodology. See `agents/sub-agents/_retired/`.
+> 6 Nyx sub-agents added at P7.5-D.0 (3 demoted personas + 3 new). Wraith banger-mode added at P7.5-D.0.
+> Sub-agent count will grow as persona profile sessions identify additional needs.
+> See `agents/sub-agents/_retired/`.
+
+### Nyx Sub-Agents (6)
+| Sub-Agent | File | Build Phase | Post-Build Mode |
+|-----------|------|------------|-----------------|
+| Nyx Scout | `agents/sub-agents/nyx-scout.md` | Phase 0: terrain mapping, brief | Change-request recon, bug investigation |
+| Nyx Sentinel | `agents/sub-agents/nyx-sentinel.md` | Phase 4: regression scanning | Production monitoring, deploy verification |
+| Nyx Meridian | `agents/sub-agents/nyx-meridian.md` | Phase 4 exit: cross-surface consistency | Drift detection, style coherence |
+| Nyx Chronicle | `agents/sub-agents/nyx-chronicle.md` | Phase 5: pattern mining, history compounding | Historical analysis, trend detection |
+| Nyx Scribe | `agents/sub-agents/nyx-scribe.md` | Phase 5: knowledge synthesis | Documentation maintenance, knowledge updates |
+| Nyx Banger-Mode | `agents/sub-agents/nyx-banger-mode.md` | Any phase: bounded iterative fix loop | Hotfix — bang on it until it works |
 
 ### Pierce Sub-Agents (3)
 | Sub-Agent | File | Focus |
@@ -171,16 +177,18 @@
 
 ---
 
-## Persona Identity Sets (14)
+## Persona Identity Sets (11)
 
 Each persona has identity files in `personas/{name}/`:
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `PERSONALITY.md` | Voice, communication style, backstory, humor | 10 original have it; 4 elevated pending |
-| `INTROSPECTION.md` | Failure modes, blind spots, cognitive biases | 10 original have it; 4 elevated pending |
-| `JOURNAL.md` | Reflections and growth across projects | All 14 have it |
-| `RELATIONSHIPS.md` | How this persona relates to every other persona | All 14 have it |
+| `PERSONALITY.md` | Voice, communication style, backstory, humor | 10 have it; Wraith pending (P7.5-E.2) |
+| `INTROSPECTION.md` | Failure modes, blind spots, cognitive biases | 10 have it; Wraith pending (P7.5-E.2) |
+| `JOURNAL.md` | Reflections and growth across projects | All 11 have it |
+| `RELATIONSHIPS.md` | How this persona relates to every other persona | All 11 have it |
+
+> Scout, Sentinel, Meridian persona dirs archived at P7.5-D.0. Their identity is now in sub-agent definitions.
 
 ---
 
@@ -188,19 +196,19 @@ Each persona has identity files in `personas/{name}/`:
 
 | Category | Count |
 |----------|-------|
-| Personas | 14 |
-| Dispatchers | 2 |
+| Personas | 11 |
+| Dispatchers | 0 (retired — absorbed into Nyx) |
 | Customer Lens | 1 |
 | Utilities | 5 |
-| Sub-Agents | 20 |
-| **Agent Subtotal** | **42** |
+| Sub-Agents | 27 (Nyx 6, Pierce 3, Mara 3, Riven 3, Kehinde 4, Tanaka 3, Wraith 5) |
+| **Agent Subtotal** | **46** |
 | Build Commands | ~35 |
-| **Entity Total** | **~77** |
+| **Entity Total** | **~81** |
 | OS Commands | 5 |
 | Skills | 5 |
-| Persona Identity Sets | 14 |
-| Cognitive Kernels | 16 (14 persona + 2 dispatcher) |
-| **Retired** | **39** (in `_retired/` directories) |
+| Persona Identity Sets | 11 |
+| Cognitive Kernels | 11 (11 persona, 0 dispatchers) |
+| **Retired** | **42** (39 prior + Scout/Sentinel/Meridian kernels) |
 
 ---
 

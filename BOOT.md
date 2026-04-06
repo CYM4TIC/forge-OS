@@ -32,7 +32,9 @@ Last completed: **P7.5-C.1** — Infrastructure Housekeeping.
 
 **Pre-D.0 prep (2026-04-05):** Mined github/awesome-copilot (35 patterns, 14 HIGH). Surveyed 38 repos across 8 orgs (github, microsoft, langchain, MCP, etc.) — 12 HIGH priority. Created `forge/research/PHASE-8-REPO-REFERENCE.md` (Phase 8 manifest reference combining mined patterns + repos to mine, organized by sub-session). Updated `docs/RESEARCH-PERSONA-MAP.md` with Repo Mining Targets per persona. Refined D/E-series manifest: 4-phase process (Load → Conversation → Reference Bank → Profile+Index), three output files per session (reference bank first as source of truth, profile + index derived from it). Updated `docs/KNOWLEDGE-LOADING-ARCHITECTURE.md` with Layer 3 reference bank + index structure and KAIROS ingestion path.
 
-**Next: P7.5-D.0 — Guided Profile Session: Nyx** (Phase A-D: load context → guided conversation → reference bank → profile + index).
+**D.0 in progress (2026-04-05):** Major restructuring decision during guided conversation. Scout, Sentinel, Meridian demoted from personas to Nyx sub-agents — they serve the build loop, not independent domain expertise. Chronicle + Scribe become sub-agents (not absorbed capabilities). Banger-mode added (bounded iterative fix loop). Phase 5 reframed: Scribe posture (synthesis through writing) replaces compliance bookkeeping. E-series collapses from 4 sessions to 1 (Wraith only). Team: 14→11 personas, 20→27 sub-agents.
+
+**Next: P7.5-D.0 — continue** (sub-agent definitions → reference bank → profile + index).
 
 ---
 
@@ -52,10 +54,10 @@ Last completed: **P7.5-C.1** — Infrastructure Housekeeping.
 | Batch | Name | Status |
 |-------|------|--------|
 | P7.5-A | Dispatch Queue Intelligence + Secret Scrubbing | ✅ DONE |
-| P7.5-B | Ecosystem Refinement (42→14 personas) | ✅ DONE |
-| P7.5-C | Research Audit (400+ patterns → 14 personas) | ✅ DONE |
-| P7.5-D.0–D.9 | Guided Profile Sessions — 10 original personas | ⬜ TODO |
-| P7.5-E.0–E.3 | Guided Profile + Introspection — 4 elevated personas | ⬜ TODO |
+| P7.5-B | Ecosystem Refinement (42→14→11 personas) | ✅ DONE |
+| P7.5-C | Research Audit (400+ patterns → 14→11 personas) | ✅ DONE |
+| P7.5-D.0–D.9 | Guided Profile Sessions — 10 original personas (+ Nyx sub-agent defs) | ⬜ TODO |
+| P7.5-E | Guided Profile + Introspection — Wraith | ⬜ TODO |
 | P7.5-F | Design System Governance | ⬜ TODO |
 | P7.5-G | Finding Deduplication + Compaction Condenser | ⬜ TODO |
 | P7.5-H | KAIROS Composite Scoring + Swarm Event Triggers | ⬜ TODO |

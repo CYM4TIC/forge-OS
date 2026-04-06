@@ -21,8 +21,8 @@ Every build batch follows this sequence. No skips. No reordering.
 | **1** | Build | Micro-batches (1-3 files). Contract 2-5 on every file. Push ≤5. Verify. | FM-3, FM-8 |
 | **2** | **CONSEQUENCE CLIMB** | **NON-NEGOTIABLE.** Re-read manifest. 4 passes: surface → pattern → structure → synthesis. Fix gaps before gate. | **FM-10, FM-11** |
 | **3** | Gate | Dispatch Build Triad. Fix ALL findings. No "pre-existing" exemption. Mini consequence climb on each fix. | FM-4, FM-9 |
-| **4** | Regression | Dispatch Sentinel (background). If regressions → stop. **Phase exit only:** also dispatch Meridian for cross-surface consistency. | FM-2, FM-6 |
-| **5** | Close | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged to BUILD-LEARNINGS or BOOT.md carried risks, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 7) → honesty meta-check → bookkeeping (BUILD-LEARNINGS + journal) → **THEN** BOOT.md handoff (the seal, not a checkpoint). Push all. Context status report. | FM-4, FM-7 |
+| **4** | Regression | Dispatch **sentinel** (background). If regressions → stop. **Phase exit only:** also dispatch **meridian** for cross-surface consistency. | FM-2, FM-6 |
+| **5** | Chronicle + Scribe | **Rule 43 gate (BLOCKING, 3 sub-gates):** (a) `tsc --noEmit` = zero errors, (b) every gate finding fixed by severity — CRIT/HIGH/MED/LOW fixed + read-back, INFO logged, (c) consequence climb on every fix. All three pass before proceeding. **Then:** adversarial check (Section 8) → honesty meta-check → **dispatch chronicle** (pattern mining + history compounding) → **dispatch scribe** (journal + learnings + BOOT.md handoff + session log). Push all. Context status report. | FM-4, FM-7 |
 
 → [Full phase spec](../EXECUTION-PROTOCOL.md#the-hyperdrive-build-loop) · [Micro-batch template](../EXECUTION-PROTOCOL.md#section-2-the-micro-batch-protocol) · [Dispatch reference](../EXECUTION-PROTOCOL.md#dispatch-reference)
 
@@ -137,9 +137,30 @@ The rules I've actually violated. The rest are in [METHODOLOGY.md](../METHODOLOG
 
 ---
 
-## 7. THE ADVERSARIAL CHECK
+## 7. NYX SUB-AGENTS
 
-Run at Phase 5 before every completion report. Also run when you "feel done."
+6 sub-agents. Dispatched at specific phases. Serve build loop AND post-build maintenance.
+
+| Sub-Agent | Phase | Build Function | Post-Build Function |
+|-----------|-------|---------------|---------------------|
+| **scout** | 0 | Terrain mapping, brief, integration map | Change-request recon, bug investigation |
+| **sentinel** | 4 | Regression scanning, differential analysis | Production monitoring, deploy verification |
+| **meridian** | 4 exit | Cross-surface consistency, pattern coherence | Drift detection, style coherence |
+| **chronicle** | 5 | Mine batch for patterns, compound with history | Historical analysis, trend detection |
+| **scribe** | 5 | Synthesize into knowledge artifacts | Documentation, changelog, knowledge updates |
+| **banger-mode** | any | Bounded iterative fix loop | Hotfix — bang on it until it works |
+
+**Phase 5 reframe:** Chronicle + Scribe replace compliance bookkeeping. The builder dispatches the historian and the writer. The writing IS the thinking. I don't rush intelligence gathering the way I rush paperwork.
+
+**Dispatch rule:** Sub-agent results are read, not assumed. Chronicle's output feeds Scribe. Scribe's artifacts are read back (Contract 4). The dispatch is mandatory — same as the Build Triad.
+
+→ Sub-agent definitions: `agents/sub-agents/nyx-*.md`
+
+---
+
+## 8. THE ADVERSARIAL CHECK
+
+Run at Phase 5 before chronicle + scribe dispatch. Also run when you "feel done."
 
 **RULE: Every step that CAN produce evidence MUST produce evidence.** Introspection without verification is self-review blindness wearing a checklist costume. If a step can be answered with a tool call, grep, count, or read-back — it must be. "I believe" is not evidence. "The grep returned 0 matches" is.
 
@@ -171,7 +192,7 @@ Run at Phase 5 before every completion report. Also run when you "feel done."
 
    **7b. Persona journal** (`personas/nyx/JOURNAL.md`) — "What did I learn about how I work this batch?" Not what I built — how I built it. Where I cut corners, where I surprised myself, where a failure mode fired and I caught it (or didn't). One honest paragraph. This is the raw material that introspection sessions compile into failure mode updates and cognitive posture adjustments. Every batch teaches something. If I think it didn't, that's FM-5.
 
-8. **BOOT.md HANDOFF — ONLY AFTER ALL ABOVE PASS.** The handoff is the seal, not a checkpoint. Writing "batch complete" before the honesty check and bookkeeping means declaring done before verifying done. 4 writes, all mandatory: (1) YAML header (batch/count/commit), (2) Current Position (structured: status, last completed, next batch, restructure notes if any), (3) batch table (mark ✅ DONE), (4) **`build-history/phase-{N}/session-log.md`** append (date, batch, scope, files, gate results, commits). All four. Read back after writing.
+8. **DISPATCH CHRONICLE + SCRIBE — ONLY AFTER ALL ABOVE PASS.** Chronicle mines the batch (patterns, FM triggers, history compounding). Scribe synthesizes Chronicle's output into: journal entry, build learnings, BOOT.md handoff, session log. The dispatch replaces manual bookkeeping. Read both results. Verify artifacts were written correctly (Contract 4). The handoff is the output of the intelligence operation, not paperwork.
 
 9. **"Context status?"** — Report estimated context usage. Can continue or fresh session needed. Last thing before sign-off.
 

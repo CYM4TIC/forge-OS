@@ -14,13 +14,13 @@
 
 ---
 
-## The 14 Personas
+## The 11 Personas
 
-Scout, Sentinel, Wraith, and Meridian are elevated from "intelligences" to full personas. There is no tier distinction. One team.
+Wraith elevated from "intelligence" to full persona. Scout, Sentinel, and Meridian become Nyx sub-agents — they serve the build loop and maintenance loop, not independent domain expertise. There is no tier distinction among the 11. One team.
 
 | Persona | Domain | Absorbs |
 |---------|--------|---------|
-| **Nyx** | Build Orchestration | Chronicle (build history), Scribe (documentation synthesis) |
+| **Nyx** | Build Orchestration | Chronicle (sub-agent), Scribe (sub-agent), Scout (sub-agent), Sentinel (sub-agent, absorbs Beacon), Meridian (sub-agent) |
 | **Pierce** | QA & Spec Conformance | — |
 | **Mara** | UX Evaluation | — |
 | **Kehinde** | Systems Architecture | Kiln (performance), Compass (impact analysis) |
@@ -30,10 +30,7 @@ Scout, Sentinel, Wraith, and Meridian are elevated from "intelligences" to full 
 | **Voss** | Platform Legal | — |
 | **Calloway** | Growth Strategy | — |
 | **Sable** | Brand Voice & Copy | — |
-| **Scout** | Pre-Build Intelligence | — |
-| **Sentinel** | Monitoring & Regression | Beacon (post-deploy watchdog) |
 | **Wraith** | Adversarial Red Team | — |
-| **Meridian** | Cross-Surface Consistency | — |
 
 ### What "world-class" means
 
@@ -45,41 +42,64 @@ Profiles reflect this: professional resumes, not project assignments.
 
 | Absorbed Agent | Into | How |
 |----------------|------|-----|
-| **Chronicle** | Nyx | Build history analysis becomes part of Nyx's Phase 5 bookkeeping. Historical pattern detection is a methodology in Nyx's profile. |
-| **Scribe** | Nyx | Documentation synthesis becomes a Nyx task. Knowledge writing is build orchestration. |
+| **Chronicle** | Nyx (sub-agent) | Pattern mining at Phase 5. Deployed by Nyx, not performed by Nyx. The historian is a dispatched hand, not a cognitive posture. |
+| **Scribe** | Nyx (sub-agent) | Knowledge synthesis at Phase 5. The writing IS the thinking — Scribe discovers patterns through composition, not transcription. |
+| **Scout** | Nyx (sub-agent) | Pre-build intelligence at Phase 0. Terrain mapping, brief generation. Post-build: change-request recon, bug investigation. |
+| **Sentinel** | Nyx (sub-agent) | Regression scanning at Phase 4 (absorbs Beacon). Post-build: production monitoring, deploy verification. |
+| **Meridian** | Nyx (sub-agent) | Cross-surface consistency at Phase 4 exit. Post-build: pattern drift detection, style coherence enforcement. |
 | **Arbiter** | Discussion protocol | Decision synthesis becomes a step in the discussion protocol, not a separate persona. |
 | **Kiln** | Kehinde | Performance profiling becomes a Kehinde methodology. Query analysis and optimization are systems architecture through a performance lens. |
 | **Compass** | Kehinde | Impact analysis (BFS dependency graph, change impact scoring) becomes a Kehinde methodology. |
-| **Beacon** | Sentinel | Post-deploy monitoring becomes Sentinel's second mode. Same methodology (differential scanning), different timing (post-deploy vs post-build). |
+| **Beacon** | Sentinel (via Nyx) | Post-deploy monitoring absorbed into Sentinel sub-agent. Same methodology (differential scanning), different timing. |
+
+### Why Scout, Sentinel, Meridian are sub-agents (not personas)
+
+The test is independence. Personas bring professional judgment to any project — they have domain expertise that exists outside the build loop. Sub-agents serve a specific function in a specific phase of a specific workflow.
+
+- **Scout** serves Nyx's Phase 0. No other persona dispatches Scout. Scout doesn't wake up independently.
+- **Sentinel** serves Nyx's Phase 4. Every batch. Regression scanning is verification of Nyx's output.
+- **Meridian** serves Nyx's Phase 4 exit. Cross-surface consistency is verification of Nyx's integration.
+- **Wraith** stays as a persona because: 4 sub-agents of its own, distinct voice (l33tspeak), independent methodology (adversarial red teaming), and future plans beyond the build loop. Tanaka could dispatch Wraith independently.
+
+The principle: **if it only serves the build loop, it's a sub-agent. If it has independent domain expertise, it's a persona.**
 
 ---
 
-## Orchestrator Collapse
+## Orchestrator Collapse → Nyx Methodology
 
 ### Before: 10 orchestrators
 
 Build Triad, Systems Triad, Strategy Triad, Gate Runner, Full Audit, Council, Decision Council, Debate, Launch Sequence, Postmortem.
 
-### After: 2 parameterized dispatchers
+### P7.5-B: 10 → 2 parameterized dispatchers
 
-**Gate Dispatcher** — One agent that reads the gate configuration and dispatches the right personas. Replaces Build Triad, Systems Triad, Strategy Triad, Gate Runner, Full Audit, and Smart Review.
+Gate Dispatcher and Discussion Protocol. Consolidated 10 orchestrators into 2 parameterized routers.
 
-Modes:
-- `gate --build` → Pierce + Mara + Kehinde
-- `gate --systems` → Kehinde + Tanaka + Vane
-- `gate --strategy` → Calloway + Voss + Sable
-- `gate --manifest` → reads PERSONA-GATES.md for the current batch
-- `gate --full` → all relevant personas
-- `gate --diff` → reads git diff, routes by file pattern (Smart Review logic)
+### P7.5-D.0: 2 → 0 dispatchers (absorbed into Nyx)
 
-**Discussion Protocol** — One format for multi-persona deliberation. Replaces Council, Decision Council, Debate.
+Both dispatchers retired. The routing logic is Nyx methodology, not a separate entity. Nyx IS the gate dispatcher.
 
-Modes:
-- `discuss --council` → all 14 personas
-- `discuss --decide` → structured deliberation with synthesis step (former Arbiter role built in)
-- `discuss --debate [persona-a] [persona-b]` → 2-persona structured argument
+**Gate routing (smart):** Pierce (always) + manifest `Gate:` field + auto-detect from files touched. No fixed triads — routing is dynamic based on what the batch actually touches.
 
-Launch Sequence and Postmortem become commands that invoke the gate dispatcher or discussion protocol with specific parameters.
+| Files Touched | Adds |
+|--------------|------|
+| .tsx, .css, components/, pages/ | **Mara** (UX) |
+| tokens, theme, design system | **Riven** (design) |
+| .rs, schema, migration, queries | **Kehinde** (architecture) |
+| auth, rls, secrets, permissions | **Tanaka** (security) |
+| payment, rates, billing | **Vane** (financial) |
+| tos, consent, privacy, legal | **Voss** (legal) |
+| labels, strings, copy, messages | **Sable** (voice) |
+| pricing, tiers, growth, plans | **Calloway** (strategy) |
+
+Modes: default (smart routing), `--add [name]` (explicit additions), `--full` (all 10 non-Nyx personas).
+
+**Discussion formats (Nyx-orchestrated):**
+- `/council` → all 11 personas weigh in, Nyx synthesizes
+- `/decide` → 5 cognitive lenses + peer review + Nyx synthesis
+- `/debate [a] [b]` → 2-persona structured argument + Nyx synthesis
+
+Launch Sequence and Postmortem remain commands that invoke these formats with specific parameters.
 
 ---
 
@@ -89,16 +109,30 @@ Launch Sequence and Postmortem become commands that invoke the gate dispatcher o
 
 Personas own their sub-agents. The operator never manages sub-agents directly. When Pierce runs a gate review, Pierce decides to dispatch his sub-agents in parallel. The operator says "/gate" — Pierce decides the rest.
 
-### Keep (20 sub-agents — genuinely parallel, independent methodology)
+### Keep (20 sub-agents — genuinely parallel, independent methodology) + 6 Nyx sub-agents
 
 | Parent | Sub-Agents | Parallel Function |
 |--------|-----------|-------------------|
-| **Wraith** (4) | input-fuzzer, auth-probe, concurrency, parseltongue | Four attack surfaces simultaneously |
+| **Nyx** (6) | scout, sentinel, meridian, chronicle, scribe, banger-mode | Build loop phases 0/4/5 + iterative fix loop |
+| **Wraith** (4+) | input-fuzzer, auth-probe, concurrency, parseltongue, banger-mode (break variant) | Four attack surfaces + iterative break loop |
 | **Kehinde** (4) | failure-modes, schema-drift, race-conditions, migration-validator | Four analysis dimensions simultaneously |
 | **Tanaka** (3) | rls-audit, pii-scan, tcpa-check | Three security surfaces simultaneously |
 | **Pierce** (3) | adl-audit, field-presence, rpc-shape | Three conformance checks simultaneously |
 | **Mara** (3) | accessibility, interaction, mobile | Three evaluation passes simultaneously |
 | **Riven** (3) | token-audit, touch-targets, theme-check | Three design audits simultaneously |
+
+### Nyx Sub-Agents (6) — Build Loop + Maintenance
+
+| Sub-Agent | Build Mode | Post-Build Mode |
+|-----------|-----------|-----------------|
+| **scout** | Phase 0: terrain mapping, brief, integration map | Change-request recon, bug investigation, codebase exploration |
+| **sentinel** | Phase 4: regression scanning, differential analysis | Production monitoring, error watching, deploy verification |
+| **meridian** | Phase 4 exit: cross-surface consistency | Pattern drift detection, style coherence enforcement |
+| **chronicle** | Phase 5: mine batch for patterns, compound with history | Historical analysis, sprint retrospectives, trend detection |
+| **scribe** | Phase 5: synthesize into knowledge artifacts | Documentation maintenance, changelog, knowledge updates |
+| **banger-mode** | Any phase: bounded iterative fix loop | Hotfix iteration — bang on it until it works |
+
+> **Sub-agent count will grow.** Each persona profile session may identify additional sub-agents. The architecture supports it.
 
 ### Absorb (15 sub-agents — protocol steps, not independent agents)
 
@@ -248,19 +282,19 @@ Sub-agent awareness lives in the profile's methodologies: "Conformance review: p
 
 ## Revised Entity Counts
 
-| Category | Before | After |
-|----------|--------|-------|
-| Personas | 10 | **14** |
-| Intelligences | 10 | **0** (4 elevated, 6 absorbed) |
-| Orchestrators | 10 | **2** (gate dispatcher + discussion protocol) |
-| Customer Lens | 1 | 1 |
-| Utilities | 10 | **5** (5 became commands) |
-| Sub-Agents | 35 | **20** (15 absorbed) |
-| Commands | 30 | **~35** (30 + 5 converted utilities) |
-| Skills | 5 | 5 |
-| Kernels | 25 | **16** (14 persona + 2 dispatcher) |
-| Profiles | 0 | **14** (new) |
-| **Total functional units** | 125+ | **~80** |
+| Category | Original (42) | P7.5-B (14) | P7.5-D.0 (11) |
+|----------|--------------|-------------|----------------|
+| Personas | 10 | 14 | **11** (Scout/Sentinel/Meridian → Nyx sub-agents) |
+| Intelligences | 10 | 0 | 0 |
+| Orchestrators | 10 | 2 | **0** (absorbed into Nyx methodology) |
+| Customer Lens | 1 | 1 | 1 |
+| Utilities | 10 | 5 | 5 |
+| Sub-Agents | 35 | 20 | **27** (20 + 6 Nyx + Wraith banger-mode) |
+| Commands | 30 | ~35 | ~35 |
+| Skills | 5 | 5 | 5 |
+| Kernels | 25 | 16 | **11** (11 persona, 0 dispatchers) |
+| Profiles | 0 | 14 | **11** (personas only, sub-agents get definitions) |
+| **Total functional units** | 125+ | ~80 | **~80** (count shifts from personas to sub-agents) |
 
 ---
 
